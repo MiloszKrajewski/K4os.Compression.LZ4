@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace K4os.Compression.LZ4
 {
-    internal unsafe class LZ4_xx
-    {
+	internal unsafe class LZ4_xx
+	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
@@ -15,7 +12,7 @@ namespace K4os.Compression.LZ4
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int LZ4_COMPRESSBOUND(int isize) =>
+		internal static int LZ4_compressBound(int isize) =>
 			isize > LZ4_MAX_INPUT_SIZE ? 0 : isize + isize / 255 + 16;
 
 		protected const int LZ4_HASHLOG = LZ4_MEMORY_USAGE - 2;
@@ -23,8 +20,8 @@ namespace K4os.Compression.LZ4
 		protected const int LZ4_HASH_SIZE_U32 = 1 << LZ4_HASHLOG;
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct LZ4_stream_t_internal
-		{
+		internal struct LZ4_stream_t
+		{	
 			public fixed uint hashTable[LZ4_HASH_SIZE_U32];
 			public uint currentOffset;
 			public uint initCheck;
@@ -34,7 +31,7 @@ namespace K4os.Compression.LZ4
 		};
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct LZ4_streamDecode_t_internal
+		internal struct LZ4_streamDecode_t
 		{
 			public byte* externalDict;
 			public uint extDictSize;
@@ -42,27 +39,13 @@ namespace K4os.Compression.LZ4
 			public uint prefixSize;
 		};
 
-		protected const int LZ4_STREAMSIZE_U64 = (1 << (LZ4_MEMORY_USAGE - 3)) + 4;
-		protected const int LZ4_STREAMSIZE = LZ4_STREAMSIZE_U64 * sizeof(ulong);
+		//protected const int LZ4_STREAMSIZE_U64 = (1 << (LZ4_MEMORY_USAGE - 3)) + 4;
+		//protected const int LZ4_STREAMSIZE = LZ4_STREAMSIZE_U64 * sizeof(ulong);
 
-		[StructLayout(LayoutKind.Explicit)]
-		internal struct LZ4_stream_t
-		{
-			[FieldOffset(0)] public fixed ulong table[LZ4_STREAMSIZE_U64];
-			[FieldOffset(0)] public LZ4_stream_t_internal internal_donotuse;
-		};
+		//protected const int LZ4_STREAMDECODESIZE_U64 = 4;
+		//protected const int LZ4_STREAMDECODESIZE = LZ4_STREAMDECODESIZE_U64 * sizeof(ulong);
 
-		protected const int LZ4_STREAMDECODESIZE_U64 = 4;
-		protected const int LZ4_STREAMDECODESIZE = LZ4_STREAMDECODESIZE_U64 * sizeof(ulong);
-
-		[StructLayout(LayoutKind.Explicit)]
-		internal struct LZ4_streamDecode_t
-		{
-			[FieldOffset(0)] public fixed ulong table[LZ4_STREAMDECODESIZE_U64];
-			[FieldOffset(0)] public LZ4_streamDecode_t_internal internal_donotuse;
-		};
-
-		protected const int LZ4_HEAPMODE = 0;
+		//protected const int LZ4_HEAPMODE = 0;
 
 		protected const int ACCELERATION_DEFAULT = 1;
 
@@ -77,21 +60,6 @@ namespace K4os.Compression.LZ4
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static void LZ4_write32(void* p, uint v) => *(uint*) p = v;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_copy8(void* d, void* s) => *(ulong*) d = *(ulong*) s;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_wildCopy(ulong* d, ulong* s, void* e)
-		{
-			do
-			{
-				*d = *s;
-				d++;
-				s++;
-			}
-			while (d < e);
-		}
 
 		protected const int MINMATCH = 4;
 
@@ -115,39 +83,39 @@ namespace K4os.Compression.LZ4
 		protected const int LZ4_64Klimit = 64 * KB + (MFLIMIT - 1);
 		protected const int LZ4_skipTrigger = 6;
 
-		protected enum limitedOutput_directive
+		public enum limitedOutput_directive
 		{
 			notLimited = 0,
 			limitedOutput = 1
 		}
 
-		protected enum tableType_t
+		public enum tableType_t
 		{
 			byPtr = 0,
 			byU32 = 1,
 			byU16 = 2
 		}
 
-		protected enum dict_directive
+		public enum dict_directive
 		{
 			noDict = 0,
 			withPrefix64k,
 			usingExtDict
 		}
 
-		protected enum dictIssue_directive
+		public enum dictIssue_directive
 		{
 			noDictIssue = 0,
 			dictSmall
 		}
 
-		protected enum endCondition_directive
+		public enum endCondition_directive
 		{
 			endOnOutputSize = 0,
 			endOnInputSize = 1
 		}
 
-		protected enum earlyEnd_directive
+		public enum earlyEnd_directive
 		{
 			full = 0,
 			partial = 1

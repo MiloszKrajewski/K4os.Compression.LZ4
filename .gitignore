@@ -9,3 +9,6 @@ paket-files/
 
 **/bin/
 **/obj/
+
+Debug/
+Release/

@@ -1,3 +1,5 @@
-﻿Microsoft.NET.Test.Sdk
+﻿lz4net
+
+Microsoft.NET.Test.Sdk
 xunit
 xunit.runner.visualstudio
