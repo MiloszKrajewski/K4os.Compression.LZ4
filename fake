@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+dp0=$(cd "$(dirname "$0")" && pwd -P)
+
+target=$dp0/../.fake
+fake=$target/fake.exe
+tempDir=$(mktemp -d)
+
+if [ ! -f $fake ]
+then
+	mkdir $target
+	nuget install -out $tempDir/nuget -excludeversion fake
+	cp $tempDir/nuget/fake/tools/* $target
+	rm -rf $tempDir
+fi
+
+mono $fake "$@"

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+dp0=$(cd "$(dirname "$0")" && pwd -P)
+
+target=$dp0/.paket
+paket=$target/paket.exe
+downloadUrl=https://github.com/fsprojects/Paket/releases/download/5.120.0/paket.bootstrapper.exe
+
+if [ ! -f $paket ]
+then
+	mkdir -p $target
+	curl -L -o $target/paket.bootstrapper.exe $downloadUrl
+	mv $target/paket.bootstrapper.exe $paket
+fi
+
+mono $paket "$@"

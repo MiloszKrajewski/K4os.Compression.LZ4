@@ -1,0 +1,11 @@
+.vs/
+.vscode/
+.fake/
+.paket/
+.output/
+.idea/
+paket-files/
+.secrets.config
+
+**/bin/
+**/obj/
