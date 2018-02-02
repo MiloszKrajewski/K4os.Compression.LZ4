@@ -4,6 +4,8 @@
 .paket/
 .output/
 .idea/
+.tools/
+.corpus/
 paket-files/
 .secrets.config
 

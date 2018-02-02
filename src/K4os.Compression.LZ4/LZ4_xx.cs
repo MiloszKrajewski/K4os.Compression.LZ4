@@ -125,7 +125,7 @@ namespace K4os.Compression.LZ4
 		protected static uint LZ4_hash4(uint sequence, tableType_t tableType)
 		{
 			var hashLog = tableType == tableType_t.byU16 ? LZ4_HASHLOG + 1 : LZ4_HASHLOG;
-			return (sequence * 2654435761U) >> (MINMATCH * 8 - hashLog);
+			return (sequence * 2654435761u) >> (MINMATCH * 8 - hashLog);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 // ReSharper disable InconsistentNaming
 
@@ -55,28 +54,20 @@ namespace K4os.Compression.LZ4
 			{
 				var diff = LZ4_read_ARCH(pMatch) ^ LZ4_read_ARCH(pIn);
 				if (diff != 0)
-				{
-					pIn += STEPSIZE;
-					pMatch += STEPSIZE;
-				}
-				else
-				{
 					return LZ4_NbCommonBytes(diff);
-				}
+
+				pIn += STEPSIZE;
+				pMatch += STEPSIZE;
 			}
 
 			while (pIn < pInLimit - (STEPSIZE - 1))
 			{
 				var diff = LZ4_read_ARCH(pMatch) ^ LZ4_read_ARCH(pIn);
 				if (diff != 0)
-				{
-					pIn += STEPSIZE;
-					pMatch += STEPSIZE;
-					continue;
-				}
+					return (uint) (pIn + LZ4_NbCommonBytes(diff) - pStart);
 
-				pIn += LZ4_NbCommonBytes(diff);
-				return (uint) (pIn - pStart);
+				pIn += STEPSIZE;
+				pMatch += STEPSIZE;
 			}
 
 #if !BIT32
@@ -86,13 +77,16 @@ namespace K4os.Compression.LZ4
 				pMatch += 4;
 			}
 #endif
+
 			if (pIn < pInLimit - 1 && LZ4_read16(pMatch) == LZ4_read16(pIn))
 			{
 				pIn += 2;
 				pMatch += 2;
 			}
 
-			if (pIn < pInLimit && *pMatch == *pIn) pIn++;
+			if (pIn < pInLimit && *pMatch == *pIn)
+				pIn++;
+
 			return (uint) (pIn - pStart);
 		}
 
@@ -143,8 +137,6 @@ namespace K4os.Compression.LZ4
 		static byte* LZ4_getPosition(byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
 			LZ4_getPositionOnHash(LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
 
-		/** LZ4_compress_generic() :
-			inlined, to ensure branches are decided at compilation time */
 		public static int LZ4_compress_generic(
 			LZ4_stream_t* cctx,
 			byte* source,
@@ -157,271 +149,8 @@ namespace K4os.Compression.LZ4
 			dictIssue_directive dictIssue,
 			uint acceleration)
 		{
-			byte* ip = (byte*) source;
-			byte* base_;
-			byte* lowLimit;
-			byte* lowRefLimit = ip - cctx->dictSize;
-			byte* dictionary = cctx->dictionary;
-			byte* dictEnd = dictionary + cctx->dictSize;
-			var dictDelta = (int) (dictEnd - source);
-			byte* anchor = (byte*) source;
-			byte* iend = ip + inputSize;
-			byte* mflimit = iend - MFLIMIT;
-			byte* matchlimit = iend - LASTLITERALS;
-
-			byte* op = (byte*) dest;
-			byte* olimit = op + maxOutputSize;
-
-			uint forwardH;
-
-			/* Init conditions */
-			if (inputSize > LZ4_MAX_INPUT_SIZE)
-				return 0; /* Unsupported inputSize, too large (or negative) */
-
-			switch (dict)
-			{
-				case dict_directive.noDict:
-				default:
-					base_ = (byte*) source;
-					lowLimit = (byte*) source;
-					break;
-				case dict_directive.withPrefix64k:
-					base_ = (byte*) source - cctx->currentOffset;
-					lowLimit = (byte*) source - cctx->dictSize;
-					break;
-				case dict_directive.usingExtDict:
-					base_ = (byte*) source - cctx->currentOffset;
-					lowLimit = (byte*) source;
-					break;
-			}
-
-			if ((tableType == tableType_t.byU16) && (inputSize >= LZ4_64Klimit))
-				return 0; /* Size too large (not within 64K limit) */
-
-			if (inputSize < LZ4_minLength)
-				goto _last_literals; /* Input too small, no compression (all literals) */
-
-			/* First Byte */
-			LZ4_putPosition(ip, cctx->hashTable, tableType, base_);
-			ip++;
-			forwardH = LZ4_hashPosition(ip, tableType);
-
-			/* Main Loop */
-			for (;;)
-			{
-				int refDelta = 0;
-				byte* match;
-				byte* token;
-
-				/* Find a match */
-				{
-					byte* forwardIp = ip;
-					uint step = 1;
-					uint searchMatchNb = acceleration << LZ4_skipTrigger;
-					do
-					{
-						uint h = forwardH;
-						ip = forwardIp;
-						forwardIp += step;
-						step = (searchMatchNb++ >> LZ4_skipTrigger);
-
-						if ((forwardIp > mflimit)) goto _last_literals;
-
-						match = LZ4_getPositionOnHash(h, cctx->hashTable, tableType, base_);
-						if (dict == dict_directive.usingExtDict)
-						{
-							if (match < (byte*) source)
-							{
-								refDelta = dictDelta;
-								lowLimit = dictionary;
-							}
-							else
-							{
-								refDelta = 0;
-								lowLimit = (byte*) source;
-							}
-						}
-
-						forwardH = LZ4_hashPosition(forwardIp, tableType);
-						LZ4_putPositionOnHash(ip, h, cctx->hashTable, tableType, base_);
-					}
-					while (((dictIssue == dictIssue_directive.dictSmall) ? (match < lowRefLimit) : false)
-						|| ((tableType == tableType_t.byU16) ? false : (match + MAX_DISTANCE < ip))
-						|| (LZ4_read32(match + refDelta) != LZ4_read32(ip)));
-				}
-
-				/* Catch up */
-				while (((ip > anchor) & (match + refDelta > lowLimit)) && ((ip[-1] == match[refDelta - 1])))
-				{
-					ip--;
-					match--;
-				}
-
-				/* Encode Literals */
-				{
-					uint litLength = (uint) (ip - anchor);
-					token = op++;
-					if ((outputLimited == limitedOutput_directive.limitedOutput)
-						&& /* Check output buffer overflow */
-						((op + litLength + (2 + 1 + LASTLITERALS) + (litLength / 255) > olimit)))
-						return 0;
-
-					if (litLength >= RUN_MASK)
-					{
-						int len = (int) (litLength - RUN_MASK);
-
-						*token = (byte) (RUN_MASK << ML_BITS);
-						for (; len >= 255; len -= 255) *op++ = 255;
-
-						*op++ = (byte) len;
-					}
-					else *token = (byte) (litLength << ML_BITS);
-
-/* Copy Literals */
-					Mem.WildCopy(op, anchor, op + litLength);
-					op += litLength;
-				}
-
-				_next_match:
-				/* Encode Offset */
-				LZ4_write16(op, (ushort) (ip - match));
-				op += 2;
-
-				/* Encode MatchLength */
-				{
-					uint matchCode;
-
-					if ((dict == dict_directive.usingExtDict) && (lowLimit == dictionary))
-					{
-						byte* limit;
-						match += refDelta;
-						limit = ip + (dictEnd - match);
-						if (limit > matchlimit) limit = matchlimit;
-						matchCode = LZ4_count(ip + MINMATCH, match + MINMATCH, limit);
-						ip += MINMATCH + matchCode;
-						if (ip == limit)
-						{
-							uint more = LZ4_count(ip, (byte*) source, matchlimit);
-							matchCode += more;
-							ip += more;
-						}
-					}
-					else
-					{
-						matchCode = LZ4_count(ip + MINMATCH, match + MINMATCH, matchlimit);
-						ip += MINMATCH + matchCode;
-					}
-
-					if (outputLimited == limitedOutput_directive.limitedOutput
-						&& /* Check output buffer overflow */
-						((op + (1 + LASTLITERALS) + (matchCode >> 8) > olimit)))
-						return 0;
-
-					if (matchCode >= ML_MASK)
-					{
-						*token += (byte) ML_MASK;
-						matchCode -= ML_MASK;
-						LZ4_write32(op, 0xFFFFFFFF);
-						while (matchCode >= 4 * 255)
-						{
-							op += 4;
-							LZ4_write32(op, 0xFFFFFFFF);
-							matchCode -= 4 * 255;
-						}
-
-						op += matchCode / 255;
-
-						*op++ = (byte) (matchCode % 255);
-					}
-					else
-
-						*token += (byte) (matchCode);
-				}
-
-				anchor = ip;
-
-				/* Test end of chunk */
-				if (ip > mflimit) break;
-
-				/* Fill table */
-				LZ4_putPosition(ip - 2, cctx->hashTable, tableType, base_);
-
-/* Test next position */
-				match = LZ4_getPosition(ip, cctx->hashTable, tableType, base_);
-				if (dict == dict_directive.usingExtDict)
-				{
-					if (match < (byte*) source)
-					{
-						refDelta = dictDelta;
-						lowLimit = dictionary;
-					}
-					else
-					{
-						refDelta = 0;
-						lowLimit = (byte*) source;
-					}
-				}
-
-				LZ4_putPosition(ip, cctx->hashTable, tableType, base_);
-				if (((dictIssue == dictIssue_directive.dictSmall) ? (match >= lowRefLimit) : true)
-					&& (match + MAX_DISTANCE >= ip)
-					&& (LZ4_read32(match + refDelta) == LZ4_read32(ip)))
-				{
-					token = op++;
-					*token = 0;
-					goto _next_match;
-				}
-
-				/* Prepare next loop */
-				forwardH = LZ4_hashPosition(++ip, tableType);
-			}
-
-			_last_literals:
-			/* Encode Last Literals */
-			{
-				int lastRun = (int) (iend - anchor);
-				if ((outputLimited == limitedOutput_directive.limitedOutput)
-					&& /* Check output buffer overflow */
-					((op - (byte*) dest) + lastRun + 1 + ((lastRun + 255 - RUN_MASK) / 255)
-						> (uint) maxOutputSize))
-					return 0;
-
-				if (lastRun >= RUN_MASK)
-				{
-					int accumulator = (int) (lastRun - RUN_MASK);
-
-					*op++ = (byte) (RUN_MASK << ML_BITS);
-					for (; accumulator >= 255; accumulator -= 255) *op++ = 255;
-
-					*op++ = (byte) accumulator;
-				}
-				else
-				{
-					*op++ = (byte) (lastRun << ML_BITS);
-				}
-
-				Mem.Copy(op, anchor, lastRun);
-				op += lastRun;
-			}
-
-			/* End */
-			return (int) (((byte*) op) - dest);
-		}
-
-		static int LZ4_compress_generic_1(
-			LZ4_stream_t* cctx,
-			byte* source,
-			byte* dest,
-			int inputSize,
-			int maxOutputSize,
-			limitedOutput_directive outputLimited,
-			tableType_t tableType,
-			dict_directive dict,
-			dictIssue_directive dictIssue,
-			uint acceleration)
-		{
 			var ip = source;
-			byte* base_;
+			byte* ibase;
 			byte* lowLimit;
 			var lowRefLimit = ip - cctx->dictSize;
 			var dictionary = cctx->dictionary;
@@ -441,15 +170,15 @@ namespace K4os.Compression.LZ4
 			switch (dict)
 			{
 				case dict_directive.withPrefix64k:
-					base_ = source - cctx->currentOffset;
+					ibase = source - cctx->currentOffset;
 					lowLimit = source - cctx->dictSize;
 					break;
 				case dict_directive.usingExtDict:
-					base_ = source - cctx->currentOffset;
+					ibase = source - cctx->currentOffset;
 					lowLimit = source;
 					break;
 				default:
-					base_ = source;
+					ibase = source;
 					lowLimit = source;
 					break;
 			}
@@ -460,7 +189,252 @@ namespace K4os.Compression.LZ4
 			if (inputSize < LZ4_minLength)
 				goto _last_literals;
 
-			LZ4_putPosition(ip, cctx->hashTable, tableType, base_);
+			LZ4_putPosition(ip, cctx->hashTable, tableType, ibase);
+			ip++;
+			var forwardH = LZ4_hashPosition(ip, tableType);
+
+			for (;;)
+			{
+				var refDelta = 0;
+				byte* match;
+				byte* token;
+
+				{
+					var forwardIp = ip;
+					var step = 1u;
+					var searchMatchNb = acceleration << LZ4_skipTrigger;
+					do
+					{
+						var h = forwardH;
+						ip = forwardIp;
+						forwardIp += step;
+						step = searchMatchNb++ >> LZ4_skipTrigger;
+
+						if (forwardIp > mflimit)
+							goto _last_literals;
+
+						match = LZ4_getPositionOnHash(h, cctx->hashTable, tableType, ibase);
+						if (dict == dict_directive.usingExtDict)
+						{
+							if (match < source)
+							{
+								refDelta = dictDelta;
+								lowLimit = dictionary;
+							}
+							else
+							{
+								refDelta = 0;
+								lowLimit = source;
+							}
+						}
+
+						forwardH = LZ4_hashPosition(forwardIp, tableType);
+						LZ4_putPositionOnHash(ip, h, cctx->hashTable, tableType, ibase);
+					}
+					while (
+						dictIssue == dictIssue_directive.dictSmall && match < lowRefLimit
+						|| tableType != tableType_t.byU16 && match + MAX_DISTANCE < ip
+						|| LZ4_read32(match + refDelta) != LZ4_read32(ip));
+				}
+
+				while (ip > anchor && match + refDelta > lowLimit && ip[-1] == match[refDelta - 1])
+				{
+					ip--;
+					match--;
+				}
+
+				{
+					var litLength = (uint) (ip - anchor);
+					token = op++;
+					if (outputLimited == limitedOutput_directive.limitedOutput
+						&& op + litLength + (2 + 1 + LASTLITERALS) + litLength / 255 > olimit)
+						return 0;
+
+					if (litLength >= RUN_MASK)
+					{
+						var len = (int) (litLength - RUN_MASK);
+
+						*token = (byte) (RUN_MASK << ML_BITS);
+						for (; len >= 255; len -= 255) *op++ = 255;
+
+						*op++ = (byte) len;
+					}
+					else
+					{
+						*token = (byte) (litLength << ML_BITS);
+					}
+
+					Mem.WildCopy(op, anchor, op + litLength);
+					op += litLength;
+				}
+
+				_next_match:
+				LZ4_write16(op, (ushort) (ip - match));
+				op += 2;
+
+				{
+					uint matchCode;
+
+					if (dict == dict_directive.usingExtDict && lowLimit == dictionary)
+					{
+						match += refDelta;
+						var limit = ip + (dictEnd - match);
+						if (limit > matchlimit) limit = matchlimit;
+						matchCode = LZ4_count(ip + MINMATCH, match + MINMATCH, limit);
+						ip += MINMATCH + matchCode;
+						if (ip == limit)
+						{
+							var more = LZ4_count(ip, source, matchlimit);
+							matchCode += more;
+							ip += more;
+						}
+					}
+					else
+					{
+						matchCode = LZ4_count(ip + MINMATCH, match + MINMATCH, matchlimit);
+						ip += MINMATCH + matchCode;
+					}
+
+					if (outputLimited == limitedOutput_directive.limitedOutput
+						&& op + (1 + LASTLITERALS) + (matchCode >> 8) > olimit)
+						return 0;
+
+					if (matchCode >= ML_MASK)
+					{
+						*token += (byte) ML_MASK;
+						matchCode -= ML_MASK;
+						LZ4_write32(op, 0xFFFFFFFF);
+						while (matchCode >= 4 * 255)
+						{
+							op += 4;
+							LZ4_write32(op, 0xFFFFFFFF);
+							matchCode -= 4 * 255;
+						}
+
+						op += matchCode / 255;
+
+						*op++ = (byte) (matchCode % 255);
+					}
+					else
+					{
+						*token += (byte) matchCode;
+					}
+				}
+
+				anchor = ip;
+
+				if (ip > mflimit) break;
+
+				LZ4_putPosition(ip - 2, cctx->hashTable, tableType, ibase);
+
+				match = LZ4_getPosition(ip, cctx->hashTable, tableType, ibase);
+				if (dict == dict_directive.usingExtDict)
+				{
+					if (match < source)
+					{
+						refDelta = dictDelta;
+						lowLimit = dictionary;
+					}
+					else
+					{
+						refDelta = 0;
+						lowLimit = source;
+					}
+				}
+
+				LZ4_putPosition(ip, cctx->hashTable, tableType, ibase);
+				if ((dictIssue != dictIssue_directive.dictSmall || match >= lowRefLimit)
+					&& match + MAX_DISTANCE >= ip
+					&& LZ4_read32(match + refDelta) == LZ4_read32(ip))
+				{
+					token = op++;
+					*token = 0;
+					goto _next_match;
+				}
+
+				forwardH = LZ4_hashPosition(++ip, tableType);
+			}
+
+			_last_literals:
+			{
+				var lastRun = (int) (iend - anchor);
+				if (outputLimited == limitedOutput_directive.limitedOutput
+					&& op - dest + lastRun + 1 + (lastRun + 255 - RUN_MASK) / 255 > (uint) maxOutputSize)
+					return 0;
+
+				if (lastRun >= RUN_MASK)
+				{
+					var accumulator = (int) (lastRun - RUN_MASK);
+
+					*op++ = (byte) (RUN_MASK << ML_BITS);
+					for (; accumulator >= 255; accumulator -= 255) *op++ = 255;
+					*op++ = (byte) accumulator;
+				}
+				else
+				{
+					*op++ = (byte) (lastRun << ML_BITS);
+				}
+
+				Mem.Copy(op, anchor, lastRun);
+				op += lastRun;
+			}
+
+			return (int) (op - dest);
+		}
+
+		static int LZ4_compress_generic_1(
+			LZ4_stream_t* cctx,
+			byte* source,
+			byte* dest,
+			int inputSize,
+			int maxOutputSize,
+			limitedOutput_directive outputLimited,
+			tableType_t tableType,
+			dict_directive dict,
+			dictIssue_directive dictIssue,
+			uint acceleration)
+		{
+			var ip = source;
+			byte* ibase;
+			byte* lowLimit;
+			var lowRefLimit = ip - cctx->dictSize;
+			var dictionary = cctx->dictionary;
+			var dictEnd = dictionary + cctx->dictSize;
+			var dictDelta = (int) (dictEnd - source);
+			var anchor = source;
+			var iend = ip + inputSize;
+			var mflimit = iend - MFLIMIT;
+			var matchlimit = iend - LASTLITERALS;
+
+			var op = dest;
+			var olimit = op + maxOutputSize;
+
+			if (inputSize > LZ4_MAX_INPUT_SIZE)
+				return 0;
+
+			switch (dict)
+			{
+				case dict_directive.withPrefix64k:
+					ibase = source - cctx->currentOffset;
+					lowLimit = source - cctx->dictSize;
+					break;
+				case dict_directive.usingExtDict:
+					ibase = source - cctx->currentOffset;
+					lowLimit = source;
+					break;
+				default:
+					ibase = source;
+					lowLimit = source;
+					break;
+			}
+
+			if (tableType == tableType_t.byU16 && inputSize >= LZ4_64Klimit)
+				return 0;
+
+			if (inputSize < LZ4_minLength)
+				goto _last_literals;
+
+			LZ4_putPosition(ip, cctx->hashTable, tableType, ibase);
 			ip++;
 			var forwardH = LZ4_hashPosition(ip, tableType);
 
@@ -484,7 +458,7 @@ namespace K4os.Compression.LZ4
 						if (forwardIp > mflimit)
 							goto _last_literals;
 
-						match = LZ4_getPositionOnHash(h, cctx->hashTable, tableType, base_);
+						match = LZ4_getPositionOnHash(h, cctx->hashTable, tableType, ibase);
 						if (dict == dict_directive.usingExtDict)
 						{
 							if (match < source)
@@ -500,7 +474,7 @@ namespace K4os.Compression.LZ4
 						}
 
 						forwardH = LZ4_hashPosition(forwardIp, tableType);
-						LZ4_putPositionOnHash(ip, h, cctx->hashTable, tableType, base_);
+						LZ4_putPositionOnHash(ip, h, cctx->hashTable, tableType, ibase);
 					}
 					while (
 						dictIssue == dictIssue_directive.dictSmall && match < lowRefLimit
@@ -546,7 +520,6 @@ namespace K4os.Compression.LZ4
 				LZ4_write16(op, (ushort) (ip - match));
 				op += 2;
 
-				/* Encode MatchLength */
 				{
 					uint matchCode;
 
@@ -599,9 +572,9 @@ namespace K4os.Compression.LZ4
 
 				if (ip > mflimit) break;
 
-				LZ4_putPosition(ip - 2, cctx->hashTable, tableType, base_);
+				LZ4_putPosition(ip - 2, cctx->hashTable, tableType, ibase);
 
-				match = LZ4_getPosition(ip, cctx->hashTable, tableType, base_);
+				match = LZ4_getPosition(ip, cctx->hashTable, tableType, ibase);
 				if (dict == dict_directive.usingExtDict)
 				{
 					if (match < source)
@@ -616,7 +589,7 @@ namespace K4os.Compression.LZ4
 					}
 				}
 
-				LZ4_putPosition(ip, cctx->hashTable, tableType, base_);
+				LZ4_putPosition(ip, cctx->hashTable, tableType, ibase);
 				if ((dictIssue != dictIssue_directive.dictSmall || match >= lowRefLimit)
 					&& match + MAX_DISTANCE >= ip
 					&& LZ4_read32(match + refDelta) == LZ4_read32(ip))
@@ -626,7 +599,6 @@ namespace K4os.Compression.LZ4
 					goto _next_match;
 				}
 
-				/* Prepare next loop */
 				forwardH = LZ4_hashPosition(++ip, tableType);
 			}
 
@@ -942,25 +914,19 @@ namespace K4os.Compression.LZ4
 			var safeDecode = endOnInput == endCondition_directive.endOnInputSize;
 			var checkOffset = safeDecode && dictSize < 64 * KB;
 
-			/* Special cases */
 			if (partialDecoding != earlyEnd_directive.full && oexit > oend - MFLIMIT)
-				oexit = oend - MFLIMIT; /* targetOutputSize too high => just decode everything */
+				oexit = oend - MFLIMIT;
 			if (endOnInput == endCondition_directive.endOnInputSize && outputSize == 0)
 				return srcSize == 1 && *ip == 0 ? 0 : -1;
 			if (endOnInput != endCondition_directive.endOnInputSize && outputSize == 0)
 				return *ip == 0 ? 1 : -1;
 
-			/* Main Loop : decode sequences */
 			while (true)
 			{
 				int length;
 
 				uint token = *ip++;
 
-				/* shortcut for common case :
-				 * in most circumstances, we expect to decode small matches (<= 18 bytes) separated by few literals (<= 14 bytes).
-				 * this shortcut was tested on x86 and x64, where it improves decoding speed.
-				 * it has not yet been benchmarked on ARM, Power, mips, etc. */
 				if (ip + 14 + 2 <= iend
 					&& op + 14 + 18 <= oend
 					&& token < 15 << ML_BITS
@@ -981,7 +947,6 @@ namespace K4os.Compression.LZ4
 					}
 				}
 
-				/* decode literal length */
 				if ((length = (int) (token >> ML_BITS)) == RUN_MASK)
 				{
 					uint s;
@@ -994,11 +959,10 @@ namespace K4os.Compression.LZ4
 						(endOnInput != endCondition_directive.endOnInputSize || ip < iend - RUN_MASK)
 						&& s == 255);
 
-					if (safeDecode && op + length < op) goto _output_error; /* overflow detection */
-					if (safeDecode && ip + length < ip) goto _output_error; /* overflow detection */
+					if (safeDecode && op + length < op) goto _output_error;
+					if (safeDecode && ip + length < ip) goto _output_error;
 				}
 
-				/* copy literals */
 				var cpy = op + length;
 				if (endOnInput == endCondition_directive.endOnInputSize
 					&& (
@@ -1009,39 +973,37 @@ namespace K4os.Compression.LZ4
 				{
 					if (partialDecoding == earlyEnd_directive.partial)
 					{
-						if (cpy > oend) goto _output_error; /* Error : write attempt beyond end of output buffer */
+						if (cpy > oend) goto _output_error;
 						if ((endOnInput == endCondition_directive.endOnInputSize) && (ip + length > iend))
-							goto _output_error; /* Error : read attempt beyond end of input buffer */
+							goto _output_error;
 					}
 					else
 					{
 						if (endOnInput != endCondition_directive.endOnInputSize && cpy != oend)
-							goto _output_error; /* Error : block decoding must stop exactly there */
+							goto _output_error;
 						if (endOnInput == endCondition_directive.endOnInputSize
 							&& (ip + length != iend || cpy > oend))
-							goto _output_error; /* Error : input must be consumed */
+							goto _output_error;
 					}
 
 					Mem.Copy(op, ip, length);
 					ip += length;
 					op += length;
-					break; /* Necessarily EOF, due to parsing restrictions */
+					break;
 				}
 
 				Mem.WildCopy(op, ip, cpy);
 				ip += length;
 				op = cpy;
 
-				/* get offset */
 				int offset = LZ4_read16(ip);
 				ip += 2;
 				var match = op - offset;
 				if (checkOffset && match + dictSize < lowPrefix)
-					goto _output_error; /* Error : offset outside buffers */
+					goto _output_error;
 
-				LZ4_write32(op, (uint) offset); /* costs ~1%; silence an msan warning when offset==0 */
+				LZ4_write32(op, (uint) offset);
 
-/* get matchlength */
 				length = (int) (token & ML_MASK);
 				if (length == ML_MASK)
 				{
@@ -1057,26 +1019,23 @@ namespace K4os.Compression.LZ4
 					while (s == 255);
 
 					if (safeDecode && op + length < op)
-						goto _output_error; /* overflow detection */
+						goto _output_error;
 				}
 
 				length += MINMATCH;
 
-				/* check external dictionary */
-				if ((dict == dict_directive.usingExtDict) && (match < lowPrefix))
+				if (dict == dict_directive.usingExtDict && match < lowPrefix)
 				{
-					if ((op + length > oend - LASTLITERALS))
-						goto _output_error; /* doesn't respect parsing restriction */
+					if (op + length > oend - LASTLITERALS)
+						goto _output_error;
 
 					if (length <= lowPrefix - match)
 					{
-						/* match can be copied as a single segment from external dictionary */
 						Mem.Move(op, dictEnd - (lowPrefix - match), length);
 						op += length;
 					}
 					else
 					{
-						/* match encompass external dictionary and current block */
 						var copySize = (int) (lowPrefix - match);
 						var restSize = length - copySize;
 						Mem.Copy(op, dictEnd - copySize, copySize);
@@ -1098,9 +1057,8 @@ namespace K4os.Compression.LZ4
 					continue;
 				}
 
-				/* copy match within block */
 				cpy = op + length;
-				if ((offset < 8))
+				if (offset < 8)
 				{
 					op[0] = match[0];
 					op[1] = match[1];
