@@ -44,6 +44,7 @@ namespace K4os.Compression.LZ4
 			while (d < e);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
 			var diff = target - source;
