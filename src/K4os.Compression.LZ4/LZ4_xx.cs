@@ -11,7 +11,7 @@ namespace K4os.Compression.LZ4
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int LZ4_compressBound(int isize) =>
 			isize > LZ4_MAX_INPUT_SIZE ? 0 : isize + isize / 255 + 16;
 

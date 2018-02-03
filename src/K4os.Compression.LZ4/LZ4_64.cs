@@ -91,7 +91,7 @@ namespace K4os.Compression.LZ4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static uint LZ4_hashPosition(void* p, tableType_t tableType)
+		private static uint LZ4_hashPosition(void* p, tableType_t tableType)
 		{
 #if !BIT32
 			if (tableType != tableType_t.byU16)
@@ -101,7 +101,7 @@ namespace K4os.Compression.LZ4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static void LZ4_putPositionOnHash(
+		private static void LZ4_putPositionOnHash(
 			byte* p, uint h, void* tableBase, tableType_t tableType, byte* srcBase)
 		{
 			switch (tableType)
@@ -119,7 +119,7 @@ namespace K4os.Compression.LZ4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static void LZ4_putPosition(byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
+		private static void LZ4_putPosition(byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
 			LZ4_putPositionOnHash(p, LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -458,13 +458,11 @@ namespace K4os.Compression.LZ4
 			ip++;
 			var forwardH = LZ4_hashPosition(ip, tableType);
 
-			/* Main Loop */
 			for (;;)
 			{
 				byte* match;
 				byte* token;
 
-				/* Find a match */
 				{
 					var forwardIp = ip;
 					var step = 1u;
@@ -477,8 +475,7 @@ namespace K4os.Compression.LZ4
 						forwardIp += step;
 						step = searchMatchNb++ >> LZ4_skipTrigger;
 
-						if (forwardIp > mflimit)
-							goto _last_literals;
+						if (forwardIp > mflimit) goto _last_literals;
 
 						match = LZ4_getPositionOnHash(h, ctx->hashTable, tableType, base_);
 						forwardH = LZ4_hashPosition(forwardIp, tableType);
@@ -529,7 +526,7 @@ namespace K4os.Compression.LZ4
 				{
 					var matchLength = (int) LZ4_count(ip + MINMATCH, match + MINMATCH, matchlimit);
 
-					if (op + ((matchLength + 240) / 255) > oMaxMatch)
+					if (op + (matchLength + 240) / 255 > oMaxMatch)
 					{
 						matchLength = (int) (15 - 1 + (oMaxMatch - op) * 255);
 					}
