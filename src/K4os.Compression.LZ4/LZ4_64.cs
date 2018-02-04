@@ -1,13 +1,12 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 // ReSharper disable InconsistentNaming
 
 namespace K4os.Compression.LZ4
 {
-	internal unsafe class LZ4_64: LZ4_xx
-	{
 #if BIT32
+	internal unsafe class LZ4_32: LZ4_xx
+	{
 		private const int STEPSIZE = 4;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -23,7 +22,15 @@ namespace K4os.Compression.LZ4
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint LZ4_NbCommonBytes(uint val) =>
 			DeBruijnBytePos[(uint) ((int) val & -(int) val) * 0x077CB531U >> 27];
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static tableType_t LZ4_tableType(int inputSize) =>
+			inputSize < LZ4_64Klimit ? tableType_t.byU16 :
+			sizeof(byte*) == sizeof(uint) ? tableType_t.byPtr :
+			tableType_t.byU32;
 #else
+	internal unsafe class LZ4_64: LZ4_xx
+	{
 		private const int STEPSIZE = 8;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -43,6 +50,10 @@ namespace K4os.Compression.LZ4
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint LZ4_NbCommonBytes(ulong val) =>
 			DeBruijnBytePos[(ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58];
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static tableType_t LZ4_tableType(int inputSize) =>
+			inputSize < LZ4_64Klimit ? tableType_t.byU16 : tableType_t.byU32;
 #endif
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -101,37 +112,9 @@ namespace K4os.Compression.LZ4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void LZ4_putPositionOnHash(
-			byte* p, uint h, void* tableBase, tableType_t tableType, byte* srcBase)
-		{
-			switch (tableType)
-			{
-				case tableType_t.byPtr:
-					((byte**) tableBase)[h] = p;
-					return;
-				case tableType_t.byU32:
-					((uint*) tableBase)[h] = (uint) (p - srcBase);
-					return;
-				default:
-					((ushort*) tableBase)[h] = (ushort) (p - srcBase);
-					return;
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void LZ4_putPosition(byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
+		private static void LZ4_putPosition(
+			byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
 			LZ4_putPositionOnHash(p, LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static byte* LZ4_getPositionOnHash(uint h, void* tableBase, tableType_t tableType, byte* srcBase)
-		{
-			switch (tableType)
-			{
-				case tableType_t.byPtr: return ((byte**) tableBase)[h];
-				case tableType_t.byU32: return ((uint*) tableBase)[h] + srcBase;
-				default: return ((ushort*) tableBase)[h] + srcBase;
-			}
-		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static byte* LZ4_getPosition(byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
@@ -393,10 +376,6 @@ namespace K4os.Compression.LZ4
 				maxOutputSize >= LZ4_compressBound(inputSize)
 					? limitedOutput_directive.notLimited
 					: limitedOutput_directive.limitedOutput;
-			var tableType =
-				inputSize < LZ4_64Klimit ? tableType_t.byU16 :
-				IntPtr.Size == 8 ? tableType_t.byU32 :
-				tableType_t.byPtr;
 
 			return LZ4_compress_generic(
 				state,
@@ -405,7 +384,7 @@ namespace K4os.Compression.LZ4
 				inputSize,
 				limited == limitedOutput_directive.notLimited ? 0 : maxOutputSize,
 				limited,
-				tableType,
+				LZ4_tableType(inputSize),
 				dict_directive.noDict,
 				dictIssue_directive.noDictIssue,
 				(uint) acceleration);
@@ -607,24 +586,21 @@ namespace K4os.Compression.LZ4
 			LZ4_stream_t* state, byte* src, byte* dst, int* srcSizePtr, int targetDstSize)
 		{
 			LZ4_resetStream(state);
-
-			if (targetDstSize >= LZ4_compressBound(*srcSizePtr))
-			{
-				return LZ4_compress_fast_extState(state, src, dst, *srcSizePtr, targetDstSize, 1);
-			}
-
-			var tableType =
-				*srcSizePtr < LZ4_64Klimit ? tableType_t.byU16 :
-				sizeof(void*) == 8 ? tableType_t.byU32 :
-				tableType_t.byPtr;
-
-			return LZ4_compress_destSize_generic(
-				state,
-				src,
-				dst,
-				srcSizePtr,
-				targetDstSize,
-				tableType);
+			return targetDstSize >= LZ4_compressBound(*srcSizePtr)
+				? LZ4_compress_fast_extState(
+					state,
+					src,
+					dst,
+					*srcSizePtr,
+					targetDstSize,
+					1)
+				: LZ4_compress_destSize_generic(
+					state,
+					src,
+					dst,
+					srcSizePtr,
+					targetDstSize,
+					LZ4_tableType(*srcSizePtr));
 		}
 
 		public static int LZ4_compress_destSize(byte* src, byte* dst, int* srcSizePtr, int targetDstSize)

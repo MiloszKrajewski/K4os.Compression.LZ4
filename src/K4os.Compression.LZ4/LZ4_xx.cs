@@ -21,7 +21,7 @@ namespace K4os.Compression.LZ4
 
 		[StructLayout(LayoutKind.Sequential)]
 		internal struct LZ4_stream_t
-		{	
+		{
 			public fixed uint hashTable[LZ4_HASH_SIZE_U32];
 			public uint currentOffset;
 			public uint initCheck;
@@ -54,6 +54,9 @@ namespace K4os.Compression.LZ4
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_read32(void* p) => *(uint*) p;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static ulong LZ4_read64(void* p) => *(ulong*) p;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static void LZ4_write16(void* p, ushort v) => *(ushort*) p = v;
@@ -133,6 +136,36 @@ namespace K4os.Compression.LZ4
 		{
 			var hashLog = tableType == tableType_t.byU16 ? LZ4_HASHLOG + 1 : LZ4_HASHLOG;
 			return (uint) (((sequence << 24) * 889523592379ul) >> (64 - hashLog));
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static void LZ4_putPositionOnHash(
+			byte* p, uint h, void* tableBase, tableType_t tableType, byte* srcBase)
+		{
+			switch (tableType)
+			{
+				case tableType_t.byPtr:
+					((byte**) tableBase)[h] = p;
+					return;
+				case tableType_t.byU32:
+					((uint*) tableBase)[h] = (uint) (p - srcBase);
+					return;
+				default:
+					((ushort*) tableBase)[h] = (ushort) (p - srcBase);
+					return;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static byte* LZ4_getPositionOnHash(
+			uint h, void* tableBase, tableType_t tableType, byte* srcBase)
+		{
+			switch (tableType)
+			{
+				case tableType_t.byPtr: return ((byte**) tableBase)[h];
+				case tableType_t.byU32: return ((uint*) tableBase)[h] + srcBase;
+				default: return ((ushort*) tableBase)[h] + srcBase;
+			}
 		}
 	}
 }
