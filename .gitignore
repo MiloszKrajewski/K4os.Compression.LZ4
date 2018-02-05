@@ -14,3 +14,7 @@ paket-files/
 
 Debug/
 Release/
+
+*.bak
+*.user
+*.suo
