@@ -948,5 +948,208 @@ namespace K4os.Compression.LZ4
 
 			return dictSize;
 		}
+
+		public static void LZ4_setStreamDecode(
+			LZ4_streamDecode_t* LZ4_streamDecode, byte* dictionary, int dictSize)
+		{
+			var lz4sd = LZ4_streamDecode;
+			lz4sd->prefixSize = (uint) dictSize;
+			lz4sd->prefixEnd = dictionary + dictSize;
+			lz4sd->externalDict = null;
+			lz4sd->extDictSize = 0;
+		}
+
+		public static int LZ4_decompress_safe_continue(
+			LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
+			int maxOutputSize)
+		{
+			var lz4sd = LZ4_streamDecode;
+			int result;
+
+			if (lz4sd->prefixEnd == dest)
+			{
+				result = LZ4_decompress_generic(
+					source,
+					dest,
+					compressedSize,
+					maxOutputSize,
+					endCondition_directive.endOnInputSize,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.usingExtDict,
+					lz4sd->prefixEnd - lz4sd->prefixSize,
+					lz4sd->externalDict,
+					(int) lz4sd->extDictSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize += (uint) result;
+				lz4sd->prefixEnd += result;
+			}
+			else
+			{
+				lz4sd->extDictSize = lz4sd->prefixSize;
+				lz4sd->externalDict = lz4sd->prefixEnd - lz4sd->extDictSize;
+				result = LZ4_decompress_generic(
+					source,
+					dest,
+					compressedSize,
+					maxOutputSize,
+					endCondition_directive.endOnInputSize,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.usingExtDict,
+					dest,
+					lz4sd->externalDict,
+					(int) lz4sd->extDictSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize = (uint) result;
+				lz4sd->prefixEnd = dest + result;
+			}
+
+			return result;
+		}
+
+		public static int LZ4_decompress_fast_continue(
+			LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int originalSize)
+		{
+			var lz4sd = LZ4_streamDecode;
+			int result;
+
+			if (lz4sd->prefixEnd == dest)
+			{
+				result = LZ4_decompress_generic(
+					source,
+					dest,
+					0,
+					originalSize,
+					endCondition_directive.endOnOutputSize,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.usingExtDict,
+					lz4sd->prefixEnd - lz4sd->prefixSize,
+					lz4sd->externalDict,
+					(int) lz4sd->extDictSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize += (uint) originalSize;
+				lz4sd->prefixEnd += originalSize;
+			}
+			else
+			{
+				lz4sd->extDictSize = lz4sd->prefixSize;
+				lz4sd->externalDict = lz4sd->prefixEnd - lz4sd->extDictSize;
+				result = LZ4_decompress_generic(
+					source,
+					dest,
+					0,
+					originalSize,
+					endCondition_directive.endOnOutputSize,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.usingExtDict,
+					dest,
+					lz4sd->externalDict,
+					(int) lz4sd->extDictSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize = (uint) originalSize;
+				lz4sd->prefixEnd = dest + originalSize;
+			}
+
+			return result;
+		}
+
+		public static int LZ4_decompress_usingDict_generic(
+			byte* source, byte* dest, int compressedSize, int maxOutputSize, int safe, byte* dictStart,
+			int dictSize)
+		{
+			if (dictSize == 0)
+				return LZ4_decompress_generic(
+					source,
+					dest,
+					compressedSize,
+					maxOutputSize,
+					(endCondition_directive) safe,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.noDict,
+					dest,
+					null,
+					0);
+
+			if (dictStart + dictSize != dest)
+				return LZ4_decompress_generic(
+					source,
+					dest,
+					compressedSize,
+					maxOutputSize,
+					(endCondition_directive) safe,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.usingExtDict,
+					dest,
+					dictStart,
+					dictSize);
+
+			if (dictSize >= 64 * KB - 1)
+				return LZ4_decompress_generic(
+					source,
+					dest,
+					compressedSize,
+					maxOutputSize,
+					(endCondition_directive) safe,
+					earlyEnd_directive.full,
+					0,
+					dict_directive.withPrefix64k,
+					dest - 64 * KB,
+					null,
+					0);
+
+			return LZ4_decompress_generic(
+				source,
+				dest,
+				compressedSize,
+				maxOutputSize,
+				(endCondition_directive) safe,
+				earlyEnd_directive.full,
+				0,
+				dict_directive.noDict,
+				dest - dictSize,
+				null,
+				0);
+		}
+
+		public static int LZ4_decompress_safe_usingDict(
+			byte* source, byte* dest, int compressedSize, int maxOutputSize, byte* dictStart,
+			int dictSize) =>
+			LZ4_decompress_usingDict_generic(
+				source,
+				dest,
+				compressedSize,
+				maxOutputSize,
+				1,
+				dictStart,
+				dictSize);
+
+		public static int LZ4_decompress_fast_usingDict(
+			byte* source, byte* dest, int originalSize, byte* dictStart, int dictSize) =>
+			LZ4_decompress_usingDict_generic(source, dest, 0, originalSize, 0, dictStart, dictSize);
+
+		public static int LZ4_decompress_safe_forceExtDict(
+			byte* source, byte* dest, int compressedSize, int maxOutputSize, byte* dictStart,
+			int dictSize) =>
+			LZ4_decompress_generic(
+				source,
+				dest,
+				compressedSize,
+				maxOutputSize,
+				endCondition_directive.endOnInputSize,
+				earlyEnd_directive.full,
+				0,
+				dict_directive.usingExtDict,
+				dest,
+				dictStart,
+				dictSize);
 	}
 }

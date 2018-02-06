@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{4959E124-9DEB-4396-826A-6760FC2FA0B5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>CppPlayground</RootNamespace>
+    <RootNamespace>CppPlayground.Demo</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4
 {
@@ -151,5 +153,11 @@ namespace K4os.Compression.LZ4
 			*((ulong*) (target + 8)) = *((ulong*) (source + 8));
 			*((ushort*) (target + 16)) = *((ushort*) (source + 16));
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* Alloc(int size) => Marshal.AllocHGlobal(size).ToPointer();
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Free(void *ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
 	}
 }

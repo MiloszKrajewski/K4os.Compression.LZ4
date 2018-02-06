@@ -9,7 +9,7 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class PerformancePlayground
 	{
-		private ITestOutputHelper _output;
+		private readonly ITestOutputHelper _output;
 
 		public PerformancePlayground(ITestOutputHelper output) => _output = output;
 
