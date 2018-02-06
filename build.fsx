@@ -12,7 +12,8 @@ let download fn (url: string) =
 let clean () = !! "**/bin/" ++ "**/obj/" |> DeleteDirs
 let build () = Proj.build "src/K4os.Compression.LZ4.sln"
 let restore () = Proj.restore "src/K4os.Compression.LZ4.sln"
-let test () = Proj.testAll ()
+let test () = Proj.xtestAll ()
+
 let release () = Proj.releaseNupkg ()
 
 Target "Clean" (fun _ -> clean ())

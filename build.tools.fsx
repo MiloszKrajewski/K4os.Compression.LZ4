@@ -132,7 +132,15 @@ module Proj =
             Project = project
             AdditionalArgs = ["--no-build"; "--no-restore"]
         })
+
     let testAll () = listProj () |> Seq.filter isTestProj |> Seq.iter test
+
+    let xtest project = 
+        Shell.runAt project "dotnet" "xunit -verbose -configuration Release -nobuild"
+
+    let xtestAll () = 
+        listProj () |> Seq.filter isTestProj |> Seq.iter (directory >> xtest)
+
     let pack version project =
         DotNetCli.Pack (fun p ->
             { p with

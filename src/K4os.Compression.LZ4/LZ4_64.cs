@@ -8,6 +8,7 @@ namespace K4os.Compression.LZ4
 	internal unsafe class LZ4_32: LZ4_xx
 	{
 		private const int STEPSIZE = 4;
+		private const int HASH_UNIT = 4;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint LZ4_read_ARCH(void* p) => *(uint*) p;
@@ -32,6 +33,7 @@ namespace K4os.Compression.LZ4
 	internal unsafe class LZ4_64: LZ4_xx
 	{
 		private const int STEPSIZE = 8;
+		private const int HASH_UNIT = 8;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static ulong LZ4_read_ARCH(void* p) => *(ulong*) p;
@@ -138,7 +140,7 @@ namespace K4os.Compression.LZ4
 			var lowRefLimit = ip - cctx->dictSize;
 			var dictionary = cctx->dictionary;
 			var dictEnd = dictionary + cctx->dictSize;
-			var dictDelta = (int) (dictEnd - source);
+			var dictDelta = dictEnd - source;
 			var anchor = source;
 			var iend = ip + inputSize;
 			var mflimit = iend - MFLIMIT;
@@ -178,7 +180,7 @@ namespace K4os.Compression.LZ4
 
 			for (;;)
 			{
-				var refDelta = 0;
+				var refDelta = 0L;
 				byte* match;
 				byte* token;
 
@@ -680,7 +682,8 @@ namespace K4os.Compression.LZ4
 						s = *ip++;
 						length += (int) s;
 					}
-					while ((endOnInput != endCondition_directive.endOnInputSize || ip < iend - RUN_MASK)
+					while (
+						(endOnInput != endCondition_directive.endOnInputSize || ip < iend - RUN_MASK)
 						&& s == 255);
 
 					if (safeDecode && op + length < op) goto _output_error;
@@ -877,5 +880,73 @@ namespace K4os.Compression.LZ4
 				dest - 64 * KB,
 				null,
 				64 * KB);
+
+		public static int LZ4_loadDict(LZ4_stream_t* LZ4_dict, byte* dictionary, int dictSize)
+		{
+			var dict = LZ4_dict;
+			var p = dictionary;
+			var dictEnd = p + dictSize;
+
+			if (dict->initCheck != 0 || dict->currentOffset > 1 * GB)
+				LZ4_resetStream(LZ4_dict);
+
+			if (dictSize < HASH_UNIT)
+			{
+				dict->dictionary = null;
+				dict->dictSize = 0;
+				return 0;
+			}
+
+			if (dictEnd - p > 64 * KB) p = dictEnd - 64 * KB;
+			dict->currentOffset += 64 * KB;
+			var base_ = p - dict->currentOffset;
+			dict->dictionary = p;
+			dict->dictSize = (uint) (dictEnd - p);
+			dict->currentOffset += dict->dictSize;
+
+			while (p <= dictEnd - HASH_UNIT)
+			{
+				LZ4_putPosition(p, dict->hashTable, tableType_t.byU32, base_);
+				p += 3;
+			}
+
+			return (int) dict->dictSize;
+		}
+
+		public static void LZ4_renormDictT(LZ4_stream_t* LZ4_dict, byte* src)
+		{
+			if (LZ4_dict->currentOffset > 0x80000000 || LZ4_dict->currentOffset > (ulong) src)
+			{
+				var delta = LZ4_dict->currentOffset - 64 * KB;
+				var dictEnd = LZ4_dict->dictionary + LZ4_dict->dictSize;
+				for (var i = 0; i < LZ4_HASH_SIZE_U32; i++)
+				{
+					if (LZ4_dict->hashTable[i] < delta)
+						LZ4_dict->hashTable[i] = 0;
+					else
+						LZ4_dict->hashTable[i] -= delta;
+				}
+
+				LZ4_dict->currentOffset = 64 * KB;
+				if (LZ4_dict->dictSize > 64 * KB) LZ4_dict->dictSize = 64 * KB;
+				LZ4_dict->dictionary = dictEnd - LZ4_dict->dictSize;
+			}
+		}
+
+		public static int LZ4_saveDict(LZ4_stream_t* LZ4_dict, byte* safeBuffer, int dictSize)
+		{
+			var dict = LZ4_dict;
+			var previousDictEnd = dict->dictionary + dict->dictSize;
+
+			if ((uint) dictSize > 64 * KB) dictSize = 64 * KB;
+			if ((uint) dictSize > dict->dictSize) dictSize = (int) dict->dictSize;
+
+			Mem.Move(safeBuffer, previousDictEnd - dictSize, dictSize);
+
+			dict->dictionary = safeBuffer;
+			dict->dictSize = (uint) dictSize;
+
+			return dictSize;
+		}
 	}
 }
