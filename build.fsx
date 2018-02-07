@@ -60,14 +60,10 @@ Target "Restore:Corpus" (fun _ ->
     uncorpus "x-ray" "http://sun.aei.polsl.pl/~sdeor/corpus/x-ray.bz2"
 )
 
-"Restore:Corpus" ==> "Restore"
-"Restore" ==> "Build"
-"Build" ==> "Rebuild"
-"Clean" ?=> "Restore"
+"Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"
 "Clean" ==> "Rebuild"
-"Rebuild" ==> "Release"
-"Test" ==> "Release"
+"Clean" ?=> "Restore"
 "Build" ?=> "Test"
-"Release" ==> "Release:Nuget"
+
 
 RunTargetOrDefault "Build"
