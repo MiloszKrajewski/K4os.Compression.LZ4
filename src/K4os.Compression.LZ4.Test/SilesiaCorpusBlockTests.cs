@@ -37,8 +37,8 @@ namespace K4os.Compression.LZ4.Test
 		{
 			var src = Tools.LoadChunk(Tools.FindFile(filename), index, length);
 
-			var dst = LZ4Interface.Encode(src);
-			var cmp = LZ4Interface.Decode(dst, src.Length);
+			var dst = LZ4Codec.Encode64(src, 0, src.Length);
+			var cmp = LZ4Codec.Decode(dst, 0, dst.Length, src.Length);
 
 			string AsHex(uint value) => $"0x{value:x8}";
 

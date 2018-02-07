@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using LZ4;
 using Xunit;
+using _LZ4 = global::LZ4.LZ4Codec;
 
 namespace K4os.Compression.LZ4.Test
 {
@@ -36,8 +37,12 @@ namespace K4os.Compression.LZ4.Test
 
 		private static void Roundtrip(byte[] source)
 		{
-			var compressedOld = LZ4Codec.Encode(source, 0, source.Length);
-			var compressedNew = LZ4Interface.Encode(source);
+			var compressedOld = global::LZ4.LZ4Codec.Encode(source, 0, source.Length);
+			var compressedNew = LZ4Codec.Encode64(source, 0, source.Length);
+
+			Assert.Equal(
+				source,
+				_LZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
 
 			Assert.Equal(
 				source,
@@ -45,11 +50,7 @@ namespace K4os.Compression.LZ4.Test
 
 			Assert.Equal(
 				source,
-				LZ4Interface.Decode(compressedNew, source.Length));
-
-			Assert.Equal(
-				source,
-				LZ4Interface.Decode(compressedOld, source.Length));
+				LZ4Codec.Decode(compressedOld, 0, compressedOld.Length, source.Length));
 		}
 
 		[Theory]

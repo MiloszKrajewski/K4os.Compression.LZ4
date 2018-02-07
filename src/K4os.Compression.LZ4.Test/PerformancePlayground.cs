@@ -30,8 +30,8 @@ namespace K4os.Compression.LZ4.Test
 		public void MeasureDickens()
 		{
 			var input = File.ReadAllBytes(Tools.FindFile(".corpus/dickens"));
-			var output = new byte[LZ4Interface.MaximumOutputSize(input.Length)];
-			Measure("compress", 100, () => LZ4Interface.Encode(input, output));
+			var output = new byte[LZ4Codec.MaximumOutputSize(input.Length)];
+			Measure("compress", 100, () => LZ4Codec.Encode64(input, 0, input.Length, output, 0, output.Length));
 		}
 	}
 }

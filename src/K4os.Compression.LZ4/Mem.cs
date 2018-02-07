@@ -159,5 +159,29 @@ namespace K4os.Compression.LZ4
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Free(void *ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static byte Peek8(void* p) => *(byte*) p;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static ushort Peek16(void* p) => *(ushort*) p;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static uint Peek32(void* p) => *(uint*) p;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static ulong Peek64(void* p) => *(ulong*) p;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static void Poke8(void* p, byte v) => *(byte*) p = v;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static void Poke16(void* p, ushort v) => *(ushort*) p = v;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static void Poke32(void* p, uint v) => *(uint*) p = v;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static void Poke64(void* p, ulong v) => *(ulong*) p = v;
 	}
 }
