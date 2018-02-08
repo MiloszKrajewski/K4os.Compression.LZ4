@@ -9,7 +9,7 @@ namespace K4os.Compression.LZ4
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
-			while (length > sizeof(ulong))
+			while (length >= sizeof(ulong))
 			{
 				*(ulong*) target = *(ulong*) source;
 				target += sizeof(ulong);
@@ -17,7 +17,7 @@ namespace K4os.Compression.LZ4
 				length -= sizeof(ulong);
 			}
 
-			while (length > sizeof(uint))
+			while (length >= sizeof(uint))
 			{
 				*(uint*) target = *(uint*) source;
 				target += sizeof(uint);
@@ -53,7 +53,7 @@ namespace K4os.Compression.LZ4
 
 			if (diff < 0 || diff >= length)
 			{
-				while (length > sizeof(ulong))
+				while (length >= sizeof(ulong))
 				{
 					*(ulong*) target = *(ulong*) source;
 					target += sizeof(ulong);
@@ -61,7 +61,7 @@ namespace K4os.Compression.LZ4
 					length -= sizeof(ulong);
 				}
 
-				while (length > sizeof(uint))
+				while (length >= sizeof(uint))
 				{
 					*(uint*) target = *(uint*) source;
 					target += sizeof(uint);
@@ -82,7 +82,7 @@ namespace K4os.Compression.LZ4
 				target += length;
 				source += length;
 
-				while (length > sizeof(ulong))
+				while (length >= sizeof(ulong))
 				{
 					target -= sizeof(ulong);
 					source -= sizeof(ulong);
@@ -90,7 +90,7 @@ namespace K4os.Compression.LZ4
 					length -= sizeof(ulong);
 				}
 
-				while (length > sizeof(uint))
+				while (length >= sizeof(uint))
 				{
 					target -= sizeof(uint);
 					source -= sizeof(uint);
@@ -111,14 +111,14 @@ namespace K4os.Compression.LZ4
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Zero(byte* target, int length)
 		{
-			while (length > sizeof(ulong))
+			while (length >= sizeof(ulong))
 			{
 				*(ulong*) target = 0;
 				target += sizeof(ulong);
 				length -= sizeof(ulong);
 			}
 
-			while (length > sizeof(uint))
+			while (length >= sizeof(uint))
 			{
 				*(uint*) target = 0;
 				target += sizeof(uint);
@@ -128,6 +128,39 @@ namespace K4os.Compression.LZ4
 			while (length > 0)
 			{
 				*target = 0;
+				target++;
+				length--;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Fill(byte* target, byte value, int length)
+		{
+			if (length >= sizeof(uint))
+			{
+				var value8 = (ulong) value;
+				value8 |= value8 << 8;
+				value8 |= value8 << 16;
+				value8 |= value8 << 32;
+
+				while (length >= sizeof(ulong))
+				{
+					*(ulong*) target = value8;
+					target += sizeof(ulong);
+					length -= sizeof(ulong);
+				}
+
+				while (length >= sizeof(uint))
+				{
+					*(uint*) target = (uint) value8;
+					target += sizeof(uint);
+					length -= sizeof(uint);
+				}
+			}
+
+			while (length > 0)
+			{
+				*target = value;
 				target++;
 				length--;
 			}
@@ -158,7 +191,7 @@ namespace K4os.Compression.LZ4
 		public static void* Alloc(int size) => Marshal.AllocHGlobal(size).ToPointer();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Free(void *ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
+		public static void Free(void* ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static byte Peek8(void* p) => *(byte*) p;
