@@ -59,13 +59,13 @@ namespace K4os.Compression.LZ4
 
 		const int OPTIMAL_ML = (int) (ML_MASK - 1 + MINMATCH);
 
-		// uint? it was macro so types were not specified
+#warning uint? it was macro so types were not specified
 		private static uint HASH_FUNCTION(uint i) => (i * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
 
-		// ulong*? it was macro so types were not specified
+#warning ulong*? it was macro so types were not specified
 		private static ulong DELTANEXTMAXD(ulong* chainTable, int p) => chainTable[p & LZ4HC_MAXD_MASK];
 
-		// ulong*? it was macro so types were not specified
+#warning ulong*? it was macro so types were not specified
 		private static ulong DELTANEXTU16(ulong* table, ushort pos) => table[pos];
 
 		private static uint LZ4HC_hashPtr(void* ptr) => HASH_FUNCTION(LZ4_read32(ptr));
