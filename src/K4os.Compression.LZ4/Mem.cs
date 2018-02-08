@@ -17,7 +17,7 @@ namespace K4os.Compression.LZ4
 				length -= sizeof(ulong);
 			}
 
-			while (length >= sizeof(uint))
+			if (length >= sizeof(uint))
 			{
 				*(uint*) target = *(uint*) source;
 				target += sizeof(uint);
@@ -25,12 +25,57 @@ namespace K4os.Compression.LZ4
 				length -= sizeof(uint);
 			}
 
-			while (length > 0)
+			if (length >= sizeof(ushort))
+			{
+				*(uint*) target = *(ushort*) source;
+				target += sizeof(ushort);
+				source += sizeof(ushort);
+				length -= sizeof(ushort);
+			}
+
+			if (length > 0)
 			{
 				*target = *source;
-				target++;
-				source++;
-				length--;
+				// target++; source++; length--;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void CopyBack(byte* target, byte* source, int length)
+		{
+			target += length;
+			source += length;
+
+			while (length >= sizeof(ulong))
+			{
+				target -= sizeof(ulong);
+				source -= sizeof(ulong);
+				*(ulong*) target = *(ulong*) source;
+				length -= sizeof(ulong);
+			}
+
+			if (length >= sizeof(uint))
+			{
+				target -= sizeof(uint);
+				source -= sizeof(uint);
+				*(uint*) target = *(uint*) source;
+				length -= sizeof(uint);
+			}
+
+			if (length >= sizeof(ushort))
+			{
+				target -= sizeof(ushort);
+				source -= sizeof(ushort);
+				*(ushort*) target = *(ushort*) source;
+				length -= sizeof(ushort);
+			}
+
+			if (length > 0)
+			{
+				target--;
+				source--;
+				*target = *source;
+				// length--;
 			}
 		}
 
@@ -53,58 +98,11 @@ namespace K4os.Compression.LZ4
 
 			if (diff < 0 || diff >= length)
 			{
-				while (length >= sizeof(ulong))
-				{
-					*(ulong*) target = *(ulong*) source;
-					target += sizeof(ulong);
-					source += sizeof(ulong);
-					length -= sizeof(ulong);
-				}
-
-				while (length >= sizeof(uint))
-				{
-					*(uint*) target = *(uint*) source;
-					target += sizeof(uint);
-					source += sizeof(uint);
-					length -= sizeof(uint);
-				}
-
-				while (length > 0)
-				{
-					*target = *source;
-					target++;
-					source++;
-					length--;
-				}
+				Copy(target, source, length);
 			}
 			else
 			{
-				target += length;
-				source += length;
-
-				while (length >= sizeof(ulong))
-				{
-					target -= sizeof(ulong);
-					source -= sizeof(ulong);
-					*(ulong*) target = *(ulong*) source;
-					length -= sizeof(ulong);
-				}
-
-				while (length >= sizeof(uint))
-				{
-					target -= sizeof(uint);
-					source -= sizeof(uint);
-					*(uint*) target = *(uint*) source;
-					length -= sizeof(uint);
-				}
-
-				while (length > 0)
-				{
-					target--;
-					source--;
-					*target = *source;
-					length--;
-				}
+				CopyBack(target, source, length);
 			}
 		}
 
@@ -118,51 +116,60 @@ namespace K4os.Compression.LZ4
 				length -= sizeof(ulong);
 			}
 
-			while (length >= sizeof(uint))
+			if (length >= sizeof(uint))
 			{
 				*(uint*) target = 0;
 				target += sizeof(uint);
 				length -= sizeof(uint);
 			}
 
-			while (length > 0)
+			if (length >= sizeof(ushort))
+			{
+				*(ushort*) target = 0;
+				target += sizeof(ushort);
+				length -= sizeof(ushort);
+			}
+
+			if (length > 0)
 			{
 				*target = 0;
-				target++;
-				length--;
+				// target++; length--;
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Fill(byte* target, byte value, int length)
 		{
-			if (length >= sizeof(uint))
+			var value8 = (ulong) value;
+			value8 |= value8 << 8;
+			value8 |= value8 << 16;
+			value8 |= value8 << 32;
+
+			while (length >= sizeof(ulong))
 			{
-				var value8 = (ulong) value;
-				value8 |= value8 << 8;
-				value8 |= value8 << 16;
-				value8 |= value8 << 32;
-
-				while (length >= sizeof(ulong))
-				{
-					*(ulong*) target = value8;
-					target += sizeof(ulong);
-					length -= sizeof(ulong);
-				}
-
-				while (length >= sizeof(uint))
-				{
-					*(uint*) target = (uint) value8;
-					target += sizeof(uint);
-					length -= sizeof(uint);
-				}
+				*(ulong*) target = value8;
+				target += sizeof(ulong);
+				length -= sizeof(ulong);
 			}
 
-			while (length > 0)
+			if (length >= sizeof(uint))
+			{
+				*(uint*) target = (uint) value8;
+				target += sizeof(uint);
+				length -= sizeof(uint);
+			}
+
+			if (length >= sizeof(ushort))
+			{
+				*(ushort*) target = (ushort) value8;
+				target += sizeof(ushort);
+				length -= sizeof(ushort);
+			}
+
+			if (length > 0)
 			{
 				*target = value;
-				target++;
-				length--;
+				// target++; length--;
 			}
 		}
 
