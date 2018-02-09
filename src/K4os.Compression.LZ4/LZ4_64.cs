@@ -7,11 +7,11 @@ namespace K4os.Compression.LZ4
 #if BIT32
 	internal unsafe class LZ4_32: LZ4_xx
 	{
-		private const int STEPSIZE = 4;
-		private const int HASH_UNIT = 4;
+		protected const int STEPSIZE = 4;
+		protected const int HASH_UNIT = 4;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint LZ4_read_ARCH(void* p) => *(uint*) p;
+		protected static uint LZ4_read_ARCH(void* p) => *(uint*) p;
 
 		private static readonly uint[] DeBruijnBytePos = {
 			0, 0, 3, 0, 3, 1, 3, 0,
@@ -21,7 +21,7 @@ namespace K4os.Compression.LZ4
 		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint LZ4_NbCommonBytes(uint val) =>
+		protected static uint LZ4_NbCommonBytes(uint val) =>
 			DeBruijnBytePos[(uint) ((int) val & -(int) val) * 0x077CB531U >> 27];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -32,11 +32,11 @@ namespace K4os.Compression.LZ4
 #else
 	internal unsafe class LZ4_64: LZ4_xx
 	{
-		private const int STEPSIZE = 8;
-		private const int HASH_UNIT = 8;
+		protected const int STEPSIZE = 8;
+		protected const int HASH_UNIT = 8;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ulong LZ4_read_ARCH(void* p) => *(ulong*) p;
+		protected static ulong LZ4_read_ARCH(void* p) => *(ulong*) p;
 
 		private static readonly uint[] DeBruijnBytePos = {
 			0, 0, 0, 0, 0, 1, 1, 2,
@@ -50,7 +50,7 @@ namespace K4os.Compression.LZ4
 		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint LZ4_NbCommonBytes(ulong val) =>
+		protected static uint LZ4_NbCommonBytes(ulong val) =>
 			DeBruijnBytePos[(ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -59,7 +59,7 @@ namespace K4os.Compression.LZ4
 #endif
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
+		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
 		{
 			var pStart = pIn;
 
@@ -644,6 +644,5 @@ namespace K4os.Compression.LZ4
 
 			return (int) dict->dictSize;
 		}
-
 	}
 }
