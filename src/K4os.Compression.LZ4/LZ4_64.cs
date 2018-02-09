@@ -7,6 +7,7 @@ namespace K4os.Compression.LZ4
 #if BIT32
 	internal unsafe class LZ4_32: LZ4_xx
 	{
+		protected const int ARCH_SIZE = 4;
 		protected const int STEPSIZE = 4;
 		protected const int HASH_UNIT = 4;
 
@@ -32,6 +33,7 @@ namespace K4os.Compression.LZ4
 #else
 	internal unsafe class LZ4_64: LZ4_xx
 	{
+		protected const int ARCH_SIZE = 8;
 		protected const int STEPSIZE = 8;
 		protected const int HASH_UNIT = 8;
 

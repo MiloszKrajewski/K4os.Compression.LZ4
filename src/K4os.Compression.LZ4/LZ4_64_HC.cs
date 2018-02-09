@@ -339,12 +339,105 @@ namespace K4os.Compression.LZ4
 				maxNbAttempts,
 				patternAnalysis);
 		}
-	}
 
-	enum limitedOutput_directive
-	{
-		noLimit = 0,
-		limitedOutput = 1,
-		limitedDestSize = 2,
+		enum limitedOutput_directive
+		{
+			noLimit = 0,
+			limitedOutput = 1,
+			limitedDestSize = 2,
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static int LZ4HC_encodeSequence(
+			byte** ip,
+			byte** op,
+			byte** anchor,
+			int matchLength,
+			byte* match,
+			limitedOutput_directive limit,
+			byte* oend)
+		{
+			var token = (*op)++;
+
+			var length = (size_t) (*ip - *anchor);
+			if (limit != limitedOutput_directive.noLimit
+				&& *op + (length >> 8) + length + (2 + 1 + LASTLITERALS) > oend)
+				return 1;
+
+			if (length >= RUN_MASK)
+			{
+				var len = length - RUN_MASK;
+				*token = (byte) (RUN_MASK << ML_BITS);
+				for (; len >= 255; len -= 255) *(*op)++ = 255;
+				*(*op)++ = (byte) len;
+			}
+			else
+			{
+				*token = (byte) (length << ML_BITS);
+			}
+
+			Mem.WildCopy(*op, *anchor, (*op) + length);
+
+			*op += length;
+			LZ4_write16(*op, (ushort) (*ip - match));
+			*op += 2;
+
+			length = (size_t) (matchLength - MINMATCH);
+			if (limit != limitedOutput_directive.noLimit && *op + (length >> 8) + (1 + LASTLITERALS) > oend)
+				return 1;
+
+			if (length >= ML_MASK)
+			{
+				*token += (byte) ML_MASK;
+				length -= ML_MASK;
+				for (; length >= 510; length -= 510)
+				{
+					*(*op)++ = 255;
+					*(*op)++ = 255;
+				}
+
+				if (length >= 255)
+				{
+					length -= 255;
+					*(*op)++ = 255;
+				}
+
+				*(*op)++ = (byte) length;
+			}
+			else
+			{
+				*token += (byte) (length);
+			}
+
+			*ip += matchLength;
+			*anchor = *ip;
+			return 0;
+		}
+
+		const int LZ4_OPT_NUM = (1 << 12);
+
+		struct LZ4HC_optimal_t
+		{
+			public int price;
+			public int off;
+			public int mlen;
+			public int litlen;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static int LZ4HC_literalsPrice(int litlen) =>
+			litlen >= (int) RUN_MASK
+				? litlen + (int) (1 + (litlen - RUN_MASK) / 255)
+				: litlen;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static int LZ4HC_sequencePrice(int litlen, int mlen)
+		{
+			var price = 1 + 2 + LZ4HC_literalsPrice(litlen);
+			return
+				mlen >= (int) (ML_MASK + MINMATCH)
+					? price + (int) (1 + (mlen - (ML_MASK + MINMATCH)) / 255)
+					: price;
+		}
 	}
 }
