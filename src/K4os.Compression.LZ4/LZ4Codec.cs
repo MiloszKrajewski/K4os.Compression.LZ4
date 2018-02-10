@@ -19,6 +19,10 @@ namespace K4os.Compression.LZ4
 			byte* source, byte* target, int sourceLength, int targetLength) =>
 			LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength);
 
+		public static unsafe int EncodeHC(
+			byte* source, byte* target, int sourceLength, int targetLength, int level = 0) =>
+			LZ4_64_HC.LZ4_compress_HC(source, target, sourceLength, targetLength, level);
+
 		public static unsafe int Encode64(
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength)
@@ -30,6 +34,23 @@ namespace K4os.Compression.LZ4
 				return Encode64(sourceP + sourceIndex, targetP + targetIndex, sourceLength, targetLength);
 		}
 
+		public static unsafe int EncodeHC(
+			byte[] source, int sourceIndex, int sourceLength,
+			byte[] target, int targetIndex, int targetLength,
+			int level = 0)
+		{
+			Validate(source, sourceIndex, sourceLength);
+			Validate(target, targetIndex, targetLength);
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
+				return EncodeHC(
+					sourceP + sourceIndex,
+					targetP + targetIndex,
+					sourceLength,
+					targetLength,
+					level);
+		}
+
 		public static byte[] Encode64(byte[] source, int sourceIndex, int sourceLength)
 		{
 			Validate(source, sourceIndex, sourceLength);
@@ -37,6 +58,21 @@ namespace K4os.Compression.LZ4
 			var bufferLength = MaximumOutputSize(sourceLength);
 			var buffer = new byte[bufferLength];
 			var targetLength = Encode64(source, sourceIndex, sourceLength, buffer, 0, bufferLength);
+			if (targetLength == bufferLength)
+				return buffer;
+
+			var target = new byte[targetLength];
+			Buffer.BlockCopy(buffer, 0, target, 0, targetLength);
+			return target;
+		}
+
+		public static byte[] EncodeHC(byte[] source, int sourceIndex, int sourceLength, int level)
+		{
+			Validate(source, sourceIndex, sourceLength);
+
+			var bufferLength = MaximumOutputSize(sourceLength);
+			var buffer = new byte[bufferLength];
+			var targetLength = EncodeHC(source, sourceIndex, sourceLength, buffer, 0, bufferLength, level);
 			if (targetLength == bufferLength)
 				return buffer;
 

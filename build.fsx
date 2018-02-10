@@ -3,6 +3,7 @@ open Fake
 
 #r ".fake/FakeLib.dll"
 #load "build.tools.fsx"
+#load "sanitize.fsx"
 
 let download fn (url: string) = 
     if File.exists fn |> not then 
@@ -31,6 +32,16 @@ Target "Test" (fun _ -> test ())
 Target "Release:Nuget" (fun _ ->
     let apiKey = Proj.settings |> Config.valueOrFail "nuget" "accessKey"
     Proj.publishNugetOrg apiKey "K4os.Compression.LZ4"
+)
+
+Target "Sanitize" (fun _ ->
+    let rules = Sanitizer.basicTypes
+    let sanitize fn = 
+        printfn "Processing: %s" fn
+        Sanitizer.sanitize (sprintf "./orig/lib/%s" fn) (sprintf "./src/sanitized/%s" fn) rules
+    sanitize "lz4.c"
+    sanitize "lz4hc.c"
+    sanitize "lz4opt.h"
 )
 
 let uncorpus fn (uri: string) = 
