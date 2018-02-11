@@ -1,24 +1,9 @@
 ﻿using System;
+using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4
 {
-	public enum LZ4Level
-	{
-		L00_FAST,
-		L03_HC,
-		L04_HC,
-		L05_HC,
-		L06_HC,
-		L07_HC,
-		L08_HC,
-		L09_HC,
-		L10_OPT,
-		L11_OPT,
-		L12_MAX,
-	}
-
-// ReSharper disable once InconsistentNaming
-public class LZ4Codec
+	public class LZ4Codec
 	{
 		public static int MaximumOutputSize(int length) => LZ4_xx.LZ4_compressBound(length);
 
@@ -30,49 +15,33 @@ public class LZ4Codec
 			if (!valid) throw new ArgumentException($"invald index/length combination: {index}/{length}");
 		}
 
-		public static unsafe int Encode64(
-			byte* source, byte* target, int sourceLength, int targetLength) =>
-			LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength);
+		public static unsafe int Encode(
+			byte* source, byte* target,
+			int sourceLength, int targetLength,
+			LZ4Level level) =>
+			level == LZ4Level.L00_FAST
+				? LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength)
+				: LZ4_64_HC.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
 
-		public static unsafe int EncodeHC(
-			byte* source, byte* target, int sourceLength, int targetLength, int level = 0) =>
-			LZ4_64_HC.LZ4_compress_HC(source, target, sourceLength, targetLength, level);
-
-		public static unsafe int Encode64(
-			byte[] source, int sourceIndex, int sourceLength,
-			byte[] target, int targetIndex, int targetLength)
-		{
-			Validate(source, sourceIndex, sourceLength);
-			Validate(target, targetIndex, targetLength);
-			fixed (byte* sourceP = source)
-			fixed (byte* targetP = target)
-				return Encode64(sourceP + sourceIndex, targetP + targetIndex, sourceLength, targetLength);
-		}
-
-		public static unsafe int EncodeHC(
+		public static unsafe int Encode(
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
-			int level = 0)
+			LZ4Level level)
 		{
 			Validate(source, sourceIndex, sourceLength);
 			Validate(target, targetIndex, targetLength);
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
-				return EncodeHC(
-					sourceP + sourceIndex,
-					targetP + targetIndex,
-					sourceLength,
-					targetLength,
-					level);
+				return Encode(sourceP + sourceIndex, targetP + targetIndex, sourceLength, targetLength, level);
 		}
 
-		public static byte[] Encode64(byte[] source, int sourceIndex, int sourceLength)
+		public static byte[] Encode(byte[] source, int sourceIndex, int sourceLength, LZ4Level level)
 		{
 			Validate(source, sourceIndex, sourceLength);
 
 			var bufferLength = MaximumOutputSize(sourceLength);
 			var buffer = new byte[bufferLength];
-			var targetLength = Encode64(source, sourceIndex, sourceLength, buffer, 0, bufferLength);
+			var targetLength = Encode(source, sourceIndex, sourceLength, buffer, 0, bufferLength, level);
 			if (targetLength == bufferLength)
 				return buffer;
 
@@ -81,22 +50,8 @@ public class LZ4Codec
 			return target;
 		}
 
-		public static byte[] EncodeHC(byte[] source, int sourceIndex, int sourceLength, int level)
-		{
-			Validate(source, sourceIndex, sourceLength);
-
-			var bufferLength = MaximumOutputSize(sourceLength);
-			var buffer = new byte[bufferLength];
-			var targetLength = EncodeHC(source, sourceIndex, sourceLength, buffer, 0, bufferLength, level);
-			if (targetLength == bufferLength)
-				return buffer;
-
-			var target = new byte[targetLength];
-			Buffer.BlockCopy(buffer, 0, target, 0, targetLength);
-			return target;
-		}
-
-		public static unsafe int Decode(byte* source, byte* target, int sourceLength, int targetLength) =>
+		public static unsafe int Decode(
+			byte* source, byte* target, int sourceLength, int targetLength) =>
 			LZ4_xx.LZ4_decompress_safe(source, target, sourceLength, targetLength);
 
 		public static unsafe int Decode(

@@ -2,7 +2,7 @@
 
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4
+namespace K4os.Compression.LZ4.Internal
 {
 #if BIT32
 	internal unsafe class LZ4_32: LZ4_xx
@@ -378,7 +378,7 @@ namespace K4os.Compression.LZ4
 
 			var limited =
 				maxOutputSize >= LZ4_compressBound(inputSize)
-					? limitedOutput_directive.notLimited
+					? limitedOutput_directive.noLimit
 					: limitedOutput_directive.limitedOutput;
 
 			return LZ4_compress_generic(
@@ -386,7 +386,7 @@ namespace K4os.Compression.LZ4
 				source,
 				dest,
 				inputSize,
-				limited == limitedOutput_directive.notLimited ? 0 : maxOutputSize,
+				limited == limitedOutput_directive.noLimit ? 0 : maxOutputSize,
 				limited,
 				LZ4_tableType(inputSize),
 				dict_directive.noDict,

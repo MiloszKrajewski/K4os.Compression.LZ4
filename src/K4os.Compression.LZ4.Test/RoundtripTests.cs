@@ -38,7 +38,7 @@ namespace K4os.Compression.LZ4.Test
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = global::LZ4.LZ4Codec.Encode(source, 0, source.Length);
-			var compressedNew = LZ4Codec.Encode64(source, 0, source.Length);
+			var compressedNew = LZ4Codec.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 
 			Assert.Equal(
 				source,

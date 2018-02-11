@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using uint16 = System.UInt16;
 using uint32 = System.UInt32;
 
-namespace K4os.Compression.LZ4
+// ReSharper disable InconsistentNaming
+
+namespace K4os.Compression.LZ4.Internal
 {
 #if BIT32
 	using size_t = System.UInt32;
@@ -14,7 +15,6 @@ namespace K4os.Compression.LZ4
 	{
 #else
 	using size_t = System.UInt64;
-	using reg_t = System.UInt64;
 
 	internal unsafe class LZ4_64_HC: LZ4_64
 	{
@@ -25,21 +25,23 @@ namespace K4os.Compression.LZ4
 			ptr => Mem.Free(ptr.ToPointer()),
 			4);
 
-		const int LZ4HC_CLEVEL_MIN = 3;
-		const int LZ4HC_CLEVEL_DEFAULT = 9;
-		const int LZ4HC_CLEVEL_OPT_MIN = 10;
-		const int LZ4HC_CLEVEL_MAX = 12;
+		private const int LZ4HC_CLEVEL_MIN = 3;
+		private const int LZ4HC_CLEVEL_DEFAULT = 9;
+		private const int LZ4HC_CLEVEL_OPT_MIN = 10;
+		private const int LZ4HC_CLEVEL_MAX = 12;
 
-		const int LZ4HC_DICTIONARY_LOGSIZE = 16;
-		const int LZ4HC_MAXD = 1 << LZ4HC_DICTIONARY_LOGSIZE;
-		const int LZ4HC_MAXD_MASK = LZ4HC_MAXD - 1;
+		private const int LZ4HC_DICTIONARY_LOGSIZE = 16;
+		private const int LZ4HC_MAXD = 1 << LZ4HC_DICTIONARY_LOGSIZE;
+		private const int LZ4HC_MAXD_MASK = LZ4HC_MAXD - 1;
 
-		const int LZ4HC_HASH_LOG = 15;
-		const int LZ4HC_HASHTABLESIZE = (1 << LZ4HC_HASH_LOG);
-		const int LZ4HC_HASH_MASK = (LZ4HC_HASHTABLESIZE - 1);
+		private const int LZ4HC_HASH_LOG = 15;
+		private const int LZ4HC_HASHTABLESIZE = 1 << LZ4HC_HASH_LOG;
+		private const int LZ4HC_HASH_MASK = LZ4HC_HASHTABLESIZE - 1;
+
+		private const int OPTIMAL_ML = (int) (ML_MASK - 1 + MINMATCH);
 
 		[StructLayout(LayoutKind.Sequential)]
-		struct LZ4HC_CCtx_t
+		struct LZ4HC_CCtx_t // LZ4_streamHC_u
 		{
 			public fixed uint hashTable[LZ4HC_HASHTABLESIZE];
 			public fixed ushort chainTable[LZ4HC_MAXD];
@@ -52,7 +54,6 @@ namespace K4os.Compression.LZ4
 			public uint nextToUpdate; /* index from which to continue dictionary update */
 			public int compressionLevel;
 		}
-		//LZ4_streamHC_u
 
 		enum repeat_state_e
 		{
@@ -61,32 +62,15 @@ namespace K4os.Compression.LZ4
 			rep_confirmed
 		};
 
-		//const int LZ4_STREAMHCSIZE = (4*LZ4HC_HASHTABLESIZE + 2*LZ4HC_MAXD + 56);
-		//const int LZ4_STREAMHCSIZE_SIZET = (LZ4_STREAMHCSIZE / sizeof(size_t));
-
-		//union LZ4_streamHC_u
-		//{
-		//	size_t table [LZ4_STREAMHCSIZE_SIZET];
-		//	LZ4HC_CCtx_internal internal_donotuse;
-		//};   /* previously typedef'd to LZ4_streamHC_t */
-
-		const int OPTIMAL_ML = (int) (ML_MASK - 1 + MINMATCH);
-
-#warning uint? it was macro so types were not specified
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint HASH_FUNCTION(uint i) => (i * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
-
-#warning ulong*? it was macro so types were not specified
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ulong DELTANEXTMAXD(ulong* chainTable, int p) => chainTable[p & LZ4HC_MAXD_MASK];
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static ushort DELTANEXTU16(ushort* table, ushort pos) => table[pos];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void DELTANEXTU16(ushort* table, ushort pos, ushort value) => table[pos] = value;
 
-		private static uint LZ4HC_hashPtr(void* ptr) => HASH_FUNCTION(LZ4_read32(ptr));
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static uint LZ4HC_hashPtr(void* ptr) =>
+			(LZ4_read32(ptr) * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
 
 		private static void LZ4HC_init(LZ4HC_CCtx_t* hc4, byte* start)
 		{
@@ -349,13 +333,6 @@ namespace K4os.Compression.LZ4
 				patternAnalysis);
 		}
 
-		enum limitedOutput_directive
-		{
-			noLimit = 0,
-			limitedOutput = 1,
-			limitedDestSize = 2,
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static int LZ4HC_encodeSequence(
 			byte** ip,
@@ -487,13 +464,13 @@ namespace K4os.Compression.LZ4
 
 			var opt = stackalloc LZ4HC_optimal_t[LZ4_OPT_NUM + TRAILING_LITERALS];
 
-			byte* ip = (byte*) source;
+			byte* ip = source;
 			byte* anchor = ip;
 			byte* iend = ip + *srcSizePtr;
 			byte* mflimit = iend - MFLIMIT;
 			byte* matchlimit = iend - LASTLITERALS;
-			byte* op = (byte*) dst;
-			byte* opSaved = (byte*) dst;
+			byte* op = dst;
+			byte* opSaved = dst;
 			byte* oend = op + dstCapacity;
 
 			*srcSizePtr = 0;
@@ -516,8 +493,8 @@ namespace K4os.Compression.LZ4
 
 				if ((size_t) firstMatch.len > sufficient_len)
 				{
-					int firstML = firstMatch.len;
-					byte* matchPos = ip - firstMatch.off;
+					var firstML = firstMatch.len;
+					var matchPos = ip - firstMatch.off;
 					opSaved = op;
 					if (LZ4HC_encodeSequence(&ip, &op, &anchor, firstML, matchPos, limit, oend) != 0)
 						goto _dest_overflow;
@@ -530,7 +507,7 @@ namespace K4os.Compression.LZ4
 					int rPos;
 					for (rPos = 0; rPos < MINMATCH; rPos++)
 					{
-						int cost = LZ4HC_literalsPrice(llen + rPos);
+						var cost = LZ4HC_literalsPrice(llen + rPos);
 						opt[rPos].mlen = 1;
 						opt[rPos].off = 0;
 						opt[rPos].litlen = llen + rPos;
@@ -539,12 +516,12 @@ namespace K4os.Compression.LZ4
 				}
 				/* set prices using initial match */
 				{
-					int mlen = MINMATCH;
-					int matchML = firstMatch.len; /* necessarily < sufficient_len < LZ4_OPT_NUM */
-					int offset = firstMatch.off;
+					var mlen = MINMATCH;
+					var matchML = firstMatch.len; /* necessarily < sufficient_len < LZ4_OPT_NUM */
+					var offset = firstMatch.off;
 					for (; mlen <= matchML; mlen++)
 					{
-						int cost = LZ4HC_sequencePrice(llen, mlen);
+						var cost = LZ4HC_sequencePrice(llen, mlen);
 						opt[mlen].mlen = mlen;
 						opt[mlen].off = offset;
 						opt[mlen].litlen = llen;
@@ -566,8 +543,7 @@ namespace K4os.Compression.LZ4
 				/* check further positions */
 				for (cur = 1; cur < last_match_pos; cur++)
 				{
-					byte* curPtr = ip + cur;
-					LZ4HC_match_t newMatch;
+					var curPtr = ip + cur;
 
 					if (curPtr >= mflimit) break;
 
@@ -581,10 +557,13 @@ namespace K4os.Compression.LZ4
 						if (opt[cur + 1].price <= opt[cur].price) continue;
 					}
 
-					if (fullUpdate != 0)
-						newMatch = LZ4HC_FindLongerMatch(ctx, curPtr, matchlimit, MINMATCH - 1, nbSearches);
-					else
-						newMatch = LZ4HC_FindLongerMatch(ctx, curPtr, matchlimit, last_match_pos - cur, nbSearches);
+					var newMatch = LZ4HC_FindLongerMatch(
+						ctx,
+						curPtr,
+						matchlimit,
+						fullUpdate != 0 ? MINMATCH - 1 : last_match_pos - cur,
+						nbSearches);
+
 					if (newMatch.len == 0) continue;
 
 					if ((size_t) newMatch.len > sufficient_len || newMatch.len + cur >= LZ4_OPT_NUM)
@@ -598,21 +577,20 @@ namespace K4os.Compression.LZ4
 
 					/* before match : set price with literals at beginning */
 					{
-						int baseLitlen = opt[cur].litlen;
-						int litlen;
-						for (litlen = 1; litlen < MINMATCH; litlen++)
+						var baseLitlen = opt[cur].litlen;
+						for (var litlen = 1; litlen < MINMATCH; litlen++)
 						{
-							int price =
+							var price =
 								opt[cur].price - LZ4HC_literalsPrice(baseLitlen)
 								+ LZ4HC_literalsPrice(baseLitlen + litlen);
-							int pos = cur + litlen;
-							if (price < opt[pos].price)
-							{
-								opt[pos].mlen = 1;
-								opt[pos].off = 0;
-								opt[pos].litlen = baseLitlen + litlen;
-								opt[pos].price = price;
-							}
+							var pos = cur + litlen;
+							if (price >= opt[pos].price)
+								continue;
+
+							opt[pos].mlen = 1;
+							opt[pos].off = 0;
+							opt[pos].litlen = baseLitlen + litlen;
+							opt[pos].price = price;
 						}
 					}
 
@@ -742,17 +720,15 @@ namespace K4os.Compression.LZ4
 			}
 
 			/* End */
-			*srcSizePtr = (int) (((byte*) ip) - source);
-			return (int) ((byte*) op - dst);
+			*srcSizePtr = (int) (ip - source);
+			return (int) (op - dst);
 
 			_dest_overflow:
-			if (limit == limitedOutput_directive.limitedDestSize)
-			{
-				op = opSaved; /* restore correct out pointer */
-				goto _last_literals;
-			}
+			if (limit != limitedOutput_directive.limitedDestSize)
+				return 0;
 
-			return 0;
+			op = opSaved; /* restore correct out pointer */
+			goto _last_literals;
 		}
 
 		static int LZ4HC_compress_hashChain(
@@ -762,30 +738,26 @@ namespace K4os.Compression.LZ4
 			int* srcSizePtr,
 			int maxOutputSize,
 			uint maxNbAttempts,
-			limitedOutput_directive limit
-		)
+			limitedOutput_directive limit)
 		{
-			int inputSize = *srcSizePtr;
-			int patternAnalysis = (maxNbAttempts > 64) ? 1 : 0; /* levels 8+ */
+			var inputSize = *srcSizePtr;
+			var patternAnalysis = maxNbAttempts > 64 ? 1 : 0; /* levels 8+ */
 
-			byte* ip = (byte*) source;
-			byte* anchor = ip;
-			byte* iend = ip + inputSize;
-			byte* mflimit = iend - MFLIMIT;
-			byte* matchlimit = (iend - LASTLITERALS);
+			var ip = source;
+			var anchor = ip;
+			var iend = ip + inputSize;
+			var mflimit = iend - MFLIMIT;
+			var matchlimit = (iend - LASTLITERALS);
 
-			byte* optr = (byte*) dest;
-			byte* op = (byte*) dest;
-			byte* oend = op + maxOutputSize;
+			byte* optr;
+			var op = dest;
+			var oend = op + maxOutputSize;
 
-			int ml, ml2, ml3, ml0;
 			byte* ref_ = null;
 			byte* start2 = null;
 			byte* ref2 = null;
 			byte* start3 = null;
 			byte* ref3 = null;
-			byte* start0;
-			byte* ref0;
 
 			/* init */
 			*srcSizePtr = 0;
@@ -797,7 +769,7 @@ namespace K4os.Compression.LZ4
 			/* Main Loop */
 			while (ip < mflimit)
 			{
-				ml = LZ4HC_InsertAndFindBestMatch(
+				var ml = LZ4HC_InsertAndFindBestMatch(
 					ctx,
 					ip,
 					matchlimit,
@@ -811,11 +783,12 @@ namespace K4os.Compression.LZ4
 				}
 
 				/* saved, in case we would skip too much */
-				start0 = ip;
-				ref0 = ref_;
-				ml0 = ml;
+				var start0 = ip;
+				var ref0 = ref_;
+				var ml0 = ml;
 
 				_Search2:
+				int ml2;
 				if (ip + ml < mflimit)
 				{
 					ml2 = LZ4HC_InsertAndGetWiderMatch(
@@ -855,7 +828,7 @@ namespace K4os.Compression.LZ4
 				}
 
 				/* Here, start0==ip */
-				if ((start2 - ip) < 3)
+				if (start2 - ip < 3)
 				{
 					/* First Match too small : removed */
 					ml = ml2;
@@ -883,6 +856,7 @@ namespace K4os.Compression.LZ4
 				}
 				/* Now, we have start2 = ip+new_ml, with new_ml = min(ml, OPTIMAL_ML=18) */
 
+				int ml3;
 				if (start2 + ml2 < mflimit)
 
 					ml3 = LZ4HC_InsertAndGetWiderMatch(
@@ -959,7 +933,7 @@ namespace K4os.Compression.LZ4
 				*/
 				if (start2 < ip + ml)
 				{
-					if ((start2 - ip) < (int) ML_MASK)
+					if (start2 - ip < (int) ML_MASK)
 					{
 						if (ml > OPTIMAL_ML) ml = OPTIMAL_ML;
 						if (ip + ml > start2 + ml2 - MINMATCH) ml = (int) (start2 - ip) + ml2 - MINMATCH;
@@ -1034,13 +1008,11 @@ namespace K4os.Compression.LZ4
 			return (int) (((byte*) op) - dest);
 
 			_dest_overflow:
-			if (limit == limitedOutput_directive.limitedDestSize)
-			{
-				op = optr; /* restore correct out pointer */
-				goto _last_literals;
-			}
+			if (limit != limitedOutput_directive.limitedDestSize)
+				return 0;
 
-			return 0;
+			op = optr; /* restore correct out pointer */
+			goto _last_literals;
 		}
 
 		enum lz4hc_strat_e
@@ -1051,9 +1023,9 @@ namespace K4os.Compression.LZ4
 
 		struct cParams_t
 		{
-			public lz4hc_strat_e strat;
-			public uint32 nbSearches;
-			public uint32 targetLength;
+			public readonly lz4hc_strat_e strat;
+			public readonly uint32 nbSearches;
+			public readonly uint32 targetLength;
 
 			public cParams_t(lz4hc_strat_e strat, uint32 nbSearches, uint32 targetLength)
 			{
@@ -1079,7 +1051,7 @@ namespace K4os.Compression.LZ4
 			new cParams_t(lz4hc_strat_e.lz4opt, 8192, LZ4_OPT_NUM), /* 12==LZ4HC_CLEVEL_MAX */
 		};
 
-		static int LZ4HC_compress_generic(
+		private static int LZ4HC_compress_generic(
 			LZ4HC_CCtx_t* ctx,
 			byte* src,
 			byte* dst,
@@ -1090,7 +1062,7 @@ namespace K4os.Compression.LZ4
 		{
 			if (limit == limitedOutput_directive.limitedDestSize && dstCapacity < 1)
 				return 0; /* Impossible to store anything */
-			if ((uint) *srcSizePtr > (uint) LZ4_MAX_INPUT_SIZE)
+			if (*srcSizePtr > LZ4_MAX_INPUT_SIZE)
 				return 0; /* Unsupported input size (too large or negative) */
 
 			ctx->end += *srcSizePtr;
@@ -1141,18 +1113,20 @@ namespace K4os.Compression.LZ4
 					: limitedOutput_directive.noLimit);
 		}
 
+		private static LZ4HC_CCtx_t* AllocCtx() => (LZ4HC_CCtx_t*) CtxPool.Borrow().ToPointer();
+		private static void FreeCtx(LZ4HC_CCtx_t* context) => CtxPool.Return(new IntPtr(context));
+
 		internal static int LZ4_compress_HC(
 			byte* src, byte* dst, int srcSize, int dstCapacity, int compressionLevel)
 		{
-			var ctx = CtxPool.Borrow();
+			var ptr = AllocCtx();
 			try
 			{
-				var ptr = (LZ4HC_CCtx_t*) ctx.ToPointer();
 				return LZ4_compress_HC_extStateHC(ptr, src, dst, srcSize, dstCapacity, compressionLevel);
 			}
 			finally
 			{
-				CtxPool.Return(ctx);
+				FreeCtx(ptr);
 			}
 		}
 
@@ -1168,6 +1142,133 @@ namespace K4os.Compression.LZ4
 				targetDestSize,
 				cLevel,
 				limitedOutput_directive.limitedDestSize);
+		}
+
+		/* initialization */
+		private static void LZ4_resetStreamHC(LZ4HC_CCtx_t* ctxPtr, int compressionLevel)
+		{
+			ctxPtr->basep = null;
+			LZ4_setCompressionLevel(ctxPtr, compressionLevel);
+		}
+
+		private static void LZ4_setCompressionLevel(LZ4HC_CCtx_t* ctxPtr, int compressionLevel)
+		{
+			if (compressionLevel < 1) compressionLevel = 1;
+			if (compressionLevel > LZ4HC_CLEVEL_MAX) compressionLevel = LZ4HC_CLEVEL_MAX;
+			ctxPtr->compressionLevel = compressionLevel;
+		}
+
+		private static int LZ4_loadDictHC(LZ4HC_CCtx_t* ctxPtr, byte* dictionary, int dictSize)
+		{
+			if (dictSize > 64 * KB)
+			{
+				dictionary += dictSize - 64 * KB;
+				dictSize = 64 * KB;
+			}
+
+			LZ4HC_init(ctxPtr, dictionary);
+			ctxPtr->end = dictionary + dictSize;
+			if (dictSize >= 4) LZ4HC_insert(ctxPtr, ctxPtr->end - 3);
+			return dictSize;
+		}
+
+		private static void LZ4HC_setExternalDict(LZ4HC_CCtx_t* ctxPtr, byte* newBlock)
+		{
+			if (ctxPtr->end >= ctxPtr->basep + 4)
+				LZ4HC_insert(ctxPtr, ctxPtr->end - 3); // Referencing remaining dictionary content
+
+			// Only one memory segment for extDict, so any previous extDict is lost at this stage
+			ctxPtr->lowLimit = ctxPtr->dictLimit;
+			ctxPtr->dictLimit = (uint) (ctxPtr->end - ctxPtr->basep);
+			ctxPtr->dictBase = ctxPtr->basep;
+			ctxPtr->basep = newBlock - ctxPtr->dictLimit;
+			ctxPtr->end = newBlock;
+			ctxPtr->nextToUpdate = ctxPtr->dictLimit; // match referencing will resume from there
+		}
+
+		private static int LZ4_compressHC_continue_generic(
+			LZ4HC_CCtx_t* ctxPtr,
+			byte* src, byte* dst,
+			int* srcSizePtr, int dstCapacity,
+			limitedOutput_directive limit)
+		{
+			// auto-init if forgotten
+			if (ctxPtr->basep == null) LZ4HC_init(ctxPtr, src);
+
+			// Check overflow
+			if ((size_t) (ctxPtr->end - ctxPtr->basep) > 2 * GB)
+			{
+				var dictSize = (size_t) (ctxPtr->end - ctxPtr->basep) - ctxPtr->dictLimit;
+				if (dictSize > 64 * KB) dictSize = 64 * KB;
+				LZ4_loadDictHC(ctxPtr, ctxPtr->end - dictSize, (int) dictSize);
+			}
+
+			/* Check if blocks follow each other */
+			if (src != ctxPtr->end) LZ4HC_setExternalDict(ctxPtr, src);
+
+			/* Check overlapping input/dictionary space */
+			{
+				var sourceEnd = src + *srcSizePtr;
+				var dictBegin = ctxPtr->dictBase + ctxPtr->lowLimit;
+				var dictEnd = ctxPtr->dictBase + ctxPtr->dictLimit;
+				if (sourceEnd > dictBegin && src < dictEnd)
+				{
+					if (sourceEnd > dictEnd) sourceEnd = dictEnd;
+					ctxPtr->lowLimit = (uint) (sourceEnd - ctxPtr->dictBase);
+					if (ctxPtr->dictLimit - ctxPtr->lowLimit < 4) ctxPtr->lowLimit = ctxPtr->dictLimit;
+				}
+			}
+
+			return LZ4HC_compress_generic(
+				ctxPtr,
+				src,
+				dst,
+				srcSizePtr,
+				dstCapacity,
+				ctxPtr->compressionLevel,
+				limit);
+		}
+
+		private static int LZ4_compress_HC_continue(
+			LZ4HC_CCtx_t* ctxPtr, byte* src, byte* dst, int srcSize, int dstCapacity) =>
+			LZ4_compressHC_continue_generic(
+				ctxPtr,
+				src,
+				dst,
+				&srcSize,
+				dstCapacity,
+				dstCapacity < LZ4_compressBound(srcSize)
+					? limitedOutput_directive.limitedOutput
+					: limitedOutput_directive.noLimit);
+
+		private static int LZ4_compress_HC_continue_destSize(
+			LZ4HC_CCtx_t* ctxPtr, byte* src, byte* dst, int* srcSizePtr, int targetDestSize)
+		{
+			return LZ4_compressHC_continue_generic(
+				ctxPtr,
+				src,
+				dst,
+				srcSizePtr,
+				targetDestSize,
+				limitedOutput_directive.limitedDestSize);
+		}
+
+		private static int LZ4_saveDictHC(LZ4HC_CCtx_t* LZ4_streamHCPtr, byte* safeBuffer, int dictSize)
+		{
+			var streamPtr = LZ4_streamHCPtr;
+			int prefixSize = (int) (streamPtr->end - (streamPtr->basep + streamPtr->dictLimit));
+			if (dictSize > 64 * KB) dictSize = 64 * KB;
+			if (dictSize < 4) dictSize = 0;
+			if (dictSize > prefixSize) dictSize = prefixSize;
+			Mem.Move(safeBuffer, streamPtr->end - dictSize, dictSize);
+			var endIndex = (uint) (streamPtr->end - streamPtr->basep);
+			streamPtr->end = safeBuffer + dictSize;
+			streamPtr->basep = streamPtr->end - endIndex;
+			streamPtr->dictLimit = endIndex - (uint) dictSize;
+			streamPtr->lowLimit = endIndex - (uint) dictSize;
+			if (streamPtr->nextToUpdate < streamPtr->dictLimit)
+				streamPtr->nextToUpdate = streamPtr->dictLimit;
+			return dictSize;
 		}
 	}
 }

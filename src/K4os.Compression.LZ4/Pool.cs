@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4
 		private readonly Func<T> _create;
 		private readonly Action<T> _reset;
 		private readonly Action<T> _destroy;
-		private int _size;
+		private int _freeSlots;
 
 		public Pool(Func<T> create, Action<T> reset, Action<T> destroy, int size)
 		{
@@ -18,7 +18,7 @@ namespace K4os.Compression.LZ4
 			_create = create;
 			_reset = reset ?? (_ => { });
 			_destroy = destroy ?? (_ => { });
-			_size = size;
+			_freeSlots = size;
 		}
 
 		public T Borrow()
@@ -27,15 +27,15 @@ namespace K4os.Compression.LZ4
 				return _create();
 
 			_reset(resource);
-			Interlocked.Increment(ref _size);
+			Interlocked.Increment(ref _freeSlots);
 			return resource;
 		}
 
 		public void Return(T resource)
 		{
-			if (Interlocked.Decrement(ref _size) < 0)
+			if (Interlocked.Decrement(ref _freeSlots) < 0)
 			{
-				Interlocked.Increment(ref _size);
+				Interlocked.Increment(ref _freeSlots);
 				_destroy(resource);
 			}
 			else

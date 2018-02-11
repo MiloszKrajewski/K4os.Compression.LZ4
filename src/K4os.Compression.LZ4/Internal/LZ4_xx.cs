@@ -1,8 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4
+namespace K4os.Compression.LZ4.Internal
 {
 	internal unsafe class LZ4_xx
 	{
@@ -12,13 +13,15 @@ namespace K4os.Compression.LZ4
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
 
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int LZ4_compressBound(int isize) =>
-			isize > LZ4_MAX_INPUT_SIZE ? 0 : isize + isize / 255 + 16;
-
 		protected const int LZ4_HASHLOG = LZ4_MEMORY_USAGE - 2;
 		protected const int LZ4_HASHTABLESIZE = 1 << LZ4_MEMORY_USAGE;
 		protected const int LZ4_HASH_SIZE_U32 = 1 << LZ4_HASHLOG;
+
+		protected const int ACCELERATION_DEFAULT = 1;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static int LZ4_compressBound(int isize) =>
+			isize > LZ4_MAX_INPUT_SIZE ? 0 : isize + isize / 255 + 16;
 
 		[StructLayout(LayoutKind.Sequential)]
 		internal struct LZ4_stream_t
@@ -39,16 +42,6 @@ namespace K4os.Compression.LZ4
 			public byte* prefixEnd;
 			public uint prefixSize;
 		};
-
-		//protected const int LZ4_STREAMSIZE_U64 = (1 << (LZ4_MEMORY_USAGE - 3)) + 4;
-		//protected const int LZ4_STREAMSIZE = LZ4_STREAMSIZE_U64 * sizeof(ulong);
-
-		//protected const int LZ4_STREAMDECODESIZE_U64 = 4;
-		//protected const int LZ4_STREAMDECODESIZE = LZ4_STREAMDECODESIZE_U64 * sizeof(ulong);
-
-		//protected const int LZ4_HEAPMODE = 0;
-
-		protected const int ACCELERATION_DEFAULT = 1;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static ushort LZ4_read16(void* p) => *(ushort*) p;
@@ -74,7 +67,7 @@ namespace K4os.Compression.LZ4
 
 		protected const int KB = 1 << 10;
 		protected const int MB = 1 << 20;
-		protected const int GB = 1 << 30;
+		protected const uint GB = 1u << 30;
 
 		protected const int MAXD_LOG = 16;
 		protected const int MAX_DISTANCE = (1 << MAXD_LOG) - 1;
@@ -89,8 +82,9 @@ namespace K4os.Compression.LZ4
 
 		public enum limitedOutput_directive
 		{
-			notLimited = 0,
-			limitedOutput = 1
+			noLimit = 0,
+			limitedOutput = 1,
+			limitedDestSize = 2,
 		}
 
 		public enum tableType_t
