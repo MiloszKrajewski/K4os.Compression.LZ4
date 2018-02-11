@@ -2,8 +2,23 @@
 
 namespace K4os.Compression.LZ4
 {
-	// ReSharper disable once InconsistentNaming
-	public class LZ4Codec
+	public enum LZ4Level
+	{
+		L00_FAST,
+		L03_HC,
+		L04_HC,
+		L05_HC,
+		L06_HC,
+		L07_HC,
+		L08_HC,
+		L09_HC,
+		L10_OPT,
+		L11_OPT,
+		L12_MAX,
+	}
+
+// ReSharper disable once InconsistentNaming
+public class LZ4Codec
 	{
 		public static int MaximumOutputSize(int length) => LZ4_xx.LZ4_compressBound(length);
 

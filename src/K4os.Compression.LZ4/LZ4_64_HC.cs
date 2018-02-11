@@ -507,7 +507,7 @@ namespace K4os.Compression.LZ4
 				int best_mlen, best_off;
 				int cur, last_match_pos = 0;
 
-				LZ4HC_match_t firstMatch = LZ4HC_FindLongerMatch(ctx, ip, matchlimit, MINMATCH - 1, nbSearches);
+				var firstMatch = LZ4HC_FindLongerMatch(ctx, ip, matchlimit, MINMATCH - 1, nbSearches);
 				if (firstMatch.len == 0)
 				{
 					ip++;
@@ -870,11 +870,10 @@ namespace K4os.Compression.LZ4
 				*  ip1+3 <= ip2 (usually < ip1+ml1) */
 				if ((start2 - ip) < OPTIMAL_ML)
 				{
-					int correction;
 					int new_ml = ml;
 					if (new_ml > OPTIMAL_ML) new_ml = OPTIMAL_ML;
 					if (ip + new_ml > start2 + ml2 - MINMATCH) new_ml = (int) (start2 - ip) + ml2 - MINMATCH;
-					correction = new_ml - (int) (start2 - ip);
+					var correction = new_ml - (int) (start2 - ip);
 					if (correction > 0)
 					{
 						start2 += correction;
@@ -923,7 +922,7 @@ namespace K4os.Compression.LZ4
 						/* can write Seq1 immediately ==> Seq2 is removed, so Seq3 becomes Seq1 */
 						if (start2 < ip + ml)
 						{
-							int correction = (int) (ip + ml - start2);
+							var correction = (int) (ip + ml - start2);
 							start2 += correction;
 							ref2 += correction;
 							ml2 -= correction;
@@ -962,10 +961,9 @@ namespace K4os.Compression.LZ4
 				{
 					if ((start2 - ip) < (int) ML_MASK)
 					{
-						int correction;
 						if (ml > OPTIMAL_ML) ml = OPTIMAL_ML;
 						if (ip + ml > start2 + ml2 - MINMATCH) ml = (int) (start2 - ip) + ml2 - MINMATCH;
-						correction = ml - (int) (start2 - ip);
+						var correction = ml - (int) (start2 - ip);
 						if (correction > 0)
 						{
 							start2 += correction;
