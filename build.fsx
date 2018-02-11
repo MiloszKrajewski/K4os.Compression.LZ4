@@ -42,6 +42,7 @@ Target "Sanitize" (fun _ ->
     sanitize "lz4.c"
     sanitize "lz4hc.c"
     sanitize "lz4opt.h"
+    sanitize "lz4frame.c"
 )
 
 let uncorpus fn (uri: string) = 

@@ -41,7 +41,7 @@ namespace K4os.Compression.LZ4.Internal
 		private const int OPTIMAL_ML = (int) (ML_MASK - 1 + MINMATCH);
 
 		[StructLayout(LayoutKind.Sequential)]
-		struct LZ4HC_CCtx_t // LZ4_streamHC_u
+		public struct LZ4HC_CCtx_t // LZ4_streamHC_u
 		{
 			public fixed uint hashTable[LZ4HC_HASHTABLESIZE];
 			public fixed ushort chainTable[LZ4HC_MAXD];
