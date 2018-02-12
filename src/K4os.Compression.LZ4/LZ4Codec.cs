@@ -77,5 +77,25 @@ namespace K4os.Compression.LZ4
 
 			return result;
 		}
+
+		// ----
+
+		public static ILZ4Encoder CreateEncoder(LZ4Level level) =>
+			level == LZ4Level.L00_FAST ? (ILZ4Encoder) new LZ4Encoder() : new LZ4EncoderHC();
 	}
+
+	public interface ILZ4Encoder { }
+
+	public unsafe class LZ4Encoder: ILZ4Encoder
+	{
+		private LZ4_xx.LZ4_stream_t _state;
+
+		public LZ4Encoder()
+		{
+			fixed (LZ4_xx.LZ4_stream_t* stateP = &_state)
+				LZ4_64.LZ4_resetStream(stateP);
+		}
+	}
+
+	public unsafe class LZ4EncoderHC: ILZ4Encoder { }
 }
