@@ -198,7 +198,7 @@ namespace K4os.Compression.LZ4.Internal
 			if (endOnInput != endCondition_directive.endOnInputSize && outputSize == 0)
 				return *ip == 0 ? 1 : -1;
 
-			for (; ; )
+			for (;;)
 			{
 				int length;
 				uint token = *ip++;

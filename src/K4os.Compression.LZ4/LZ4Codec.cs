@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using K4os.Compression.LZ4.Internal;
+
+using LZ4EncoderContext = K4os.Compression.LZ4.Internal.LZ4_xx.LZ4_stream_t;
 
 namespace K4os.Compression.LZ4
 {
@@ -76,6 +80,56 @@ namespace K4os.Compression.LZ4
 					$"Decoded length does not match expected value: {decodedLength}/{targetLength}");
 
 			return result;
+		}
+	}
+
+	public unsafe class LZ4Encoder: IDisposable
+	{
+		private LZ4EncoderContext* _state;
+		private byte* _output0;
+		private byte* _output1;
+
+		public LZ4Encoder()
+		{
+			_state = (LZ4EncoderContext*) Mem.Alloc(sizeof(LZ4EncoderContext));
+			_output0 = (byte*) Mem.Alloc(0x10000);
+			_output1 = (byte*) Mem.Alloc(0x10000);
+		}
+
+		public IEnumerable<byte[]> Encode(byte[] source, int sourceIndex, int sourceLength)
+		{
+
+			return null;
+		}
+
+		protected virtual void DisposeManaged() { }
+
+		protected virtual void DisposeUnmanaged()
+		{
+			if (_state != null) Mem.Free(_state);
+			if (_output0 != null) Mem.Free(_output0);
+			if (_output1 != null) Mem.Free(_output1);
+			_state = null;
+			_output0 = null;
+			_output1 = null;
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			DisposeUnmanaged();
+			if (disposing)
+				DisposeManaged();
+		}
+
+		~LZ4Encoder()
+		{
+			Dispose(false);
 		}
 	}
 }
