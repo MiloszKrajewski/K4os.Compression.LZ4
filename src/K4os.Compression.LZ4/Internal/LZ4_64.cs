@@ -394,7 +394,7 @@ namespace K4os.Compression.LZ4.Internal
 				(uint) acceleration);
 		}
 
-		private static void LZ4_resetStream(LZ4_stream_t* state) =>
+		public static void LZ4_resetStream(LZ4_stream_t* state) =>
 			Mem.Zero((byte*) state, sizeof(LZ4_stream_t));
 
 		public static int LZ4_compress_fast(
