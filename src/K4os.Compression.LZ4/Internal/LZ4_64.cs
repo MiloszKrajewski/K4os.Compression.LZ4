@@ -646,5 +646,68 @@ namespace K4os.Compression.LZ4.Internal
 
 			return (int) dict->dictSize;
 		}
+
+		public static int LZ4_compress_fast_continue(
+			LZ4_stream_t* streamPtr, byte* source, byte* dest, int inputSize, int maxOutputSize,
+			int acceleration)
+		{
+			var dictEnd = streamPtr->dictionary + streamPtr->dictSize;
+
+			var smallest = source;
+			if (streamPtr->initCheck != 0) return 0; /* Uninitialized structure detected */
+
+			if (streamPtr->dictSize > 0 && smallest > dictEnd) smallest = dictEnd;
+			LZ4_renormDictT(streamPtr, smallest);
+			if (acceleration < 1) acceleration = ACCELERATION_DEFAULT;
+
+			/* Check overlapping input/dictionary space */
+			{
+				var sourceEnd = source + inputSize;
+				if (sourceEnd > streamPtr->dictionary && sourceEnd < dictEnd)
+				{
+					streamPtr->dictSize = (uint) (dictEnd - sourceEnd);
+					if (streamPtr->dictSize > 64 * KB) streamPtr->dictSize = 64 * KB;
+					if (streamPtr->dictSize < 4) streamPtr->dictSize = 0;
+					streamPtr->dictionary = dictEnd - streamPtr->dictSize;
+				}
+			}
+
+			var dictIssue =
+				streamPtr->dictSize < 64 * KB && streamPtr->dictSize < streamPtr->currentOffset
+					? dictIssue_directive.dictSmall
+					: dictIssue_directive.noDictIssue;
+			var dictMode =
+				dictEnd == source
+					? dict_directive.withPrefix64k
+					: dict_directive.usingExtDict;
+
+			var result = LZ4_compress_generic(
+				streamPtr,
+				source,
+				dest,
+				inputSize,
+				maxOutputSize,
+				limitedOutput_directive.limitedOutput,
+				tableType_t.byU32,
+				dictMode,
+				dictIssue,
+				(uint) acceleration);
+
+			if (dictMode == dict_directive.withPrefix64k)
+			{
+				/* prefix mode : source data follows dictionary */
+				streamPtr->dictSize += (uint) inputSize;
+				streamPtr->currentOffset += (uint) inputSize;
+			}
+			else
+			{
+				/* external dictionary mode */
+				streamPtr->dictionary = source;
+				streamPtr->dictSize = (uint) inputSize;
+				streamPtr->currentOffset += (uint) inputSize;
+			}
+
+			return result;
+		}
 	}
 }
