@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using K4os.Compression.LZ4.Internal;
 
@@ -10,59 +11,53 @@ namespace K4os.Compression.LZ4
 		private readonly LZ4_xx.LZ4_stream_t* _state;
 		private readonly byte* _inputBuffer;
 		private readonly byte* _outputBuffer;
+		private readonly int _maxBlockLength;
 		private int _disposed;
 		private readonly int _inputLength;
 		private readonly int _outputLength;
 		private int _inputIndex;
 		private int _outputIndex;
 
-		public LZ4Encoder(int inputLength)
+		//----
+
+		public LZ4Encoder(int blockLength)
 		{
 			_state = (LZ4_xx.LZ4_stream_t*) Mem.Alloc(sizeof(LZ4_xx.LZ4_stream_t));
 			_inputIndex = 0;
 			_outputIndex = 0;
-			_inputLength = Math.Max(inputLength, 1024);
-			_outputLength = 0x10000 + LZ4_xx.LZ4_compressBound(_inputLength);
+			_maxBlockLength = Math.Max(blockLength, 1024);
+			_inputLength = _maxBlockLength + 0x10000;
+			_outputLength = LZ4_xx.LZ4_compressBound(_maxBlockLength);
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength);
 			_outputBuffer = (byte*) Mem.Alloc(_outputLength);
 		}
 
-		public IEnumerable<byte[]> Encode(byte[] source, int sourceIndex, int sourceLength)
+		public int Encode(byte* source, int sourceLength, byte* target, int targetLength)
 		{
 			if (Interlocked.CompareExchange(ref _disposed, 0, 0) != 0)
 				throw new InvalidOperationException("Cannot use disposed encoder");
 
 			if (sourceLength <= 0)
-				yield break;
+				return 0;
 
-			while (sourceLength > 0)
+			if (sourceLength > _maxBlockLength)
+				throw new ArgumentException($"sourceLength must be smaller than {_maxBlockLength}");
+
+			// top-up
+			// compress
+
+			var blockStrart = _inputIndex & _maxBlockLength;
+
+			var topup = Math.Min(Math.Min(_blockLeft, _inputLength - _inputIndex), sourceLength);
+			if (topup > 0)
 			{
-				var chunk = Math.Min(_inputLength - _inputIndex, sourceLength);
-				if (chunk != 0)
-				{
-					Append(source, sourceIndex, chunk);
-					_inputIndex += chunk;
-					sourceIndex += chunk;
-					sourceLength -= chunk;
-				}
-
-				if (_inputIndex >= _inputLength)
-				{
-					yield return Encode();
-					_inputIndex = 0;
-				}
+				Mem.Copy(_inputBuffer + _inputIndex, source, topup);
+				_inputIndex += topup;
+				source += topup;
+				_blockLeft -= topup;
 			}
-		}
 
-		private byte[] Encode()
-		{
-			LZ4_64.LZ4_compress_fast_extState()
-		}
-
-		private void Append(byte[] source, int sourceIndex, int sourceLength)
-		{
-			fixed (byte* sourceP = source)
-				Mem.Copy(_inputBuffer, sourceP + sourceIndex, sourceLength);
+			
 		}
 
 		protected virtual void DisposeManaged() { }
