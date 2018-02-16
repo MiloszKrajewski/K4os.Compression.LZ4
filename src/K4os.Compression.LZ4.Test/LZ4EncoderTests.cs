@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using K4os.Compression.LZ4.Encoders;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Test
@@ -10,7 +7,7 @@ namespace K4os.Compression.LZ4.Test
 	public class LZ4EncoderTests
 	{
 		[Fact]
-		public void xxx()
+		public void NoopEncoderEncodesAllBytes()
 		{
 			const int chunkSize = 1023;
 			const int blockSize = 1024;
@@ -18,9 +15,9 @@ namespace K4os.Compression.LZ4.Test
 			var output = new byte[chunkSize * blockSize];
 
 			new Random(0).NextBytes(input);
-			new Random(1).NextBytes(output); // different then input
+			new Random(1).NextBytes(output); // different than input
 
-			var encoder = new LZ4Encoder(blockSize);
+			var encoder = new LZ4NoopEncoder(blockSize);
 			var inputIndex = 0;
 			var outputIndex = 0;
 

@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Threading;
 using K4os.Compression.LZ4.Internal;
-using LZ4EncodingContext = K4os.Compression.LZ4.Internal.LZ4_xx.LZ4_stream_t;
 
-namespace K4os.Compression.LZ4
+namespace K4os.Compression.LZ4.Encoders
 {
-	public unsafe class LZ4Encoder: IDisposable
+	public abstract unsafe class LZ4AbstractEncoder: IDisposable
 	{
-		private readonly LZ4EncodingContext* _state;
 		private readonly byte* _inputBuffer;
 		private int _disposed;
 		private readonly int _blockSize;
@@ -15,9 +13,8 @@ namespace K4os.Compression.LZ4
 		private int _blockIndex;
 		private int _inputIndex;
 
-		public LZ4Encoder(int blockSize)
+		protected LZ4AbstractEncoder(int blockSize)
 		{
-			_state = (LZ4EncodingContext*) Mem.Alloc(sizeof(LZ4EncodingContext));
 			_inputIndex = 0;
 			_blockIndex = 0;
 			_blockSize = Math.Max(blockSize, 1024);
@@ -33,8 +30,12 @@ namespace K4os.Compression.LZ4
 		private static int MaximumCompressedSize(int inputSize) =>
 			LZ4_xx.LZ4_compressBound(inputSize);
 
-		private void Validate(byte[] buffer, int bufferIndex, int bufferLength)
+		private static void Validate(byte[] buffer, int index, int length)
 		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer), "cannot be null");
+
+			var valid = index >= 0 && length >= 0 && index + length <= buffer.Length;
+			if (!valid) throw new ArgumentException($"invald index/length combination: {index}/{length}");
 		}
 
 		public int Encode(
@@ -85,11 +86,8 @@ namespace K4os.Compression.LZ4
 			return encoded;
 		}
 
-		protected virtual int EncodeBlock(byte* source, int sourceLength, byte* target, int targetLength)
-		{
-			Mem.Copy(target, source, sourceLength);
-			return targetLength;
-		}
+		protected abstract int EncodeBlock(
+			byte* source, int sourceLength, byte* target, int targetLength);
 
 		private int TopUp(byte* source, int sourceLength)
 		{
@@ -105,11 +103,7 @@ namespace K4os.Compression.LZ4
 
 		protected virtual void DisposeUnmanaged()
 		{
-			if (Interlocked.CompareExchange(ref _disposed, 1, 0) != 0)
-				return;
-
-			if (_state != null) Mem.Free(_state);
-			if (_inputBuffer != null) Mem.Free(_inputBuffer);
+			Mem.Free(_inputBuffer);
 		}
 
 		public void Dispose()
@@ -120,12 +114,15 @@ namespace K4os.Compression.LZ4
 
 		private void Dispose(bool disposing)
 		{
+			if (Interlocked.CompareExchange(ref _disposed, 1, 0) != 0)
+				return;
+
 			DisposeUnmanaged();
 			if (disposing)
 				DisposeManaged();
 		}
 
-		~LZ4Encoder()
+		~LZ4AbstractEncoder()
 		{
 			Dispose(false);
 		}
