@@ -198,6 +198,14 @@ namespace K4os.Compression.LZ4
 		public static void* Alloc(int size) => Marshal.AllocHGlobal(size).ToPointer();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* AllocZero(int size)
+		{
+			var result = Alloc(size);
+			Zero((byte*) result, size);
+			return result;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Free(void* ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
