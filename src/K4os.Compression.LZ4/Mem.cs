@@ -79,16 +79,24 @@ namespace K4os.Compression.LZ4
 			}
 		}
 
+		/// <summary>
+		/// Compies memory block for <paramref name="source"/> to <paramref name="target"/> 
+		/// up to (around) <paramref name="limit"/>.
+		/// It does not handle overlapping blocks and may copy up to 8 bytes more than expected.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="source">The source block address.</param>
+		/// <param name="limit">The limit (in target block).</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void WildCopy(byte* d, byte* s, void* e)
+		public static void WildCopy(byte* target, byte* source, void* limit)
 		{
 			do
 			{
-				*(ulong*) d = *(ulong*) s;
-				d += sizeof(ulong);
-				s += sizeof(ulong);
+				*(ulong*) target = *(ulong*) source;
+				target += sizeof(ulong);
+				source += sizeof(ulong);
 			}
-			while (d < e);
+			while (target < limit);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

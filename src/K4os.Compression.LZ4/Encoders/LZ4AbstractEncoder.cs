@@ -6,6 +6,7 @@ namespace K4os.Compression.LZ4.Encoders
 {
 	public abstract unsafe class LZ4AbstractEncoder: IDisposable
 	{
+		private const int MinBlockSize = 0x10000;
 		private readonly byte* _inputBuffer;
 		private int _disposed;
 		private readonly int _blockSize;
@@ -17,15 +18,12 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			_inputIndex = 0;
 			_blockIndex = 0;
-			_blockSize = Math.Max(blockSize, 1024);
-			_inputLength = OptimalInputBufferSize(_blockSize);
+			_blockSize = Roundup(Math.Max(blockSize, MinBlockSize), 1024);
+			_inputLength = 2 * _blockSize;
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength);
 		}
 
 		private static int Roundup(int value, int step) => (value + step - 1) / step * step;
-
-		private static int OptimalInputBufferSize(int blockSize) =>
-			Roundup(blockSize + Math.Max(0x10000, blockSize), blockSize);
 
 		private static int MaximumCompressedSize(int inputSize) =>
 			LZ4_xx.LZ4_compressBound(inputSize);
