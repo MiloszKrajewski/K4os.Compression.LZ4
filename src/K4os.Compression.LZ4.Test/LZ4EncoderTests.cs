@@ -19,10 +19,16 @@ namespace K4os.Compression.LZ4.Test
 			while (inputIndex < input.Length)
 			{
 				var chunkLength = Math.Min(1024, input.Length - inputIndex);
-				var loaded = encoder.Topup(input, inputIndex, chunkLength);
-				inputIndex += loaded;
-				if (loaded == 0)
-					outputIndex += encoder.Encode(output, outputIndex, output.Length - outputIndex);
+				var tailLength = output.Length - outputIndex;
+				var success = encoder.TopupAndEncode(
+					input,
+					ref inputIndex,
+					chunkLength,
+					output,
+					ref outputIndex,
+					tailLength);
+				if (!success)
+					throw new InvalidOperationException();
 			}
 
 			outputIndex += encoder.Encode(output, outputIndex, output.Length - outputIndex);
