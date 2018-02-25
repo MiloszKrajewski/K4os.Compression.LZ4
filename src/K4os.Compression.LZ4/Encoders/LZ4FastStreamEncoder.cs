@@ -2,13 +2,16 @@
 
 namespace K4os.Compression.LZ4.Encoders
 {
+	// fast encoder context
+	using LZ4Context = LZ4_xx.LZ4_stream_t;
+
 	public unsafe class LZ4FastStreamEncoder: LZ4StreamEncoder
 	{
-		private readonly LZ4_xx.LZ4_stream_t* _context;
+		private readonly LZ4Context* _context;
 
 		public LZ4FastStreamEncoder(int blockSize, int extraBlocks = 0): base(blockSize, extraBlocks)
 		{
-			_context = (LZ4_xx.LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4_xx.LZ4_stream_t));
+			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}
 
 		protected override void ReleaseUnmanaged()

@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Threading;
+using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
-	public abstract unsafe class LZ4StreamEncoder: ILZ4StreamEncoder
+	public abstract unsafe class LZ4StreamEncoder: LZ4Unmanaged, ILZ4StreamEncoder
 	{
-		private const int Size1K = 1024;
-		private const int Size64K = 0x10000;
-
-		private int _disposed;
-
 		private readonly byte* _inputBuffer;
 		private readonly int _inputLength;
 		private readonly int _blockSize;
@@ -19,13 +14,11 @@ namespace K4os.Compression.LZ4.Encoders
 
 		protected LZ4StreamEncoder(int blockSize, int extraBlocks = 0)
 		{
-			_blockSize = Math.Max(Roundup(blockSize, Size1K), Size1K);
-			_inputLength = Size64K + (1 + Math.Max(extraBlocks, 0)) * _blockSize + 8;
+			_blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
+			_inputLength = Mem.K64 + (1 + Math.Max(extraBlocks, 0)) * _blockSize + 8;
 			_inputIndex = _inputPointer = 0;
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
 		}
-
-		private static int Roundup(int value, int step) => (value + step - 1) / step * step;
 
 		public int BlockSize => _blockSize;
 		public int BytesReady => _inputPointer - _inputIndex;
@@ -42,7 +35,7 @@ namespace K4os.Compression.LZ4.Encoders
 				return 0;
 
 			var chunk = Math.Min(spaceLeft, length);
-			Mem.WildCopy(_inputBuffer, source, _inputBuffer + chunk);
+			Mem.Copy(_inputBuffer, source, chunk);
 			_inputPointer += chunk;
 			return chunk;
 		}
@@ -92,11 +85,11 @@ namespace K4os.Compression.LZ4.Encoders
 			if (_inputIndex + _blockSize <= _inputLength)
 				return;
 
-			var dictionaryIndex = Math.Max(_inputPointer - Size64K, 0) & ~0x7;
+			var dictionaryIndex = Math.Max(_inputPointer - Mem.K64, 0) & ~0x7;
 			var dictionaryLength = _inputPointer - dictionaryIndex;
 			Mem.WildCopy(_inputBuffer, _inputBuffer + dictionaryIndex, _inputBuffer + dictionaryLength);
 			_inputPointer = _inputIndex = dictionaryLength;
-			dictionaryLength = Math.Min(dictionaryLength, Size64K);
+			dictionaryLength = Math.Min(dictionaryLength, Mem.K64);
 
 			SetupPrefix(_inputBuffer + _inputPointer - dictionaryLength, dictionaryLength);
 		}
@@ -106,38 +99,10 @@ namespace K4os.Compression.LZ4.Encoders
 
 		protected abstract void SetupPrefix(byte* dictionary, int dictionaryLength);
 
-		private void ThrowIfDisposed()
+		protected override void ReleaseUnmanaged()
 		{
-			if (Interlocked.CompareExchange(ref _disposed, 0, 0) != 0)
-				throw new InvalidOperationException();
-		}
-
-		protected virtual void ReleaseUnmanaged()
-		{
+			base.ReleaseUnmanaged();
 			Mem.Free(_inputBuffer);
-		}
-
-		protected virtual void ReleaseManaged() { }
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if (Interlocked.CompareExchange(ref _disposed, 1, 0) != 0)
-				return;
-
-			ReleaseUnmanaged();
-			if (disposing)
-				ReleaseManaged();
-		}
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		~LZ4StreamEncoder()
-		{
-			Dispose(false);
 		}
 	}
 }

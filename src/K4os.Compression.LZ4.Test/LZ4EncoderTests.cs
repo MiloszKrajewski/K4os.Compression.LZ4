@@ -1,18 +1,24 @@
 ﻿using System;
 using K4os.Compression.LZ4.Encoders;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace K4os.Compression.LZ4.Test
 {
 	public class LZ4EncoderTests
 	{
+		private readonly ITestOutputHelper _output;
+		public LZ4EncoderTests(ITestOutputHelper output) => _output = output;
+		protected void WriteLine(string text) => _output.WriteLine(text);
+
 		[Fact]
 		public void FastEncoderEncodesAllBytes()
 		{
-			var input = new byte[16 * 1024 * 1024];
-			var output = new byte[16 * 1024 * 1024];
+			var size = 1100;
+			var input = new byte[size];
+			var output = new byte[LZ4Codec.MaximumOutputSize(size)];
 			Lorem.Fill(input, 0, input.Length);
-			var encoder = new LZ4FastStreamEncoder(1024, 64);
+			var encoder = new LZ4FastStreamEncoder(1024);
 			var inputIndex = 0;
 			var outputIndex = 0;
 
@@ -22,18 +28,25 @@ namespace K4os.Compression.LZ4.Test
 				var tailLength = output.Length - outputIndex;
 				var success = encoder.TopupAndEncode(
 					input,
-					ref inputIndex,
+					inputIndex,
 					chunkLength,
 					output,
-					ref outputIndex,
-					tailLength);
+					outputIndex,
+					tailLength,
+					false,
+					out var loaded,
+					out var encoded);
+
+				inputIndex += loaded;
+				outputIndex += encoded;
+
 				if (!success)
 					throw new InvalidOperationException();
 			}
 
 			outputIndex += encoder.Encode(output, outputIndex, output.Length - outputIndex);
 
-			Console.WriteLine($"output: {outputIndex}");
+			WriteLine($"output: {outputIndex}");
 		}
 	}
 }

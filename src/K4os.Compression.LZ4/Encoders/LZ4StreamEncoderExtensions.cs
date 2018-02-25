@@ -48,8 +48,8 @@
 			return encoded != 0;
 		}
 
-		private static unsafe bool TopupAndEncode(
-			ILZ4StreamEncoder encoder,
+		public static unsafe bool TopupAndEncode(
+			this ILZ4StreamEncoder encoder,
 			byte* source, int sourceLength,
 			byte* target, int targetLength,
 			bool force,
@@ -73,46 +73,21 @@
 
 		public static unsafe bool TopupAndEncode(
 			this ILZ4StreamEncoder encoder,
-			ref byte* source, int sourceLength,
-			ref byte* target, int targetLength,
-			bool force = false)
-		{
-			var success = TopupAndEncode(
-				encoder,
-				source,
-				sourceLength,
-				target,
-				targetLength,
-				force,
-				out var loaded,
-				out var encoded);
-			source += loaded;
-			target += encoded;
-			return success;
-		}
-
-		public static unsafe bool TopupAndEncode(
-			this ILZ4StreamEncoder encoder,
-			byte[] source, ref int sourceIndex, int sourceLength,
-			byte[] target, ref int targetIndex, int targetLength,
-			bool force = false)
+			byte[] source, int sourceIndex, int sourceLength,
+			byte[] target, int targetIndex, int targetLength,
+			bool force,
+			out int loaded, out int encoded)
 		{
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
-			{
-				var success = TopupAndEncode(
-					encoder,
+				return encoder.TopupAndEncode(
 					sourceP + sourceIndex,
 					sourceLength,
 					targetP + targetIndex,
 					targetLength,
 					force,
-					out var loaded,
-					out var encoded);
-				sourceIndex += loaded;
-				targetIndex += encoded;
-				return success;
-			}
+					out loaded,
+					out encoded);
 		}
 	}
 }

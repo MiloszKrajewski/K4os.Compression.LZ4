@@ -6,6 +6,13 @@ namespace K4os.Compression.LZ4
 {
 	internal unsafe class Mem
 	{
+		public const int K1 = 1024;
+		public const int K64 = 0x10000;
+		public const int M1 = 1024 * 1024;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int RoundUp(int value, int step) => (value + step - 1) / step * step;
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
@@ -97,6 +104,25 @@ namespace K4os.Compression.LZ4
 				source += sizeof(ulong);
 			}
 			while (target < limit);
+		}
+
+		/// <summary>
+		/// This is very specific function moving head block back to index 0.
+		/// It uses <see cref="WildCopy"/> so it copies up to 8 bytes too much, so 
+		/// you need to be sure, it is safe. 
+		/// </summary>
+		/// <param name="buffer">The buffer.</param>
+		/// <param name="head">The head pointer.</param>
+		/// <param name="size">The window size (so blocks starts at <c>head - size</c>.</param>
+		/// <returns>Actual size of window (can be up to 8 bytes bigger than requested)</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static int WildShift0(byte* buffer, ref int head, int size)
+		{
+			size = Math.Min(size, head);
+			var index = (head - size) & ~0x7;
+			head -= index;
+			WildCopy(buffer, buffer + index, buffer + head);
+			return size;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
