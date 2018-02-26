@@ -37,6 +37,7 @@ namespace K4os.Compression.LZ4.Encoders
 			var chunk = Math.Min(spaceLeft, length);
 			Mem.Copy(_inputBuffer + _inputPointer, source, chunk);
 			_inputPointer += chunk;
+
 			return chunk;
 		}
 
@@ -56,7 +57,7 @@ namespace K4os.Compression.LZ4.Encoders
 			if (encoded == 0)
 				return 0;
 
-			AdjustBlockStart();
+			Commit();
 
 			return encoded;
 		}
@@ -74,30 +75,22 @@ namespace K4os.Compression.LZ4.Encoders
 
 			Mem.Copy(target, _inputBuffer + _inputIndex, sourceLength);
 
-			AdjustBlockStart();
+			Commit();
 
 			return sourceLength;
 		}
 
-		private void AdjustBlockStart()
+		private void Commit()
 		{
 			_inputIndex = _inputPointer;
-			if (_inputIndex + _blockSize <= _inputLength)
-				return;
-
-			var dictionaryIndex = Math.Max(_inputPointer - Mem.K64, 0) & ~0x7;
-			var dictionaryLength = _inputPointer - dictionaryIndex;
-			Mem.WildCopy(_inputBuffer, _inputBuffer + dictionaryIndex, _inputBuffer + dictionaryLength);
-			_inputPointer = _inputIndex = dictionaryLength;
-			dictionaryLength = Math.Min(dictionaryLength, Mem.K64);
-
-			SetupPrefix(_inputBuffer + _inputPointer - dictionaryLength, dictionaryLength);
+			if (_inputIndex + _blockSize > _inputLength)
+				_inputIndex = _inputPointer = CopyDict(_inputBuffer, _inputPointer);
 		}
 
 		protected abstract int EncodeBlock(
 			byte* source, int sourceLength, byte* target, int targetLength);
 
-		protected abstract void SetupPrefix(byte* dictionary, int dictionaryLength);
+		protected abstract int CopyDict(byte* buffer, int dictionaryLength);
 
 		protected override void ReleaseUnmanaged()
 		{

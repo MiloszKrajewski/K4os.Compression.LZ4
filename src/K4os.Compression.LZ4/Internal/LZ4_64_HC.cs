@@ -8,13 +8,13 @@ using uint32 = System.UInt32;
 namespace K4os.Compression.LZ4.Internal
 {
 #if BIT32
-	using size_t = System.UInt32;
-	using reg_t = System.UInt32;
+	using size_t = UInt32;
+	using reg_t = UInt32;
 
 	internal unsafe class LZ4_64_HC: LZ4_32
 	{
 #else
-	using size_t = System.UInt64;
+	using size_t = UInt64;
 
 	internal unsafe class LZ4_64_HC: LZ4_64
 	{
@@ -72,7 +72,7 @@ namespace K4os.Compression.LZ4.Internal
 		private static uint LZ4HC_hashPtr(void* ptr) =>
 			(LZ4_read32(ptr) * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
 
-		private static void LZ4HC_init(LZ4HC_CCtx_t* hc4, byte* start)
+		public static void LZ4HC_init(LZ4HC_CCtx_t* hc4, byte* start)
 		{
 			Mem.Zero((byte*) hc4->hashTable, LZ4HC_HASHTABLESIZE * sizeof(uint));
 			Mem.Fill((byte*) hc4->chainTable, 0xFF, LZ4HC_MAXD * sizeof(ushort));
@@ -1145,13 +1145,13 @@ namespace K4os.Compression.LZ4.Internal
 		}
 
 		/* initialization */
-		private static void LZ4_resetStreamHC(LZ4HC_CCtx_t* ctxPtr, int compressionLevel)
+		public static void LZ4_resetStreamHC(LZ4HC_CCtx_t* ctxPtr, int compressionLevel)
 		{
 			ctxPtr->basep = null;
 			LZ4_setCompressionLevel(ctxPtr, compressionLevel);
 		}
 
-		private static void LZ4_setCompressionLevel(LZ4HC_CCtx_t* ctxPtr, int compressionLevel)
+		public static void LZ4_setCompressionLevel(LZ4HC_CCtx_t* ctxPtr, int compressionLevel)
 		{
 			if (compressionLevel < 1) compressionLevel = 1;
 			if (compressionLevel > LZ4HC_CLEVEL_MAX) compressionLevel = LZ4HC_CLEVEL_MAX;
@@ -1229,7 +1229,7 @@ namespace K4os.Compression.LZ4.Internal
 				limit);
 		}
 
-		private static int LZ4_compress_HC_continue(
+		public static int LZ4_compress_HC_continue(
 			LZ4HC_CCtx_t* ctxPtr, byte* src, byte* dst, int srcSize, int dstCapacity) =>
 			LZ4_compressHC_continue_generic(
 				ctxPtr,
@@ -1253,7 +1253,7 @@ namespace K4os.Compression.LZ4.Internal
 				limitedOutput_directive.limitedDestSize);
 		}
 
-		private static int LZ4_saveDictHC(LZ4HC_CCtx_t* LZ4_streamHCPtr, byte* safeBuffer, int dictSize)
+		public static int LZ4_saveDictHC(LZ4HC_CCtx_t* LZ4_streamHCPtr, byte* safeBuffer, int dictSize)
 		{
 			var streamPtr = LZ4_streamHCPtr;
 			int prefixSize = (int) (streamPtr->end - (streamPtr->basep + streamPtr->dictLimit));

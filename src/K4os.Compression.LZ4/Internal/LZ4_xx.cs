@@ -30,7 +30,7 @@ namespace K4os.Compression.LZ4.Internal
 			public uint currentOffset;
 			public uint initCheck;
 			public byte* dictionary;
-			public byte* bufferStart; /* obsolete, used for slideInputBuffer */
+			// public byte* bufferStart; /* obsolete, used for slideInputBuffer */
 			public uint dictSize;
 		};
 
