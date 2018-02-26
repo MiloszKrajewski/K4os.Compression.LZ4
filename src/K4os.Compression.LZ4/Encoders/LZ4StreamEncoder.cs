@@ -35,7 +35,7 @@ namespace K4os.Compression.LZ4.Encoders
 				return 0;
 
 			var chunk = Math.Min(spaceLeft, length);
-			Mem.Copy(_inputBuffer, source, chunk);
+			Mem.Copy(_inputBuffer + _inputPointer, source, chunk);
 			_inputPointer += chunk;
 			return chunk;
 		}

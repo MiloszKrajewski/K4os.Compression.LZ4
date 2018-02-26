@@ -4,6 +4,12 @@
     <TargetFramework>net46</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
   </ItemGroup>

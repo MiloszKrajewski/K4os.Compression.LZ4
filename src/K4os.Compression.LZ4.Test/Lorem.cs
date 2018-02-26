@@ -8,7 +8,7 @@ namespace K4os.Compression.LZ4.Test
 {
 	public static class Lorem
 	{
-		public const string Text = 
+		public const string Text =
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
 			"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
 			"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris " +
@@ -16,6 +16,7 @@ namespace K4os.Compression.LZ4.Test
 			"in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
 			"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia " +
 			"deserunt mollit anim id est laborum. ";
+
 		public static readonly byte[] Bytes = Encoding.UTF8.GetBytes(Text);
 
 		public static void Fill(byte[] output, int outputIndex, int outputLength)
@@ -26,6 +27,20 @@ namespace K4os.Compression.LZ4.Test
 				Array.Copy(Bytes, 0, output, outputIndex, chunk);
 				outputLength -= chunk;
 				outputIndex += chunk;
+			}
+		}
+
+		public static unsafe void Fill(byte* output, int outputLength)
+		{
+			fixed (byte* bytesP = Bytes)
+			{
+				while (outputLength > 0)
+				{
+					var chunk = Math.Min(outputLength, Bytes.Length);
+					Buffer.MemoryCopy(bytesP, output, outputLength, chunk);
+					outputLength -= chunk;
+					output += chunk;
+				}
 			}
 		}
 	}

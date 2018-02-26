@@ -1,19 +1,34 @@
 ﻿using System;
-using System.Collections;
 using System.IO;
 
 namespace K4os.Compression.LZ4.Test
 {
 	public class Tools
 	{
-		public static uint Adler32(byte[] data)
+		public static unsafe uint Adler32(byte* data, int length)
 		{
 			const uint modAdler = 65521;
 
 			uint a = 1, b = 0;
-			var len = data.Length;
 
-			for (var index = 0; index < len; ++index)
+			for (var index = 0; index < length; ++index)
+			{
+				a = (a + data[index]) % modAdler;
+				b = (b + a) % modAdler;
+			}
+
+			return (b << 16) | a;
+		}
+
+		public static uint Adler32(byte[] data, int index = 0, int length = -1)
+		{
+			const uint modAdler = 65521;
+			if (length < 0)
+				length = data.Length - index;
+
+			uint a = 1, b = 0;
+
+			for (; index < length; ++index)
 			{
 				a = (a + data[index]) % modAdler;
 				b = (b + a) % modAdler;

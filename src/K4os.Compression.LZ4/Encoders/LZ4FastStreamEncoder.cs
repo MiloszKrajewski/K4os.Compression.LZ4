@@ -24,7 +24,11 @@ namespace K4os.Compression.LZ4.Encoders
 			byte* source, int sourceLength, byte* target, int targetLength) =>
 			LZ4_64.LZ4_compress_fast_continue(_context, source, target, sourceLength, targetLength, 1);
 
-		protected override void SetupPrefix(byte* dictionary, int dictionaryLength) =>
-			LZ4_64.LZ4_loadDict(_context, dictionary, dictionaryLength);
+		protected override void SetupPrefix(byte* dictionary, int dictionaryLength)
+		{
+			_context->dictionary = dictionary;
+			_context->dictSize = (uint) dictionaryLength;
+			// LZ4_64.LZ4_loadDict(_context, dictionary, dictionaryLength);
+		}
 	}
 }

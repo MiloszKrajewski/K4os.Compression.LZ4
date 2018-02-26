@@ -16,6 +16,7 @@ namespace K4os.Compression.LZ4
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
+			// Buffer.MemoryCopy(source, target, length, length);
 			while (length >= sizeof(ulong))
 			{
 				*(ulong*) target = *(ulong*) source;
@@ -48,7 +49,7 @@ namespace K4os.Compression.LZ4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void CopyBack(byte* target, byte* source, int length)
+		private static void CopyBackwards(byte* target, byte* source, int length)
 		{
 			target += length;
 			source += length;
@@ -136,7 +137,7 @@ namespace K4os.Compression.LZ4
 			}
 			else
 			{
-				CopyBack(target, source, length);
+				CopyBackwards(target, source, length);
 			}
 		}
 
