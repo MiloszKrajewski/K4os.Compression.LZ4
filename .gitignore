@@ -18,3 +18,4 @@ Release/
 *.bak
 *.user
 *.suo
+BenchmarkDotNet.Artifacts/

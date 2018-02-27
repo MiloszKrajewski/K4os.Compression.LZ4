@@ -1,11 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("K4os.Compression.LZ4.Test")]
+[assembly: InternalsVisibleTo("K4os.Compression.LZ4.Benchmarks")]
 
-//namespace K4os.Compression.LZ4
-//{
-//    public class AssemblyHook
-//    {
-
-//    }
-//}
+namespace K4os.Compression.LZ4
+{
+	public class AssemblyHook
+	{
+		private AssemblyHook() { }
+	}
+}
