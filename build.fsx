@@ -1,21 +1,22 @@
-open System.Net
 open Fake
 
 #r ".fake/FakeLib.dll"
 #load "build.tools.fsx"
 #load "sanitize.fsx"
 
-let download fn (url: string) = 
-    if File.exists fn |> not then 
-        printfn "Downloading: %s" url
-        use wc = new WebClient() in wc.DownloadFile(url, fn)
+let solutions = Proj.settings |> Config.keys "Build"
+let packages = Proj.settings |> Config.keys "Pack"
+
+//----
 
 let clean () = !! "**/bin/" ++ "**/obj/" |> DeleteDirs
-let build () = Proj.build "src/K4os.Compression.LZ4.sln"
-let restore () = Proj.restore "src/K4os.Compression.LZ4.sln"
+let restore () = solutions |> Seq.iter Proj.restore
+let build () = solutions |> Seq.iter Proj.build
 let test () = Proj.xtestAll ()
+let release () = packages |> Proj.packMany
+let publish apiKey = packages |> Seq.iter (Proj.publishNugetOrg apiKey)
 
-let release () = Proj.releaseNupkg ()
+//----
 
 Target "Clean" (fun _ -> clean ())
 
@@ -29,14 +30,11 @@ Target "Release" (fun _ -> release ())
 
 Target "Test" (fun _ -> test ())
 
-Target "Release:Nuget" (fun _ ->
-    let apiKey = Proj.settings |> Config.valueOrFail "nuget" "accessKey"
-    Proj.publishNugetOrg apiKey "K4os.Compression.LZ4"
-)
+Target "Release:Nuget" (fun _ -> Proj.settings |> Config.valueOrFail "nuget" "accessKey" |> publish)
 
 Target "Sanitize" (fun _ ->
     let rules = Sanitizer.basicTypes
-    let sanitize fn = 
+    let sanitize fn =
         printfn "Processing: %s" fn
         Sanitizer.sanitize (sprintf "./orig/lib/%s" fn) (sprintf "./src/sanitized/%s" fn) rules
     sanitize "lz4.c"
@@ -45,16 +43,16 @@ Target "Sanitize" (fun _ ->
     sanitize "lz4frame.c"
 )
 
-let uncorpus fn (uri: string) = 
+let uncorpus fn (uri: string) =
     let fn = sprintf "./.corpus/%s" fn
     if not (File.exists fn) then
         if not (File.exists "./.tools/7za.exe") then
             CreateDir "./.tools"
-            download "./.tools/7za920.zip" "http://www.7-zip.org/a/7za920.zip"
+            File.download "./.tools/7za920.zip" "http://www.7-zip.org/a/7za920.zip"
             ZipHelper.Unzip "./.tools/" "./.tools/7za920.zip"
         fn |> directory |> CreateDir
         let bz2 = sprintf "%s.bz2" fn
-        download bz2 uri
+        File.download bz2 uri
         Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory bz2) bz2)
 
 Target "Restore:Corpus" (fun _ ->

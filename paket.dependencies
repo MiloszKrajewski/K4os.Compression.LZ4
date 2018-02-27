@@ -1,11 +1,14 @@
-storage: none
-framework: auto-detect
+storage none
+framework auto-detect
 source https://www.nuget.org/api/v2
 
 nuget lz4net
 nuget SharpZipLib
 
+nuget BenchmarkDotNet
+
 nuget Microsoft.NET.Test.Sdk
 nuget xunit
 nuget xunit.runner.visualstudio
+
 clitool dotnet-xunit

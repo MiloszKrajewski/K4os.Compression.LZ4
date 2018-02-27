@@ -5,6 +5,7 @@ namespace Fake
 open Fake
 open System
 open System.IO
+open System.Net
 open System.Text.RegularExpressions
 open System.Diagnostics
 
@@ -44,14 +45,17 @@ module File =
     let loadText filename = File.ReadAllText(filename)
     let saveText filename text = File.WriteAllText(filename, text)
 
+    let download fn (url: string) =
+        if not (exists fn) then
+            printfn "Downloading: %s" url
+            use wc = new WebClient() in wc.DownloadFile(url, fn)
+
 module Regex =
     let create ignoreCase pattern =
         let ignoreCase = if ignoreCase then RegexOptions.IgnoreCase else RegexOptions.None
         Regex(pattern, RegexOptions.ExplicitCapture ||| RegexOptions.IgnorePatternWhitespace ||| ignoreCase)
     let replace pattern (replacement: string) input = Regex.Replace(input, pattern, replacement)
-
     let matches pattern input = Regex.IsMatch(input, pattern)
-
     let (|Match|_|) (pattern: Regex) text =
         match pattern.Match(text) with | m when m.Success -> Some m | _ -> None
 
@@ -70,7 +74,7 @@ module Shell =
 module Config =
     type Item = { Section: string; Key: string; Value: string }
     let private sectionRx = """^\s*\[\s*(?<name>.*?)\s*\]\s*$""" |> Regex.create true
-    let private valueRx = """^\s*(?<key>.*?)\s*=\s*(?<value>.*?)\s*$""" |> Regex.create true
+    let private valueRx = """^\s*(?<key>.*?)\s*(=\s*(?<value>.*?)\s*)?$""" |> Regex.create true
     let private emptyRx = """^\s*(;.*)?$""" |> Regex.create true
     let validate (items: Item seq) = items |> Seq.distinctBy (fun i -> i.Section, i.Key) |> List.ofSeq
     let merge configs = configs |> Seq.collect id |> validate
@@ -81,12 +85,14 @@ module Config =
             | line :: lines ->
                 match line with
                 | Regex.Match emptyRx _ -> parse lines section result
-                | Regex.Match valueRx m ->
-                    let item = { Section = section; Key = m.Groups.["key"].Value; Value = m.Groups.["value"].Value }
-                    parse lines section (item :: result)
                 | Regex.Match sectionRx m ->
                     let section = m.Groups.["name"].Value
                     parse lines section result
+                | Regex.Match valueRx m ->
+                    let key = m.Groups.["key"].Value
+                    let value = match m.Groups.["value"] with | m when m.Success -> m.Value | _ -> ""
+                    let item = { Section = section; Key = key; Value = value }
+                    parse lines section (item :: result)
                 | _ ->
                     printfn "Line '%s' does not match config pattern as has been ignored" line
                     parse lines section result
@@ -117,15 +123,20 @@ module Proj =
             let projectName = projectPath |> fileNameWithoutExt
             String.same projectFolder projectName
         !! "src/*/*.*proj" |> Seq.filter isValidProject
-    let isTemplateProj projectFile =
-        let templateJson = (projectFile |> directory) @@ ".template.config/template.json"
-        File.Exists(templateJson)
-    let isTestProj projectFile = projectFile |> directory |> Regex.matches "Test$"
-    let isDemoProj projectFile = projectFile |> directory |> Regex.matches "Demo$"
-    let isNugetProj projectFile = not (isTemplateProj projectFile || isTestProj projectFile || isDemoProj projectFile)
 
-    let restore project = DotNetCli.Restore (fun p -> { p with Project = project })
-    let build project = DotNetCli.Build (fun p -> { p with Configuration = "Release"; Project = project })
+    let findSln name = !! (sprintf "src/%s.sln" name)
+    let findProj name = !! (sprintf "src/%s/%s.??proj" name name)
+
+    let isTestProj projectFile = projectFile |> directory |> Regex.matches "Test$"
+
+    let restore solution =
+        solution
+        |> findSln
+        |> Seq.iter (fun sln -> DotNetCli.Restore (fun p -> { p with Project = sln }))
+    let build solution =
+        solution
+        |> findSln
+        |> Seq.iter (fun sln -> DotNetCli.Build (fun p -> { p with Configuration = "Release"; Project = sln }))
     let test project = DotNetCli.Test (fun p ->
         { p with
             Configuration = "Release"
@@ -135,10 +146,10 @@ module Proj =
 
     let testAll () = listProj () |> Seq.filter isTestProj |> Seq.iter test
 
-    let xtest project = 
+    let xtest project =
         Shell.runAt project "dotnet" "xunit -verbose -configuration Release -nobuild"
 
-    let xtestAll () = 
+    let xtestAll () =
         listProj () |> Seq.filter isTestProj |> Seq.iter (directory >> xtest)
 
     let pack version project =
@@ -190,17 +201,10 @@ module Proj =
                 !! (projectPath @@ "obj" @@ "*.nuspec") -- nuspecFile |> DeleteFiles
             )
         )
-    let releaseNupkg () =
+    let packMany projects =
         updateVersion productVersion assemblyVersion "Common.targets"
-        let projects =
-            listProj ()
-            |> Seq.filter isNugetProj
-            |> Seq.toArray
-        let folders =
-            projects
-            |> Seq.map directory
-            |> Seq.distinct
-            |> Seq.toArray
+        let projectFiles = projects |> Seq.map (fun p -> sprintf "src/%s/%s.*proj" p p) |> Seq.collect (!!) |> Seq.toArray
+        let folders = projectFiles |> Seq.map directory |> Seq.distinct |> Seq.toArray
         folders |> Seq.iter (fun folder ->
             folders |> Seq.iter fixPackReferences
             pack productVersion folder

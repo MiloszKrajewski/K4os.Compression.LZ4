@@ -3,7 +3,7 @@ dp0=$(cd "$(dirname "$0")" && pwd -P)
 
 target=$dp0/.paket
 paket=$target/paket.exe
-downloadUrl=https://github.com/fsprojects/Paket/releases/download/5.120.0/paket.bootstrapper.exe
+downloadUrl=https://github.com/fsprojects/Paket/releases/download/5.145.3/paket.bootstrapper.exe
 
 if [ ! -f $paket ]
 then
