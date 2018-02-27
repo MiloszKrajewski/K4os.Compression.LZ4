@@ -16,23 +16,21 @@ namespace K4os.Compression.LZ4.Encoders
 
 		public LZ4StreamDecoder(int blockSize, int extraBlocks)
 		{
-			_blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
-			_outputLength = Mem.K64 + (1 + Math.Max(extraBlocks, 0)) * _blockSize + 8;
+			blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
+			extraBlocks = Math.Max(extraBlocks, 0);
+
+			_blockSize = blockSize;
+			_outputLength = Mem.K64 + (1 + extraBlocks) * _blockSize + 8;
 			_outputIndex = 0;
-			_outputBuffer = (byte*) Mem.AllocZero(_outputLength + 8);
+			_outputBuffer = (byte*) Mem.Alloc(_outputLength + 8);
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}
 
 		public int Decode(byte* source, int sourceLength, byte* target, int targetLength)
 		{
-			AdjustBlockStart();
+			Prepare();
 
-			var decoded = LZ4_xx.LZ4_decompress_safe_continue(
-				_context,
-				source,
-				_outputBuffer + _outputIndex,
-				sourceLength,
-				_blockSize);
+			var decoded = DecodeBlock(source, sourceLength, _outputBuffer + _outputIndex, _blockSize);
 
 			if (decoded < 0)
 				throw new InvalidOperationException();
@@ -46,16 +44,19 @@ namespace K4os.Compression.LZ4.Encoders
 			return decoded;
 		}
 
-		private void AdjustBlockStart()
+		private void Prepare()
 		{
-			if (_outputIndex + _blockSize <= _outputLength)
-				return;
-
-			var actualSize = Mem.WildShift0(_outputBuffer, ref _outputIndex, Mem.K64);
-			SetupPrefix(_outputBuffer + _outputIndex - actualSize, actualSize);
+			if (_outputIndex + _blockSize > _outputLength)
+				_outputIndex = CopyDict(_outputBuffer, _outputIndex);
 		}
 
-		protected void SetupPrefix(byte* b, int dictionaryLength) { }
+		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
+			LZ4_xx.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
+
+		protected int CopyDict(byte* buffer, int length)
+		{
+			throw new NotImplementedException();
+		}
 
 		protected override void ReleaseUnmanaged()
 		{

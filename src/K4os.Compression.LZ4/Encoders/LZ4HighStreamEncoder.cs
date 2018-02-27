@@ -2,16 +2,20 @@
 
 namespace K4os.Compression.LZ4.Encoders
 {
+	// high encoder context
 	using LZ4Context = LZ4_64_HC.LZ4HC_CCtx_t;
 
 	public unsafe class LZ4HighStreamEncoder: LZ4StreamEncoder
 	{
 		private readonly LZ4Context* _context;
 
-		public LZ4HighStreamEncoder(int blockSize, int extraBlocks = 0): base(blockSize, extraBlocks)
+		public LZ4HighStreamEncoder(
+			LZ4Level level, int blockSize, int extraBlocks = 0): base(blockSize, extraBlocks)
 		{
+			if (level < LZ4Level.L03_HC) level = LZ4Level.L03_HC;
+			if (level > LZ4Level.L12_MAX) level = LZ4Level.L12_MAX;
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
-			LZ4_64_HC.cont
+			LZ4_64_HC.LZ4_resetStreamHC(_context, (int) level);
 		}
 
 		protected override void ReleaseUnmanaged()

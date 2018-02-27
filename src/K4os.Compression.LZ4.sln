@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "K4os.Compression.LZ4", "K4os.Compression.LZ4\K4os.Compression.LZ4.csproj", "{6C3B6DD6-2502-4292-A06C-D8230A7150CA}"
 EndProject
@@ -14,6 +14,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{835ECD
 		..\CHANGES.md = ..\CHANGES.md
 		..\paket.dependencies = ..\paket.dependencies
 		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sanitized", "sanitized", "{9E28A764-FAC1-4E5C-ABAF-2B2F75173177}"
+	ProjectSection(SolutionItems) = preProject
+		sanitized\lz4.c = sanitized\lz4.c
+		sanitized\lz4frame.c = sanitized\lz4frame.c
+		sanitized\lz4hc.c = sanitized\lz4hc.c
+		sanitized\lz4opt.h = sanitized\lz4opt.h
 	EndProjectSection
 EndProject
 Global

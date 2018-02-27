@@ -14,8 +14,11 @@ namespace K4os.Compression.LZ4.Encoders
 
 		protected LZ4StreamEncoder(int blockSize, int extraBlocks = 0)
 		{
-			_blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
-			_inputLength = Mem.K64 + (1 + Math.Max(extraBlocks, 0)) * _blockSize + 8;
+			blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
+			extraBlocks = Math.Max(extraBlocks, 0);
+
+			_blockSize = blockSize;
+			_inputLength = Mem.K64 + (1 + extraBlocks) * blockSize + 8;
 			_inputIndex = _inputPointer = 0;
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
 		}
