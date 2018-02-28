@@ -30,6 +30,8 @@ Target "Release" (fun _ -> release ())
 
 Target "Test" (fun _ -> test ())
 
+Target "Benchmark" (fun _ -> Shell.run "dotnet" "run -p src/K4os.Compression.LZ4.Benchmarks -c Release")
+
 Target "Release:Nuget" (fun _ -> Proj.settings |> Config.valueOrFail "nuget" "accessKey" |> publish)
 
 Target "Sanitize" (fun _ ->

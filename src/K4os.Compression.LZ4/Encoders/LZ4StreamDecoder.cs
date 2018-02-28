@@ -57,11 +57,8 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			var dictStart = Math.Max(_outputIndex - length, 0);
 			var dictSize = _outputIndex - dictStart;
-			if (dictStart > 0)
-			{
-				Mem.Move(buffer, buffer + dictStart, dictSize);
-				LZ4_xx.LZ4_setStreamDecode(_context, buffer, dictSize);
-			}
+			Mem.Move(buffer, buffer + dictStart, dictSize);
+			LZ4_xx.LZ4_setStreamDecode(_context, buffer, dictSize);
 
 			return dictSize;
 		}

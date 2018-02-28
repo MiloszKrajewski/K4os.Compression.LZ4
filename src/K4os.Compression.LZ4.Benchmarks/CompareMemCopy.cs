@@ -5,7 +5,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 {
 	public unsafe class CompareMemCopy
 	{
-		[Params(0x10, 0x100, 0x1000, 0x10000, 0x100000)]
+		[Params(0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0)]
 		public int Size { get; set; }
 
 		private byte* _source;
@@ -26,50 +26,6 @@ namespace K4os.Compression.LZ4.Benchmarks
 		}
 
 		[Benchmark]
-		public void InlinedLoop()
-		{
-			var source = _source;
-			var target = _target;
-			var length = Size;
-
-			while (length >= sizeof(ulong))
-			{
-				*(ulong*) target = *(ulong*) source;
-				target += sizeof(ulong);
-				source += sizeof(ulong);
-				length -= sizeof(ulong);
-			}
-
-			if (length >= sizeof(uint))
-			{
-				*(uint*) target = *(uint*) source;
-				target += sizeof(uint);
-				source += sizeof(uint);
-				length -= sizeof(uint);
-			}
-
-			if (length >= sizeof(ushort))
-			{
-				*(uint*) target = *(ushort*) source;
-				target += sizeof(ushort);
-				source += sizeof(ushort);
-				length -= sizeof(ushort);
-			}
-
-			if (length > 0)
-			{
-				*target = *source;
-				// target++; source++; length--;
-			}
-		}
-
-		[Benchmark]
-		public void Loop()
-		{
-			Mem.Copy(_target, _source, Size);
-		}
-
-		[Benchmark]
 		public void WildLoop()
 		{
 			Mem.WildCopy(_target, _source, _target + Size);
@@ -78,7 +34,23 @@ namespace K4os.Compression.LZ4.Benchmarks
 		[Benchmark]
 		public void Builtin()
 		{
-			Buffer.MemoryCopy(_source, _target, Size, Size);
+			var size = ((Size - 1) & ~0x7) + 8;
+			Buffer.MemoryCopy(_source, _target, size, size);
+		}
+
+		[Benchmark]
+		public void HybridWildLoop()
+		{
+			var size = Size;
+			if (size <= 128)
+			{
+				Mem.WildCopy(_target, _source, _target + size);
+			}
+			else
+			{
+				size = ((size - 1) & ~0x7) + 8;
+				Buffer.MemoryCopy(_source, _target, size, size);
+			}
 		}
 	}
 }
