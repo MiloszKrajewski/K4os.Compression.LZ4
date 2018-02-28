@@ -6,7 +6,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 	{
 		static void Main(string[] args)
 		{
-			BenchmarkRunner.Run<CompareMemCopy>();
+			BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
 		}
 	}
 }

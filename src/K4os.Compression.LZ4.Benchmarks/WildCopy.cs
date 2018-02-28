@@ -3,7 +3,7 @@ using BenchmarkDotNet.Attributes;
 
 namespace K4os.Compression.LZ4.Benchmarks
 {
-	public unsafe class CompareMemCopy
+	public unsafe class WildCopy
 	{
 		[Params(0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0)]
 		public int Size { get; set; }
