@@ -48,6 +48,7 @@ namespace K4os.Compression.LZ4.Encoders
 			offset = _outputIndex + offset; // NOTE: negative value
 			if (offset < 0 || length < 0 || offset + length > _outputIndex)
 				throw new InvalidOperationException();
+
 			Mem.Copy(target, _outputBuffer + offset, length);
 		}
 
@@ -56,11 +57,16 @@ namespace K4os.Compression.LZ4.Encoders
 			if (_outputIndex + _blockSize <= _outputLength)
 				return;
 
-			var dictStart = Math.Max(_outputIndex - _blockSize, 0);
-			var dictSize = _outputIndex - dictStart;
-			Mem.Copy(_outputBuffer, _outputBuffer + dictStart, dictSize);
-			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
-			_outputIndex = dictSize;
+			_outputIndex = CopyDict(_outputBuffer, _outputIndex);
+		}
+
+		private int CopyDict(byte* buffer, int index)
+		{
+			var dictStart = Math.Max(index - Mem.K64, 0);
+			var dictSize = index - dictStart;
+			Mem.Copy(buffer, buffer + dictStart, dictSize);
+			LZ4_xx.LZ4_setStreamDecode(_context, buffer, dictSize);
+			return dictSize;
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>

@@ -86,8 +86,10 @@ namespace K4os.Compression.LZ4.Encoders
 		private void Commit()
 		{
 			_inputIndex = _inputPointer;
-			if (_inputIndex + _blockSize > _inputLength)
-				_inputIndex = _inputPointer = CopyDict(_inputBuffer, _inputPointer);
+			if (_inputIndex + _blockSize <= _inputLength)
+				return;
+
+			_inputIndex = _inputPointer = CopyDict(_inputBuffer, _inputPointer);
 		}
 
 		protected abstract int EncodeBlock(

@@ -33,8 +33,8 @@ namespace K4os.Compression.LZ4.Test
 		}
 
 		[Theory]
-		//[InlineData(".corpus/dickens", 4096, 4096, 0, 0)]
-		//[InlineData(".corpus/dickens", 4096, 16384, 0, 3)]
+		[InlineData(".corpus/dickens", 4096, 4096, 0, 0)]
+		[InlineData(".corpus/dickens", 4096, 16384, 0, 3)]
 		[InlineData(".corpus/dickens", 4096, 0x10000, 3, 0)]
 		[InlineData(".corpus/dickens", 4096, 0x20000, 2, 3)]
 		[InlineData(".corpus/dickens", 4096, 0x100000, 0, 0)]
@@ -46,6 +46,23 @@ namespace K4os.Compression.LZ4.Test
 			Roundtrip(filename, topupSize, blockSize, encoderExtraBlocks, decoderExtraBlocks);
 		}
 
+		[Theory]
+		[InlineData(".corpus/dickens")]
+		[InlineData(".corpus/mozilla")]
+		[InlineData(".corpus/mr")]
+		[InlineData(".corpus/nci")]
+		[InlineData(".corpus/ooffice")]
+		[InlineData(".corpus/osdb")]
+		[InlineData(".corpus/reymont")]
+		[InlineData(".corpus/samba")]
+		[InlineData(".corpus/sao")]
+		[InlineData(".corpus/webster")]
+		[InlineData(".corpus/xml")]
+		[InlineData(".corpus/x-ray")]
+		public void AllFiles(string filename)
+		{
+			Roundtrip(filename, 4096, 0x10000, 8, 8);
+		}
 
 		private static void Roundtrip(
 			string filename, 
