@@ -8,9 +8,9 @@ using Xunit.Abstractions;
 
 namespace K4os.Compression.LZ4.Test
 {
-	public unsafe class LZ4EncoderTests: PerformancePlayground
+	public unsafe class LZ4EncoderTests
 	{
-		public LZ4EncoderTests(ITestOutputHelper output): base(output) { }
+		public LZ4EncoderTests(ITestOutputHelper output) { }
 
 		[Theory]
 		[InlineData(1024, 50, 0)]

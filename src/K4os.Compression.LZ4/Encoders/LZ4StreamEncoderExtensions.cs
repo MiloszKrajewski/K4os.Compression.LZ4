@@ -1,4 +1,8 @@
-﻿namespace K4os.Compression.LZ4.Encoders
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
+
+namespace K4os.Compression.LZ4.Encoders
 {
 	public static class LZ4StreamEncoderExtensions
 	{
@@ -89,5 +93,41 @@
 					out loaded,
 					out encoded);
 		}
+
+		public static unsafe bool DecodeAndDrain(
+			this ILZ4StreamDecoder decoder,
+			byte* source, int sourceLength,
+			byte* target, int targetLength,
+			out int decoded)
+		{
+			decoded = 0;
+
+			if (sourceLength <= 0)
+				return false;
+			
+			decoded = decoder.Decode(source, sourceLength);
+			if (decoded <= 0 || targetLength < decoded)
+				return false;
+			decoder.Drain(target, -decoded, decoded);
+
+			return true;
+		}
+		
+		public static unsafe bool DecodeAndDrain(
+			this ILZ4StreamDecoder decoder,
+			byte[] source, int sourceIndex, int sourceLength,
+			byte[] target, int targetIndex, int targetLength,
+			out int decoded)
+		{
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
+				return decoder.DecodeAndDrain(
+					sourceP + sourceIndex,
+					sourceLength,
+					targetP + targetIndex,
+					targetLength,
+					out decoded);
+		}
+
 	}
 }

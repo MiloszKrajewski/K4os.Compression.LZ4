@@ -3,13 +3,15 @@ using System.Threading;
 
 namespace K4os.Compression.LZ4.Internal
 {
-	public abstract class LZ4Unmanaged: IDisposable
+	public abstract class UnmanagedResources: IDisposable
 	{
 		private int _disposed;
+		
+		public bool IsDisposed => Interlocked.CompareExchange(ref _disposed, 0, 0) != 0;
 
 		protected void ThrowIfDisposed()
 		{
-			if (Interlocked.CompareExchange(ref _disposed, 0, 0) != 0)
+			if (IsDisposed)
 				throw new InvalidOperationException();
 		}
 
@@ -34,7 +36,7 @@ namespace K4os.Compression.LZ4.Internal
 			GC.SuppressFinalize(this);
 		}
 
-		~LZ4Unmanaged()
+		~UnmanagedResources()
 		{
 			Dispose(false);
 		}

@@ -107,25 +107,6 @@ namespace K4os.Compression.LZ4
 			while (target < limit);
 		}
 
-		/// <summary>
-		/// This is very specific function moving head block back to index 0.
-		/// It uses <see cref="WildCopy"/> so it copies up to 8 bytes too much, so 
-		/// you need to be sure, it is safe. 
-		/// </summary>
-		/// <param name="buffer">The buffer.</param>
-		/// <param name="head">The head pointer.</param>
-		/// <param name="size">The window size (so blocks starts at <c>head - size</c>.</param>
-		/// <returns>Actual size of window (can be up to 8 bytes bigger than requested)</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int WildShift0(byte* buffer, ref int head, int size)
-		{
-			size = Math.Min(size, head);
-			var index = (head - size) & ~0x7;
-			head -= index;
-			WildCopy(buffer, buffer + index, buffer + head);
-			return size;
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{

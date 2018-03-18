@@ -1,4 +1,5 @@
-﻿namespace K4os.Compression.LZ4
+﻿// ReSharper disable InconsistentNaming
+namespace K4os.Compression.LZ4
 {
 	public enum LZ4Level
 	{

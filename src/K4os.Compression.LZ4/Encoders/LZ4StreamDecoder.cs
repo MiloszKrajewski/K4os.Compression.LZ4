@@ -6,7 +6,7 @@ namespace K4os.Compression.LZ4.Encoders
 	// fast decoder context
 	using LZ4Context = LZ4_xx.LZ4_streamDecode_t;
 
-	public unsafe class LZ4StreamDecoder: LZ4Unmanaged
+	public unsafe class LZ4StreamDecoder: UnmanagedResources, ILZ4StreamDecoder
 	{
 		private readonly LZ4Context* _context;
 		private readonly int _blockSize;
@@ -26,42 +26,45 @@ namespace K4os.Compression.LZ4.Encoders
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}
 
-		public int Decode(byte* source, int sourceLength, byte* target, int targetLength)
+		public int BlockSize => _blockSize;
+		public int BytesReady => _outputIndex;
+
+		public int Decode(byte* source, int length)
 		{
 			Prepare();
 
-			var decoded = DecodeBlock(source, sourceLength, _outputBuffer + _outputIndex, _blockSize);
+			var decoded = DecodeBlock(source, length, _outputBuffer + _outputIndex, _blockSize);
 
 			if (decoded < 0)
 				throw new InvalidOperationException();
 
-			if (targetLength < decoded)
-				throw new InvalidOperationException();
-
-			Mem.Copy(target, _outputBuffer + _outputIndex, decoded);
 			_outputIndex += decoded;
 
 			return decoded;
 		}
 
+		public void Drain(byte* target, int offset, int length)
+		{
+			offset = _outputIndex + offset; // NOTE: negative value
+			if (offset < 0 || length < 0 || offset + length > _outputIndex)
+				throw new InvalidOperationException();
+			Mem.Copy(target, _outputBuffer + offset, length);
+		}
+
 		private void Prepare()
 		{
-			if (_outputIndex + _blockSize > _outputLength)
-				_outputIndex = CopyDict(_outputBuffer, _outputIndex);
+			if (_outputIndex + _blockSize <= _outputLength)
+				return;
+
+			var dictStart = Math.Max(_outputIndex - _blockSize, 0);
+			var dictSize = _outputIndex - dictStart;
+			Mem.Copy(_outputBuffer, _outputBuffer + dictStart, dictSize);
+			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
+			_outputIndex = dictSize;
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
 			LZ4_xx.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
-
-		protected int CopyDict(byte* buffer, int length)
-		{
-			var dictStart = Math.Max(_outputIndex - length, 0);
-			var dictSize = _outputIndex - dictStart;
-			Mem.Move(buffer, buffer + dictStart, dictSize);
-			LZ4_xx.LZ4_setStreamDecode(_context, buffer, dictSize);
-
-			return dictSize;
-		}
 
 		protected override void ReleaseUnmanaged()
 		{

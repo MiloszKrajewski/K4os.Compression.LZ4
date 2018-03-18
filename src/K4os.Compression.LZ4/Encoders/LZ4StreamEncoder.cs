@@ -3,7 +3,7 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
-	public abstract unsafe class LZ4StreamEncoder: LZ4Unmanaged, ILZ4StreamEncoder
+	public abstract unsafe class LZ4StreamEncoder: UnmanagedResources, ILZ4StreamEncoder
 	{
 		private readonly byte* _inputBuffer;
 		private readonly int _inputLength;
