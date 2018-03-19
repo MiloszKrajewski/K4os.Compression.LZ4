@@ -49,17 +49,30 @@ Target "Sanitize" (fun _ ->
     sanitize "lz4frame.c"
 )
 
+let ensureLZ4exe () =
+    if not (File.exists "./.tools/lz4.exe") then
+        let zipFileUrl = "https://github.com/lz4/lz4/releases/download/v1.8.1.2/lz4_v1_8_1_win64.zip"
+        let zipFile = "./.tools/lz4-1.8.1-win64.zip"
+        CreateDir "./.tools"
+        File.download zipFile zipFileUrl
+        ZipHelper.Unzip "./.tools/lz4" zipFile
+        "./.tools/lz4/lz4.exe" |> CopyFile "./.tools/lz4.exe"
+        DeleteDir "./.tools/lz4"
+
 let uncorpus fn (uri: string) =
     let fn = sprintf "./.corpus/%s" fn
     if not (File.exists fn) then
         if not (File.exists "./.tools/7za.exe") then
+            let zipFileUrl = "http://www.7-zip.org/a/7za920.zip"
+            let zipFileName = "./.tools/7za920.zip"
             CreateDir "./.tools"
-            File.download "./.tools/7za920.zip" "http://www.7-zip.org/a/7za920.zip"
-            ZipHelper.Unzip "./.tools/" "./.tools/7za920.zip"
+            File.download zipFileName zipFileUrl
+            ZipHelper.Unzip "./.tools/" zipFileName
         fn |> directory |> CreateDir
         let bz2 = sprintf "%s.bz2" fn
         File.download bz2 uri
         Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory bz2) bz2)
+        DeleteFile bz2
 
 Target "Restore:Corpus" (fun _ ->
     uncorpus "dickens" "http://sun.aei.polsl.pl/~sdeor/corpus/dickens.bz2"
@@ -74,6 +87,7 @@ Target "Restore:Corpus" (fun _ ->
     uncorpus "webster" "http://sun.aei.polsl.pl/~sdeor/corpus/webster.bz2"
     uncorpus "xml" "http://sun.aei.polsl.pl/~sdeor/corpus/xml.bz2"
     uncorpus "x-ray" "http://sun.aei.polsl.pl/~sdeor/corpus/x-ray.bz2"
+    ensureLZ4exe ()
 )
 
 "Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"

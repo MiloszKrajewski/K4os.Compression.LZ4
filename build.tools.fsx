@@ -48,7 +48,13 @@ module File =
     let download fn (url: string) =
         if not (exists fn) then
             printfn "Downloading: %s" url
-            use wc = new WebClient() in wc.DownloadFile(url, fn)
+            use wc = new WebClient()
+            ServicePointManager.SecurityProtocol <-
+                ServicePointManager.SecurityProtocol
+                ||| SecurityProtocolType.Tls
+                ||| SecurityProtocolType.Tls11
+                ||| SecurityProtocolType.Tls12
+            wc.DownloadFile(url, fn)
 
 module Regex =
     let create ignoreCase pattern =
