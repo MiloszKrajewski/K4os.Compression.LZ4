@@ -3,7 +3,7 @@ using Xunit;
 
 namespace K4os.Compression.LZ4.Test
 {
-	public class SilesiaCorpusBlockTests
+	public class ChecksumBlockTests
 	{
 		[Theory(Skip = "Too long")]
 		// 64

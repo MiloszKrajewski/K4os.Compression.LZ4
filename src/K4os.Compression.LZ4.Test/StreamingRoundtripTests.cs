@@ -165,6 +165,7 @@ namespace K4os.Compression.LZ4.Test
 					false,
 					out var loaded,
 					out var encoded);
+
 				if (encoded > 0)
 				{
 					outputWriter.Write(encoded);
