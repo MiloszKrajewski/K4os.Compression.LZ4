@@ -1,14 +1,21 @@
 using System.IO;
+using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
-	public class UnitTest1
+	public class RoundtripTests
 	{
-		// ..\.tools\lz4.exe -9 -BD -B4 -BX -f .\dickens .\dickens.lz4
-		public void TestDecoder()
+		[Theory]
+		[InlineData(".corpus/dickens", "-9 -BD -B4 -BX")]
+		public void RoundtripWithReferenceEncoder(string filename, string options)
 		{
-			var original = Tools.FindFile(".corpus/dickens");
-			var encoded = ReferenceLZ4.Encode("-9 -BD -B4 -BX", original);
+			TestDecoder(filename, options);
+		}
+
+		private static void TestDecoder(string filename, string options)
+		{
+			var original = Tools.FindFile(filename);
+			var encoded = ReferenceLZ4.Encode(options, original);
 			var decoded = Path.GetTempFileName();
 			try
 			{

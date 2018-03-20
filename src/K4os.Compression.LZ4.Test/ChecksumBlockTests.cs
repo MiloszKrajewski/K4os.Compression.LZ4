@@ -5,7 +5,11 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class ChecksumBlockTests
 	{
+#if DEBUG
 		[Theory(Skip = "Too long")]
+#else
+		[Theory]
+#endif
 		// 64
 		[InlineData(".corpus/dickens", 0, 10192446, 6428742, 0x17278caf, "+qMqKlRoZSBQcm9qZWN0IEd1dGVuYmVyZyBFdGV4dCBvZiBBIENoaWxkJ3MgSGlzdG9yeSBvZiBFbmds")]
 		[InlineData(".corpus/mozilla", 0, 51220480, 26435667, 0x929ed42e, "n21vemlsbGEvAAEASPQGIDQwNzU1IAAgIDI2MDAgACAgICAgCAABAgD/CDAgIDc0NzU3NDI3NjEgIDEw")]
@@ -50,7 +54,11 @@ namespace K4os.Compression.LZ4.Test
 			Assert.Equal(AsHex(expectedChecksum), AsHex(Tools.Adler32(dst)));
 		}
 
+#if DEBUG
 		[Theory(Skip = "Too long")]
+#else
+		[Theory]
+#endif
 		[InlineData(".corpus/dickens", 0, 10192446, 3, 4777698, 0x3dcf78af, "8CMqKlRoZSBQcm9qZWN0IEd1dGVuYmVyZyBFdGV4dCBvZiBBIENoaWxkJ3MgSGlzdG9yeRUA8CJFbmds")]
 		[InlineData(".corpus/mozilla", 0, 51220480, 3, 22612180, 0xf068ebda, "n21vemlsbGEvAAEASOAgNDA3NTUgACAgMjYwMAgANCAgIAgAAw0A/wcgNzQ3NTc0Mjc2MSAgMTA3NjUA")]
 		[InlineData(".corpus/mr", 0, 9970564, 3, 4645737, 0x165d96a1, "8CEIAAUACgAAAElTT19JUiAxMDAIAAgAFgAAAE9SSUdJTkFMXFBSSU1BUllcT1RIRVIcAPAKGgAAADEu")]
