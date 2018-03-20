@@ -29,11 +29,14 @@ namespace K4os.Compression.LZ4.Encoders
 		public int BlockSize => _blockSize;
 		public int BytesReady => _outputIndex;
 
-		public int Decode(byte* source, int length)
+		public int Decode(byte* source, int length, int blockSize)
 		{
-			Prepare();
+			if (blockSize <= 0)
+				blockSize = _blockSize;
 
-			var decoded = DecodeBlock(source, length, _outputBuffer + _outputIndex, _blockSize);
+			Prepare(blockSize);
+
+			var decoded = DecodeBlock(source, length, _outputBuffer + _outputIndex, blockSize);
 
 			if (decoded < 0)
 				throw new InvalidOperationException();
@@ -42,6 +45,7 @@ namespace K4os.Compression.LZ4.Encoders
 
 			return decoded;
 		}
+
 
 		public void Drain(byte* target, int offset, int length)
 		{
@@ -52,9 +56,9 @@ namespace K4os.Compression.LZ4.Encoders
 			Mem.Copy(target, _outputBuffer + offset, length);
 		}
 
-		private void Prepare()
+		private void Prepare(int blockSize)
 		{
-			if (_outputIndex + _blockSize <= _outputLength)
+			if (_outputIndex + blockSize <= _outputLength)
 				return;
 
 			_outputIndex = CopyDict(_outputBuffer, _outputIndex);

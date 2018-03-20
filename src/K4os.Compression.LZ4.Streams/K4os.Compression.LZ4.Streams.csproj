@@ -6,4 +6,12 @@
   </PropertyGroup>
   <Import Project="..\..\Common.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Runtime.Serialization">
+      <HintPath>..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6\System.Runtime.Serialization.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>
