@@ -4,11 +4,13 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4
 {
-	internal unsafe class Mem
+	public unsafe class Mem
 	{
 		public const int K1 = 1024;
 		public const int K64 = 0x10000;
-		public const int M1 = 1024 * 1024;
+		public const int K256 = 256 * K1;
+		public const int M1 = 1024 * K1;
+		public const int M4 = M1 * 4;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int RoundUp(int value, int step) => (value + step - 1) / step * step;

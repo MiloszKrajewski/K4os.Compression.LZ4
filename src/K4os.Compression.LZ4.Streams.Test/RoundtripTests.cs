@@ -31,20 +31,21 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 		private static void Decode(string encoded, string decoded)
 		{
-			using (var input = File.OpenRead(encoded))
-			using (var output = File.Create(decoded))
-			using (var decode = new LZ4InputStream(input))
-			{
-				var buffer = new byte[4096];
-				while (true)
-				{
-					var read = decode.Read(buffer, 0, buffer.Length);
-					if (read == 0)
-						break;
+			#warning implement me
+			//using (var input = File.OpenRead(encoded))
+			//using (var output = File.Create(decoded))
+			//using (var decode = new LZ4InputStream(input))
+			//{
+			//	var buffer = new byte[4096];
+			//	while (true)
+			//	{
+			//		var read = decode.Read(buffer, 0, buffer.Length);
+			//		if (read == 0)
+			//			break;
 
-					output.Write(buffer, 0, read);
-				}
-			}
+			//		output.Write(buffer, 0, read);
+			//	}
+			//}
 		}
 	}
 }
