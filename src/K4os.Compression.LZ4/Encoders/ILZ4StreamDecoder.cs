@@ -16,6 +16,15 @@
 		unsafe int Decode(byte* source, int length, int blockSize = 0);
 
 		/// <summary>
+		/// Inject already decompressed block and caches it in decoder.
+		/// These bytes can be read with <see cref="Drain" />.
+		/// </summary>
+		/// <param name="source">Points to uncompressed block.</param>
+		/// <param name="length">Length of uncompressed block.</param>
+		/// <returns>Number of decoded bytes.</returns>
+		unsafe int Inject(byte* source, int length);
+
+		/// <summary>
 		/// Reads previously decoded bytes. Please note, <paramref name="offset"/> should be
 		/// negative number, pointing to bytes before current head. 
 		/// </summary>

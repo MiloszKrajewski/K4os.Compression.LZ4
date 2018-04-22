@@ -49,6 +49,15 @@ Target "Sanitize" (fun _ ->
     sanitize "lz4frame.c"
 )
 
+let enusure7Zexe () = 
+    if not (File.exists "./.tools/7za.exe") then
+        let zipFileUrl = "http://www.7-zip.org/a/7za920.zip"
+        let zipFileName = "./.tools/7za920.zip"
+        CreateDir "./.tools"
+        File.download zipFileName zipFileUrl
+        ZipHelper.Unzip "./.tools/" zipFileName
+
+
 let ensureLZ4exe () =
     if not (File.exists "./.tools/lz4.exe") then
         let zipFileUrl = "https://github.com/lz4/lz4/releases/download/v1.8.1.2/lz4_v1_8_1_win64.zip"
@@ -60,21 +69,17 @@ let ensureLZ4exe () =
         DeleteDir "./.tools/lz4"
 
 let uncorpus fn (uri: string) =
-    let fn = sprintf "./.corpus/%s" fn
-    if not (File.exists fn) then
-        if not (File.exists "./.tools/7za.exe") then
-            let zipFileUrl = "http://www.7-zip.org/a/7za920.zip"
-            let zipFileName = "./.tools/7za920.zip"
-            CreateDir "./.tools"
-            File.download zipFileName zipFileUrl
-            ZipHelper.Unzip "./.tools/" zipFileName
-        fn |> directory |> CreateDir
-        let bz2 = sprintf "%s.bz2" fn
-        File.download bz2 uri
-        Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory bz2) bz2)
-        DeleteFile bz2
+    let dataFile = sprintf "./.corpus/%s" fn
+    if not (File.exists dataFile) then
+        dataFile |> directory |> CreateDir
+        let bz2File = sprintf "%s.bz2" dataFile
+        File.download bz2File uri
+        Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory bz2File) bz2File)
+        DeleteFile bz2File
 
 Target "Restore:Corpus" (fun _ ->
+    enusure7Zexe ()
+    ensureLZ4exe ()
     uncorpus "dickens" "http://sun.aei.polsl.pl/~sdeor/corpus/dickens.bz2"
     uncorpus "mozilla" "http://sun.aei.polsl.pl/~sdeor/corpus/mozilla.bz2"
     uncorpus "mr" "http://sun.aei.polsl.pl/~sdeor/corpus/mr.bz2"
@@ -87,7 +92,7 @@ Target "Restore:Corpus" (fun _ ->
     uncorpus "webster" "http://sun.aei.polsl.pl/~sdeor/corpus/webster.bz2"
     uncorpus "xml" "http://sun.aei.polsl.pl/~sdeor/corpus/xml.bz2"
     uncorpus "x-ray" "http://sun.aei.polsl.pl/~sdeor/corpus/x-ray.bz2"
-    ensureLZ4exe ()
+    
 )
 
 "Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"

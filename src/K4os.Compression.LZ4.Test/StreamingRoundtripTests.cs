@@ -24,6 +24,10 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(".corpus/dickens", 4096, 0x10000, 0, 3)]
 		[InlineData(".corpus/dickens", 4096, 0x10000, 3, 0)]
 		[InlineData(".corpus/dickens", 4096, 0x10000, 8, 8)]
+		[InlineData(".corpus/samba", 4096, 0x10000, 0, 0)]
+		[InlineData(".corpus/samba", 4096, 0x10000, 0, 3)]
+		[InlineData(".corpus/samba", 4096, 0x10000, 3, 0)]
+		[InlineData(".corpus/samba", 4096, 0x10000, 8, 8)]
 		public void ExtraBlocks(
 			string filename,
 			int topupSize, int blockSize,
@@ -38,6 +42,11 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(".corpus/dickens", 4096, 0x10000, 3, 0)]
 		[InlineData(".corpus/dickens", 4096, 0x20000, 2, 3)]
 		[InlineData(".corpus/dickens", 4096, 0x100000, 0, 0)]
+		[InlineData(".corpus/samba", 4096, 4096, 0, 0)]
+		[InlineData(".corpus/samba", 4096, 16384, 0, 3)]
+		[InlineData(".corpus/samba", 4096, 0x10000, 3, 0)]
+		[InlineData(".corpus/samba", 4096, 0x20000, 2, 3)]
+		[InlineData(".corpus/samba", 4096, 0x100000, 0, 0)]
 		public void BlockSize(
 			string filename,
 			int topupSize, int blockSize,

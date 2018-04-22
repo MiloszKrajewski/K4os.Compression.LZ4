@@ -46,6 +46,34 @@ namespace K4os.Compression.LZ4.Encoders
 			return decoded;
 		}
 
+		public int Inject(byte* source, int length)
+		{
+			if (length <= 0)
+				return 0;
+
+			if (length > _blockSize)
+				throw new Exception();
+
+			if (_outputIndex + length < _outputLength)
+			{
+				Mem.Copy(_outputBuffer + _outputIndex, source, length);
+				_outputIndex = ApplyDict(_outputIndex + length);
+			} 
+			else if (length >= Mem.K64)
+			{
+				Mem.Copy(_outputBuffer, source, length);
+				_outputIndex = ApplyDict(length);
+			}
+			else
+			{
+				var tailSize = Math.Min(Mem.K64 - length, _outputIndex);
+				Mem.Copy(_outputBuffer, _outputBuffer + _outputIndex - tailSize, tailSize);
+				Mem.Copy(_outputBuffer + tailSize, source, length);
+				_outputIndex = ApplyDict(tailSize + length);
+			}
+
+			return length;
+		}
 
 		public void Drain(byte* target, int offset, int length)
 		{
@@ -61,16 +89,24 @@ namespace K4os.Compression.LZ4.Encoders
 			if (_outputIndex + blockSize <= _outputLength)
 				return;
 
-			_outputIndex = CopyDict(_outputBuffer, _outputIndex);
+			_outputIndex = CopyDict(_outputIndex);
 		}
 
-		private int CopyDict(byte* buffer, int index)
+		private int CopyDict(int index)
 		{
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
-			Mem.Copy(buffer, buffer + dictStart, dictSize);
-			LZ4_xx.LZ4_setStreamDecode(_context, buffer, dictSize);
+			Mem.Copy(_outputBuffer, _outputBuffer + dictStart, dictSize);
+			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
 			return dictSize;
+		}
+
+		private int ApplyDict(int index)
+		{ 
+			var dictStart = Math.Max(index - Mem.K64, 0);
+			var dictSize = index - dictStart;
+			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
+			return index;
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
