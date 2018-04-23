@@ -17,6 +17,7 @@
 
 		/// <summary>
 		/// Inject already decompressed block and caches it in decoder.
+		/// Used with uncompressed-yet-chained blocks and premade dictionaries.
 		/// These bytes can be read with <see cref="Drain" />.
 		/// </summary>
 		/// <param name="source">Points to uncompressed block.</param>

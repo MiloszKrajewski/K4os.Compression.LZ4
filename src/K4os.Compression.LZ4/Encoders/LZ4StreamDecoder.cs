@@ -51,7 +51,7 @@ namespace K4os.Compression.LZ4.Encoders
 			if (length <= 0)
 				return 0;
 
-			if (length > _blockSize)
+			if (length > Math.Max(_blockSize, Mem.K64))
 				throw new Exception();
 
 			if (_outputIndex + length < _outputLength)
@@ -105,7 +105,7 @@ namespace K4os.Compression.LZ4.Encoders
 		{ 
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
-			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
+			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer + dictStart, dictSize);
 			return index;
 		}
 

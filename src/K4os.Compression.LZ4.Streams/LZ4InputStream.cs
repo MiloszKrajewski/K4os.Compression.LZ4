@@ -4,13 +4,15 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
 {
 	public class LZ4InputStream: Stream
 	{
 		private readonly Stream _inner;
-		private readonly byte[] _bytes = new byte[16];
+		private readonly byte[] _buffer16 = new byte[16];
+		private int _index16;
 
 		private int _decoded;
 		private readonly bool _interactive = true;
@@ -52,9 +54,13 @@ namespace K4os.Compression.LZ4.Streams
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private void ReadFrame()
 		{
+			Read0();
+
 			var magic = TryRead32();
 			if (magic != 0x184D2204)
-				throw new InvalidDataException();
+				throw MagicNumberExpected();
+
+			Read0();
 
 			var FLG_BD = Read16();
 
@@ -66,16 +72,39 @@ namespace K4os.Compression.LZ4.Streams
 
 			var BD = (FLG_BD >> 8) & 0xFF;
 
-			var contentSize = (BD & (1 << 3)) != 0 ? (long?) Read64() : null;
-			var dictionaryId = (BD & (1 << 0)) != 0 ? (uint?) Read32() : null;
+			var hasContentSize = (BD & (1 << 3)) != 0;
+			var hasDictionary = (BD & (1 << 0)) != 0;
+			var blockSizeCode = (BD >> 4) & 0x07;
 
-			var HC = Read8();
+			if (hasContentSize) 
+				Read64(); // needs to be read (if present) but we don't care
 
-			var blockSize = MaxBlockSize((BD >> 4) & 0x07);
+			var dictionaryId = hasDictionary ? (uint?) Read32() : null;
+
+			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
+			var expectedHC = Read8();
+
+			if (actualHC != expectedHC)
+				throw InvalidHeaderChecksum();
+
+			var blockSize = MaxBlockSize(blockSizeCode);
 
 			_frameInfo = new LZ4FrameInfo(cchecksum, chaining, bchecksum, dictionaryId, blockSize);
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
+		}
+
+		private static InvalidDataException InvalidHeaderChecksum() =>
+			new InvalidDataException("Invalid LZ4 frame header checksum");
+
+		private static InvalidDataException MagicNumberExpected() =>
+			new InvalidDataException("LZ4 frame magic number expected");
+
+		private void CloseFrame()
+		{
+			_decoder = null;
+			_frameInfo = null;
+			_buffer = null;
 		}
 
 		private static int MaxBlockSize(int blockSizeCode)
@@ -92,11 +121,14 @@ namespace K4os.Compression.LZ4.Streams
 
 		private unsafe int ReadBlock()
 		{
+			Read0();
+
 			var blockLength = (int) Read32();
 			if (blockLength == 0)
 			{
 				if (_frameInfo.ContentChecksum)
 					Read32();
+				CloseFrame();
 				return 0;
 			}
 
@@ -132,7 +164,7 @@ namespace K4os.Compression.LZ4.Streams
 			var index = 0;
 			while (index < count)
 			{
-				var read = _inner.Read(_bytes, index, count - index);
+				var read = _inner.Read(_buffer16, _index16 + index, count - index);
 				if (read == 0)
 				{
 					if (index == 0 && optional)
@@ -144,13 +176,20 @@ namespace K4os.Compression.LZ4.Streams
 				index += read;
 			}
 
+			_index16 += index;
+
 			return true;
+		}
+
+		private void Read0()
+		{
+			_index16 = 0;
 		}
 
 		private ulong Read64()
 		{
 			ReadN(sizeof(ulong));
-			return BitConverter.ToUInt64(_bytes, 0);
+			return BitConverter.ToUInt64(_buffer16, _index16 - sizeof(ulong));
 		}
 
 		private uint? TryRead32()
@@ -158,32 +197,33 @@ namespace K4os.Compression.LZ4.Streams
 			if (!ReadN(sizeof(uint), true))
 				return null;
 
-			return BitConverter.ToUInt32(_bytes, 0);
+			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
 		}
 
 		private uint Read32()
 		{
 			ReadN(sizeof(uint));
-			return BitConverter.ToUInt32(_bytes, 0);
+			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
 		}
 
 		private ushort Read16()
 		{
 			ReadN(sizeof(ushort));
-			return BitConverter.ToUInt16(_bytes, 0);
+			return BitConverter.ToUInt16(_buffer16, _index16 - sizeof(ushort));
 		}
 
 		private byte Read8()
 		{
 			ReadN(sizeof(byte));
-			return _bytes[0];
+			return _buffer16[_index16 - 1];
 		}
 
 		public override Task<int> ReadAsync(
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			Task.FromResult(Read(buffer, offset, count));
 
-		public override int ReadByte() => Read(_bytes, 0, 1) > 0 ? _bytes[0] : -1;
+		public override int ReadByte() => 
+			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
 
 		protected override void Dispose(bool disposing)
 		{

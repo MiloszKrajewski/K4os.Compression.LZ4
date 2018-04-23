@@ -5,21 +5,12 @@ using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
-	public class RoundtripTests
+	public class ReferenceEncoderRoundtripTests
 	{
-		private static readonly string[] CorpusNames = new string[] {
-			"dickens", // x/1384
-			"mozilla", // 2417/913
-			"mr", // 1088/3675
-			"nci", // 1536/4049
-			"ooffice", // x/3778
-			"osdb", // x/1311
-			"reymont", // 3348/1607
-			"samba", // 69/3098
-			"sao",
-			"webster", // 817/2183
-			"x-ray", // x/365
-			"xml" // 123/1581
+		private static readonly string[] CorpusNames = {
+			"dickens", "mozilla", "mr", "nci",
+			"ooffice", "osdb", "reymont", "samba",
+			"sao", "webster", "x-ray", "xml"
 		};
 
 		[Theory]
@@ -27,7 +18,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("reymont", "-9 -BD -B4")]
 		[InlineData("xml", "-1 -BD -B4")]
 		[InlineData("xml", "-9 -BD -B4")]
-		public void RoundtripWithReferenceEncoderSmallBlockSize(string filename, string options)
+		public void SmallBlockSize(string filename, string options)
 		{
 			TestDecoder(Path.Combine(".corpus", filename), options);
 		}
@@ -45,7 +36,10 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("-9 -BD -B5 -BX")]
 		[InlineData("-9 -BD -B6")]
 		[InlineData("-9 -BD -B7 -BX")]
-		public void RoundtripWithReferenceEncoderForWholeCorpus(string options)
+		[InlineData("-1 -B4")]
+		[InlineData("-1 -B7")]
+		[InlineData("-9 -B7 -BX")]
+		public void WholeCorpus(string options)
 		{
 			foreach (var filename in CorpusNames)
 			{
@@ -58,6 +52,25 @@ namespace K4os.Compression.LZ4.Streams.Test
 					throw new Exception($"Failed to process: {filename} @ {options}", e);
 				}
 			}
+		}
+
+		[Theory]
+		[InlineData("-1 -BD -B4 -BX")]
+		public void HighEntropyData(string options)
+		{
+			var random = new Random(0);
+			var buffer = new byte[0x10000];
+			var filename = Path.GetTempFileName();
+			using (var file = File.Create(filename))
+			{
+				for (var i = 0; i < Mem.M4 / Mem.K64; i++)
+				{
+					random.NextBytes(buffer);
+					file.Write(buffer, 0, buffer.Length);
+				}
+			}
+
+			TestDecoder(filename, options);
 		}
 
 		private static void TestDecoder(string filename, string options)
