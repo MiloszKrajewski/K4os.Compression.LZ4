@@ -1,6 +1,6 @@
 ﻿namespace K4os.Compression.LZ4.Streams
 {
-	internal class LZ4FrameInfo: ILZ4FrameInfo
+	public class LZ4FrameInfo: ILZ4FrameInfo
 	{
 		public bool ContentChecksum { get; }
 		public bool Chaining { get; }

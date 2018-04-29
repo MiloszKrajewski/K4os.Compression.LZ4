@@ -32,6 +32,13 @@
 				return encoder.Encode(targetP + index, length);
 		}
 
+		public static unsafe int Copy(
+			this ILZ4StreamEncoder encoder, byte[] target, int index, int length)
+		{
+			fixed (byte* targetP = target)
+				return encoder.Copy(targetP + index, length);
+		}
+
 		public static bool Encode(
 			this ILZ4StreamEncoder encoder, byte[] target, ref int index, int length)
 		{

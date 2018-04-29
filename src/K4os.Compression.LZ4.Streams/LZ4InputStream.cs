@@ -16,8 +16,10 @@ namespace K4os.Compression.LZ4.Streams
 
 		private int _decoded;
 		private readonly bool _interactive = true;
-		private readonly Func<ILZ4FrameInfo, ILZ4StreamDecoder> _decoderFactory;
+
 		private ILZ4StreamDecoder _decoder;
+		private readonly Func<ILZ4FrameInfo, ILZ4StreamDecoder> _decoderFactory;
+
 		private ILZ4FrameInfo _frameInfo;
 		private byte[] _buffer;
 
@@ -51,6 +53,9 @@ namespace K4os.Compression.LZ4.Streams
 			return read;
 		}
 
+		public override int ReadByte() =>
+			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
+
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private void ReadFrame()
 		{
@@ -65,12 +70,11 @@ namespace K4os.Compression.LZ4.Streams
 			var FLG_BD = Read16();
 
 			var FLG = FLG_BD & 0xFF;
+			var BD = (FLG_BD >> 8) & 0xFF;
 
 			var chaining = ((FLG >> 5) & 0x01) == 0;
 			var bchecksum = ((FLG >> 4) & 0x01) != 0;
 			var cchecksum = ((FLG >> 2) & 0x01) != 0;
-
-			var BD = (FLG_BD >> 8) & 0xFF;
 
 			var hasContentSize = (BD & (1 << 3)) != 0;
 			var hasDictionary = (BD & (1 << 0)) != 0;
@@ -93,12 +97,6 @@ namespace K4os.Compression.LZ4.Streams
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
 		}
-
-		private static InvalidDataException InvalidHeaderChecksum() =>
-			new InvalidDataException("Invalid LZ4 frame header checksum");
-
-		private static InvalidDataException MagicNumberExpected() =>
-			new InvalidDataException("LZ4 frame magic number expected");
 
 		private void CloseFrame()
 		{
@@ -218,13 +216,6 @@ namespace K4os.Compression.LZ4.Streams
 			return _buffer16[_index16 - 1];
 		}
 
-		public override Task<int> ReadAsync(
-			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
-			Task.FromResult(Read(buffer, offset, count));
-
-		public override int ReadByte() => 
-			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
-
 		protected override void Dispose(bool disposing)
 		{
 			if (!disposing)
@@ -241,7 +232,7 @@ namespace K4os.Compression.LZ4.Streams
 		public override long Position
 		{
 			get => -1;
-			set => throw new InvalidOperationException();
+			set => throw InvalidOperation("SetPosition");
 		}
 
 		public override bool CanTimeout => _inner.CanTimeout;
@@ -274,7 +265,13 @@ namespace K4os.Compression.LZ4.Streams
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("WriteAsync");
 
-		private Exception InvalidOperation(string operation) =>
+		private static InvalidDataException InvalidHeaderChecksum() =>
+			new InvalidDataException("Invalid LZ4 frame header checksum");
+
+		private static InvalidDataException MagicNumberExpected() =>
+			new InvalidDataException("LZ4 frame magic number expected");
+
+		private InvalidOperationException InvalidOperation(string operation) =>
 			new InvalidOperationException($"Operation {operation} is not allowed for {GetType().Name}");
 	}
 }
