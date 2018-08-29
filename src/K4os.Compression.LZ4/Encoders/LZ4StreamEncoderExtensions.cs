@@ -73,7 +73,11 @@
 			var blockSize = encoder.BlockSize;
 			var bytesReady = encoder.BytesReady;
 			if (bytesReady >= blockSize || force && bytesReady > 0)
-				encoded = encoder.Encode(target, targetLength);
+			{
+				#error there is no way to indicate failed compression 
+				if ((encoded = encoder.Encode(target, targetLength)) <= 0) 
+					return false;
+			}
 
 			return loaded != 0 || encoded != 0;
 		}

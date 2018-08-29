@@ -7,7 +7,6 @@ using _LZ4 = LZ4.LZ4Codec;
 
 namespace K4os.Compression.LZ4.Test
 {
-
 	public class BlockRoundtripTests
 	{
 		const string Lorem =
@@ -36,7 +35,7 @@ namespace K4os.Compression.LZ4.Test
 
 		private static void Roundtrip(byte[] source)
 		{
-			var compressedOld = global::LZ4.LZ4Codec.Encode(source, 0, source.Length);
+			var compressedOld = _LZ4.Encode(source, 0, source.Length);
 			var compressedNew = LZ4Codec.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 
 			Tools.SameBytes(
@@ -103,6 +102,16 @@ namespace K4os.Compression.LZ4.Test
 			new Random(seed).NextBytes(buffer);
 
 			Roundtrip(buffer);
+		}
+
+		[Fact]
+		public void BorderLineCompressions()
+		{
+			var original = Tools.LoadChunk(Tools.FindFile(".corpus/x-ray"), 0, 0x10000);
+			var target = new byte[LZ4Codec.MaximumOutputSize(original.Length)];
+			var required = LZ4Codec.Encode(original, 0, original.Length, target, 0, target.Length, LZ4Level.L00_FAST);
+			var minimal = LZ4Codec.Encode(original, 0, original.Length, target, 0, required, LZ4Level.L00_FAST);
+			Assert.Equal(required, minimal);
 		}
 	}
 }
