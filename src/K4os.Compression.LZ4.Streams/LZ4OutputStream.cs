@@ -21,7 +21,8 @@ namespace K4os.Compression.LZ4.Streams
 		private byte[] _buffer;
 
 		public LZ4OutputStream(
-			Stream inner, ILZ4FrameInfo frameInfo, Func<ILZ4FrameInfo, ILZ4StreamEncoder> encoderFactory)
+			Stream inner, ILZ4FrameInfo frameInfo,
+			Func<ILZ4FrameInfo, ILZ4StreamEncoder> encoderFactory)
 		{
 			_inner = inner;
 			_frameInfo = frameInfo;
@@ -33,10 +34,7 @@ namespace K4os.Compression.LZ4.Streams
 		public override Task FlushAsync(CancellationToken cancellationToken) =>
 			_inner.FlushAsync(cancellationToken);
 
-		public void Close()
-		{
-			CloseFrame();
-		}
+		public void Close() { CloseFrame(); }
 
 		public override void WriteByte(byte value)
 		{
@@ -51,24 +49,24 @@ namespace K4os.Compression.LZ4.Streams
 				if (_encoder == null)
 					WriteFrame();
 
-				_encoder.TopupAndEncode(
-					buffer,
-					offset,
-					count,
-					_buffer,
-					0,
-					_buffer.Length,
+				var action = _encoder.TopupAndEncode(
+					buffer, offset, count,
+					_buffer, 0, _buffer.Length,
 					false,
 					out var loaded,
 					out var encoded);
 
-				if (encoded > 0)
-				{ 
-					WriteBlock(encoded, true);
-				}
-				else if (loaded == 0)
+				switch (action)
 				{
-					WriteBlock(_encoder.Copy(_buffer, 0, _buffer.Length), false);
+					case EncoderAction.None:
+					case EncoderAction.Loaded:
+						break;
+					case EncoderAction.Copied:
+						WriteBlock(encoded, false);
+						break;
+					case EncoderAction.Encoded:
+						WriteBlock(encoded, true);
+						break;
 				}
 
 				offset += loaded;
@@ -108,7 +106,8 @@ namespace K4os.Compression.LZ4.Streams
 			Write16((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
-				throw NotImplemented("ContentSize feature is not implemented"); // Write64(contentSize);
+				throw NotImplemented(
+					"ContentSize feature is not implemented"); // Write64(contentSize);
 
 			if (hasDictionary)
 				throw NotImplemented(
@@ -127,9 +126,11 @@ namespace K4os.Compression.LZ4.Streams
 		{
 			if (_encoder.BytesReady > 0)
 			{
+				#error after Copy bytes are still ready 
+
 				var encoded = _encoder.Encode(_buffer, 0, _buffer.Length);
 				if (encoded > 0)
-				{ 
+				{
 					WriteBlock(encoded, true);
 				}
 				else
@@ -187,10 +188,7 @@ namespace K4os.Compression.LZ4.Streams
 				Close();
 		}
 
-		private void Write8(byte value)
-		{
-			_buffer16[_index16++] = value;
-		}
+		private void Write8(byte value) { _buffer16[_index16++] = value; }
 
 		private void Write16(ushort value)
 		{
@@ -211,15 +209,15 @@ namespace K4os.Compression.LZ4.Streams
 		/*
 		private void Write64(ulong value)
 		{
-			_buffer16[_index16 + 0] = (byte) value;
-			_buffer16[_index16 + 1] = (byte) (value >> 8);
-			_buffer16[_index16 + 2] = (byte) (value >> 16);
-			_buffer16[_index16 + 3] = (byte) (value >> 24);
-			_buffer16[_index16 + 4] = (byte) (value >> 32);
-			_buffer16[_index16 + 5] = (byte) (value >> 40);
-			_buffer16[_index16 + 6] = (byte) (value >> 48);
-			_buffer16[_index16 + 7] = (byte) (value >> 56);
-			_index16 += 8;
+		    _buffer16[_index16 + 0] = (byte) value;
+		    _buffer16[_index16 + 1] = (byte) (value >> 8);
+		    _buffer16[_index16 + 2] = (byte) (value >> 16);
+		    _buffer16[_index16 + 3] = (byte) (value >> 24);
+		    _buffer16[_index16 + 4] = (byte) (value >> 32);
+		    _buffer16[_index16 + 5] = (byte) (value >> 40);
+		    _buffer16[_index16 + 6] = (byte) (value >> 48);
+		    _buffer16[_index16 + 7] = (byte) (value >> 56);
+		    _index16 += 8;
 		}
 		*/
 
@@ -271,10 +269,12 @@ namespace K4os.Compression.LZ4.Streams
 		public override int ReadByte() => throw InvalidOperation("ReadByte");
 
 		private NotImplementedException NotImplemented(string operation) =>
-			new NotImplementedException($"Feature {operation} has not been implemented in {GetType().Name}");
+			new NotImplementedException(
+				$"Feature {operation} has not been implemented in {GetType().Name}");
 
 		private InvalidOperationException InvalidOperation(string operation) =>
-			new InvalidOperationException($"Operation {operation} is not allowed for {GetType().Name}");
+			new InvalidOperationException(
+				$"Operation {operation} is not allowed for {GetType().Name}");
 
 		private ArgumentException InvalidBlockSize(int blockSize) =>
 			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");

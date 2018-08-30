@@ -55,7 +55,7 @@
 			return encoded != 0;
 		}
 
-		public static unsafe bool TopupAndEncode(
+		public static unsafe EncoderAction TopupAndEncode(
 			this ILZ4StreamEncoder encoder,
 			byte* source, int sourceLength,
 			byte* target, int targetLength,
@@ -65,24 +65,28 @@
 			loaded = 0;
 			encoded = 0;
 
-			if (sourceLength <= 0)
-				return false;
-
-			loaded = encoder.Topup(source, sourceLength);
+			if (sourceLength > 0)
+				loaded = encoder.Topup(source, sourceLength);
 
 			var blockSize = encoder.BlockSize;
 			var bytesReady = encoder.BytesReady;
-			if (bytesReady >= blockSize || force && bytesReady > 0)
-			{
-				#error there is no way to indicate failed compression 
-				if ((encoded = encoder.Encode(target, targetLength)) <= 0) 
-					return false;
-			}
 
-			return loaded != 0 || encoded != 0;
+			if (bytesReady < (force ? 1 : blockSize))
+				return loaded > 0 ? EncoderAction.Loaded : EncoderAction.None;
+
+			encoded = encoder.Encode(target, targetLength);
+			if (encoded <= 0)
+			{
+				encoded = bytesReady;
+				return EncoderAction.Copied;
+			}
+			else
+			{
+				return EncoderAction.Encoded;
+			}
 		}
 
-		public static unsafe bool TopupAndEncode(
+		public static unsafe EncoderAction TopupAndEncode(
 			this ILZ4StreamEncoder encoder,
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
