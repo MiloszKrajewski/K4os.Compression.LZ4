@@ -5,11 +5,12 @@ namespace K4os.Compression.LZ4.Encoders
 	// fast encoder context
 	using LZ4Context = LZ4_xx.LZ4_stream_t;
 
-	public unsafe class LZ4FastStreamEncoder: LZ4StreamEncoder
+	public unsafe class LZ4FastStreamEncoder: LZ4StreamEncoderBase
 	{
 		private readonly LZ4Context* _context;
 
-		public LZ4FastStreamEncoder(int blockSize, int extraBlocks = 0): base(blockSize, extraBlocks)
+		public LZ4FastStreamEncoder(int blockSize, int extraBlocks = 0): base(
+			blockSize, extraBlocks)
 		{
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}
@@ -22,7 +23,8 @@ namespace K4os.Compression.LZ4.Encoders
 
 		protected override int EncodeBlock(
 			byte* source, int sourceLength, byte* target, int targetLength) =>
-			LZ4_64.LZ4_compress_fast_continue(_context, source, target, sourceLength, targetLength, 1);
+			LZ4_64.LZ4_compress_fast_continue(
+				_context, source, target, sourceLength, targetLength, 1);
 
 		protected override int CopyDict(byte* buffer, int length) =>
 			LZ4_xx.LZ4_saveDict(_context, buffer, length);

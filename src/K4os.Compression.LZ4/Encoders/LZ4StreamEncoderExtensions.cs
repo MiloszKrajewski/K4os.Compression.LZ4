@@ -77,7 +77,7 @@
 			encoded = encoder.Encode(target, targetLength);
 			if (encoded <= 0)
 			{
-				encoded = bytesReady;
+				encoded = encoder.Copy(target, targetLength);
 				return EncoderAction.Copied;
 			}
 			else

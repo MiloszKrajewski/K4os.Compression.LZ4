@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4
@@ -10,10 +9,14 @@ namespace K4os.Compression.LZ4
 
 		private static void Validate(byte[] buffer, int index, int length)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer), "cannot be null");
+			if (buffer == null) 
+				throw new ArgumentNullException(
+					nameof(buffer), "cannot be null");
 
 			var valid = index >= 0 && length >= 0 && index + length <= buffer.Length;
-			if (!valid) throw new ArgumentException($"invald index/length combination: {index}/{length}");
+			if (!valid)
+				throw new ArgumentException(
+					$"invalid index/length combination: {index}/{length}");
 		}
 
 		public static unsafe int Encode(
@@ -22,7 +25,8 @@ namespace K4os.Compression.LZ4
 			LZ4Level level) =>
 			level == LZ4Level.L00_FAST
 				? LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength)
-				: LZ4_64_HC.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
+				: LZ4_64_HC.LZ4_compress_HC(
+					source, target, sourceLength, targetLength, (int) level);
 
 		public static unsafe int Encode(
 			byte[] source, int sourceIndex, int sourceLength,
@@ -33,16 +37,20 @@ namespace K4os.Compression.LZ4
 			Validate(target, targetIndex, targetLength);
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
-				return Encode(sourceP + sourceIndex, targetP + targetIndex, sourceLength, targetLength, level);
+				return Encode(
+					sourceP + sourceIndex, targetP + targetIndex, sourceLength, targetLength,
+					level);
 		}
 
-		public static byte[] Encode(byte[] source, int sourceIndex, int sourceLength, LZ4Level level)
+		public static byte[] Encode(
+			byte[] source, int sourceIndex, int sourceLength, LZ4Level level)
 		{
 			Validate(source, sourceIndex, sourceLength);
 
 			var bufferLength = MaximumOutputSize(sourceLength);
 			var buffer = new byte[bufferLength];
-			var targetLength = Encode(source, sourceIndex, sourceLength, buffer, 0, bufferLength, level);
+			var targetLength = Encode(
+				source, sourceIndex, sourceLength, buffer, 0, bufferLength, level);
 			if (targetLength == bufferLength)
 				return buffer;
 
@@ -66,7 +74,8 @@ namespace K4os.Compression.LZ4
 				return Decode(sourceP, targetP, sourceLength, target.Length);
 		}
 
-		public static byte[] Decode(byte[] source, int sourceIndex, int sourceLength, int targetLength)
+		public static byte[] Decode(
+			byte[] source, int sourceIndex, int sourceLength, int targetLength)
 		{
 			Validate(source, sourceIndex, sourceLength);
 

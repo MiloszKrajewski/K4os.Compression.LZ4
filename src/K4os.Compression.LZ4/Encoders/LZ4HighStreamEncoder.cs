@@ -5,7 +5,7 @@ namespace K4os.Compression.LZ4.Encoders
 	// high encoder context
 	using LZ4Context = LZ4_64_HC.LZ4HC_CCtx_t;
 
-	public unsafe class LZ4HighStreamEncoder: LZ4StreamEncoder
+	public unsafe class LZ4HighStreamEncoder: LZ4StreamEncoderBase
 	{
 		private readonly LZ4Context* _context;
 

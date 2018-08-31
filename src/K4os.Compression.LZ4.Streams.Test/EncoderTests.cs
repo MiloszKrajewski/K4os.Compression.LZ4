@@ -1,9 +1,10 @@
 using System.IO;
+using K4os.Compression.LZ4.Streams.Test.Internal;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
-	public class ReferenceDecoderRoundtripTests
+	public class EncoderTests
 	{
 		private static readonly string[] CorpusNames = {
 			"dickens", "mozilla", "mr", "nci",

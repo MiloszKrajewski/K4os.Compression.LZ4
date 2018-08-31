@@ -81,8 +81,6 @@ namespace K4os.Compression.LZ4.Streams
 			Write32(0x184D2204);
 			Flush16();
 
-			Flush16();
-
 			const int version = 0x01;
 			var chaining = _frameInfo.Chaining;
 			var bchecksum = _frameInfo.BlockChecksum;
@@ -126,7 +124,7 @@ namespace K4os.Compression.LZ4.Streams
 		{
 			if (_encoder.BytesReady > 0)
 			{
-				#error after Copy bytes are still ready 
+				#warning after Copy bytes are still ready 
 
 				var encoded = _encoder.Encode(_buffer, 0, _buffer.Length);
 				if (encoded > 0)

@@ -11,6 +11,7 @@ namespace K4os.Compression.LZ4.Internal
 
 		protected void ThrowIfDisposed()
 		{
+			#warning exception
 			if (IsDisposed)
 				throw new InvalidOperationException();
 		}

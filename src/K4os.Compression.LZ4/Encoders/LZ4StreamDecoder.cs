@@ -16,7 +16,7 @@ namespace K4os.Compression.LZ4.Encoders
 
 		public LZ4StreamDecoder(int blockSize, int extraBlocks)
 		{
-			blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
+			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
 			extraBlocks = Math.Max(extraBlocks, 0);
 
 			_blockSize = blockSize;

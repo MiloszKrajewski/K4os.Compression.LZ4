@@ -2,10 +2,16 @@
 using System.IO;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test
+namespace K4os.Compression.LZ4.Streams.Test.Internal
 {
 	public class Tools
 	{
+		public static readonly string[] CorpusNames = {
+			"dickens", "mozilla", "mr", "nci",
+			"ooffice", "osdb", "reymont", "samba",
+			"sao", "webster", "x-ray", "xml"
+		};
+		
 		public static unsafe uint Adler32(byte* data, int length)
 		{
 			const uint modAdler = 65521;

@@ -1,17 +1,12 @@
 using System;
 using System.IO;
+using K4os.Compression.LZ4.Streams.Test.Internal;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
-	public class ReferenceEncoderRoundtripTests
+	public class DecoderTests
 	{
-		private static readonly string[] CorpusNames = {
-			"dickens", "mozilla", "mr", "nci",
-			"ooffice", "osdb", "reymont", "samba",
-			"sao", "webster", "x-ray", "xml"
-		};
-
 		[Theory]
 		[InlineData("reymont", "-1 -BD -B4")]
 		[InlineData("reymont", "-9 -BD -B4")]
@@ -40,7 +35,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("-9 -B7 -BX")]
 		public void WholeCorpus(string options)
 		{
-			foreach (var filename in CorpusNames)
+			foreach (var filename in Tools.CorpusNames)
 			{
 				try
 				{

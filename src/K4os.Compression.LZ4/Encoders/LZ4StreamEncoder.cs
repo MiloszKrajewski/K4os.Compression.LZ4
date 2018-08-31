@@ -1,106 +1,33 @@
-﻿using System;
-using K4os.Compression.LZ4.Internal;
-
-namespace K4os.Compression.LZ4.Encoders
+﻿namespace K4os.Compression.LZ4.Encoders
 {
-	public abstract unsafe class LZ4StreamEncoder: UnmanagedResources, ILZ4StreamEncoder
+	public class LZ4StreamEncoder: ILZ4StreamEncoder
 	{
-		private readonly byte* _inputBuffer;
-		private readonly int _inputLength;
-		private readonly int _blockSize;
+		private readonly ILZ4StreamEncoder _encoder;
 
-		private int _inputIndex;
-		private int _inputPointer;
-
-		protected LZ4StreamEncoder(int blockSize, int extraBlocks = 0)
+		public LZ4StreamEncoder(LZ4Level level, int blockSize, int extraBlocks)
 		{
-			blockSize = Math.Max(Mem.RoundUp(blockSize, Mem.K1), Mem.K1);
-			extraBlocks = Math.Max(extraBlocks, 0);
-
-			_blockSize = blockSize;
-			_inputLength = Mem.K64 + (1 + extraBlocks) * blockSize + 8;
-			_inputIndex = _inputPointer = 0;
-			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
+			_encoder = Create(level, blockSize, extraBlocks);
 		}
 
-		public int BlockSize => _blockSize;
-		public int BytesReady => _inputPointer - _inputIndex;
+		public static ILZ4StreamEncoder Create(LZ4Level level, int blockSize, int extraBlocks) =>
+			level == LZ4Level.L00_FAST
+				? CreateFastEncoder(blockSize, extraBlocks)
+				: CreateHighEncoder(level, blockSize, extraBlocks);
 
-		public int Topup(byte* source, int length)
-		{
-			ThrowIfDisposed();
+		private static ILZ4StreamEncoder CreateHighEncoder(
+			LZ4Level level, int blockSize, int extraBlocks) =>
+			new LZ4HighStreamEncoder(level, blockSize, extraBlocks);
 
-			if (length == 0)
-				return 0;
+		private static ILZ4StreamEncoder CreateFastEncoder(int blockSize, int extraBlocks) =>
+			new LZ4FastStreamEncoder(blockSize, extraBlocks);
 
-			var spaceLeft = _inputIndex + _blockSize - _inputPointer;
-			if (spaceLeft <= 0)
-				return 0;
+		public int BlockSize => _encoder.BlockSize;
+		public int BytesReady => _encoder.BytesReady;
 
-			var chunk = Math.Min(spaceLeft, length);
-			Mem.Copy(_inputBuffer + _inputPointer, source, chunk);
-			_inputPointer += chunk;
+		public unsafe int Topup(byte* source, int length) => _encoder.Topup(source, length);
+		public unsafe int Encode(byte* target, int length) => _encoder.Encode(target, length);
+		public unsafe int Copy(byte* target, int length) => _encoder.Copy(target, length);
 
-			return chunk;
-		}
-
-		public int Encode(byte* target, int length)
-		{
-			ThrowIfDisposed();
-
-			var sourceLength = _inputPointer - _inputIndex;
-			if (sourceLength <= 0)
-				return 0;
-
-			var encoded = EncodeBlock(_inputBuffer + _inputIndex, sourceLength, target, length);
-
-			if (encoded < 0)
-				throw new InvalidOperationException();
-
-			if (encoded == 0)
-				return 0;
-
-			Commit();
-
-			return encoded;
-		}
-
-		public int Copy(byte* target, int length)
-		{
-			ThrowIfDisposed();
-
-			var sourceLength = _inputPointer - _inputIndex;
-			if (sourceLength <= 0)
-				return 0;
-
-			if (length < sourceLength)
-				throw new InvalidOperationException();
-
-			Mem.Copy(target, _inputBuffer + _inputIndex, sourceLength);
-
-			Commit();
-
-			return sourceLength;
-		}
-
-		private void Commit()
-		{
-			_inputIndex = _inputPointer;
-			if (_inputIndex + _blockSize <= _inputLength)
-				return;
-
-			_inputIndex = _inputPointer = CopyDict(_inputBuffer, _inputPointer);
-		}
-
-		protected abstract int EncodeBlock(
-			byte* source, int sourceLength, byte* target, int targetLength);
-
-		protected abstract int CopyDict(byte* buffer, int dictionaryLength);
-
-		protected override void ReleaseUnmanaged()
-		{
-			base.ReleaseUnmanaged();
-			Mem.Free(_inputBuffer);
-		}
+		public void Dispose() => _encoder.Dispose();
 	}
 }

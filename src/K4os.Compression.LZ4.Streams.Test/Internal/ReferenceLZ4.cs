@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace K4os.Compression.LZ4.Streams.Test
+namespace K4os.Compression.LZ4.Streams.Test.Internal
 {
 	public class ReferenceLZ4
 	{
