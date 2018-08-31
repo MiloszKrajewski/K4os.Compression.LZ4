@@ -68,6 +68,34 @@
 			if (sourceLength > 0)
 				loaded = encoder.Topup(source, sourceLength);
 
+			return encoder.FlushAndEncode(
+				target, targetLength, force, loaded, out encoded);
+		}
+
+		public static unsafe EncoderAction TopupAndEncode(
+			this ILZ4StreamEncoder encoder,
+			byte[] source, int sourceIndex, int sourceLength,
+			byte[] target, int targetIndex, int targetLength,
+			bool force,
+			out int loaded, out int encoded)
+		{
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
+				return encoder.TopupAndEncode(
+					sourceP + sourceIndex, sourceLength,
+					targetP + targetIndex, targetLength,
+					force,
+					out loaded, out encoded);
+		}
+
+		private static unsafe EncoderAction FlushAndEncode(
+			this ILZ4StreamEncoder encoder,
+			byte* target, int targetLength,
+			bool force,
+			int loaded, out int encoded)
+		{
+			encoded = 0;
+
 			var blockSize = encoder.BlockSize;
 			var bytesReady = encoder.BytesReady;
 
@@ -86,24 +114,20 @@
 			}
 		}
 
-		public static unsafe EncoderAction TopupAndEncode(
+		public static unsafe EncoderAction FlushAndEncode(
+			this ILZ4StreamEncoder encoder, byte* target, int targetLength, out int encoded) =>
+			encoder.FlushAndEncode(target, targetLength, true, 0, out encoded);
+		
+		public static unsafe EncoderAction FlushAndEncode(
 			this ILZ4StreamEncoder encoder,
-			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
-			bool force,
-			out int loaded, out int encoded)
+			out int encoded)
 		{
-			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
-				return encoder.TopupAndEncode(
-					sourceP + sourceIndex,
-					sourceLength,
-					targetP + targetIndex,
-					targetLength,
-					force,
-					out loaded,
-					out encoded);
+				return encoder.FlushAndEncode(
+					targetP + targetIndex, targetLength, true, 0, out encoded);
 		}
+
 
 		public static unsafe void Drain(
 			this ILZ4StreamDecoder decoder,

@@ -34,7 +34,11 @@ namespace K4os.Compression.LZ4.Streams
 		public override Task FlushAsync(CancellationToken cancellationToken) =>
 			_inner.FlushAsync(cancellationToken);
 
+		#if NET46 || NETSTANDARD2_0
+		public override void Close() { CloseFrame(); }
+		#else
 		public void Close() { CloseFrame(); }
+		#endif
 
 		public override void WriteByte(byte value)
 		{
@@ -55,19 +59,7 @@ namespace K4os.Compression.LZ4.Streams
 					false,
 					out var loaded,
 					out var encoded);
-
-				switch (action)
-				{
-					case EncoderAction.None:
-					case EncoderAction.Loaded:
-						break;
-					case EncoderAction.Copied:
-						WriteBlock(encoded, false);
-						break;
-					case EncoderAction.Encoded:
-						WriteBlock(encoded, true);
-						break;
-				}
+				WriteBlock(encoded, action);
 
 				offset += loaded;
 				count -= loaded;
@@ -116,27 +108,23 @@ namespace K4os.Compression.LZ4.Streams
 			Write8(HC);
 			Flush16();
 
-			_encoder = _encoderFactory(_frameInfo);
+			_encoder = CreateEncoder();
 			_buffer = new byte[blockSize];
+		}
+
+		private ILZ4StreamEncoder CreateEncoder()
+		{
+			var encoder = _encoderFactory(_frameInfo);
+			if (encoder.BlockSize > _frameInfo.BlockSize)
+				throw InvalidValue("BlockSize is greater than declared");
+
+			return encoder;
 		}
 
 		public void CloseFrame()
 		{
-			if (_encoder.BytesReady > 0)
-			{
-				#warning after Copy bytes are still ready 
-
-				var encoded = _encoder.Encode(_buffer, 0, _buffer.Length);
-				if (encoded > 0)
-				{
-					WriteBlock(encoded, true);
-				}
-				else
-				{
-					var copied = _encoder.Copy(_buffer, 0, _buffer.Length);
-					WriteBlock(copied, false);
-				}
-			}
+			var action = _encoder.FlushAndEncode(_buffer, 0, _buffer.Length, out var encoded);
+			WriteBlock(encoded, action);
 
 			Write32(0);
 			Flush16();
@@ -148,21 +136,24 @@ namespace K4os.Compression.LZ4.Streams
 			_buffer = null;
 		}
 
-		private int MaxBlockSizeCode(int blockSize)
-		{
-			if (blockSize <= Mem.K64)
-				return 4;
-
-			if (blockSize <= Mem.K256)
-				return 5;
-
-			if (blockSize <= Mem.M1)
-				return 6;
-
-			if (blockSize <= Mem.M4)
-				return 7;
-
+		private int MaxBlockSizeCode(int blockSize) =>
+			blockSize <= Mem.K64 ? 4 :
+			blockSize <= Mem.K256 ? 5 :
+			blockSize <= Mem.M1 ? 6 :
+			blockSize <= Mem.M4 ? 7 :
 			throw InvalidBlockSize(blockSize);
+
+		private void WriteBlock(int length, EncoderAction action)
+		{
+			switch (action)
+			{
+				case EncoderAction.Copied:
+					WriteBlock(length, false);
+					break;
+				case EncoderAction.Encoded:
+					WriteBlock(length, true);
+					break;
+			}
 		}
 
 		private void WriteBlock(int length, bool compressed)
@@ -273,6 +264,9 @@ namespace K4os.Compression.LZ4.Streams
 		private InvalidOperationException InvalidOperation(string operation) =>
 			new InvalidOperationException(
 				$"Operation {operation} is not allowed for {GetType().Name}");
+		
+		private ArgumentException InvalidValue(string description) =>
+			new ArgumentException(description);
 
 		private ArgumentException InvalidBlockSize(int blockSize) =>
 			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");

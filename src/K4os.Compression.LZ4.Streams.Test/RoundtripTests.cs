@@ -7,25 +7,26 @@ namespace K4os.Compression.LZ4.Streams.Test
 	public class RoundtripTests
 	{
 		[Theory]
-		[InlineData("dickens", false, Mem.K64)]
-		[InlineData("mozilla", false, Mem.K64)]
-		[InlineData("mr", false, Mem.K64)]
-		[InlineData("nci", false, Mem.K64)]
-		[InlineData("ooffice", false, Mem.K64)]
-		[InlineData("osdb", false, Mem.K64)]
-		[InlineData("reymont", false, Mem.K64)]
-		[InlineData("samba", false, Mem.K64)]
-		[InlineData("sao", false, Mem.K64)]
-		[InlineData("webster", false, Mem.K64)]
-		[InlineData("x-ray", false, Mem.K64)]
-		[InlineData("xml", false, Mem.K64)]
-		public void SmallBlockSize(string fileName, bool compressionLevel, int blockSize)
+		[InlineData("dickens", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("mozilla", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("mr", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("nci", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("ooffice", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("osdb", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("reymont", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("samba", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("sao", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("webster", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("x-ray", LZ4Level.L00_FAST, Mem.K64)]
+		[InlineData("xml", LZ4Level.L00_FAST, Mem.K64)]
+		public void SmallBlockSize(string fileName, LZ4Level level, int blockSize)
 		{
-			var frameInfo = new LZ4FrameInfo(false, true, false, null, blockSize);
-			TestEncoder($".corpus/{fileName}", compressionLevel, frameInfo);
+			TestEncoder(
+				$".corpus/{fileName}", 1000,
+				new LZ4Settings { Level = level, BlockSize = blockSize });
 		}
 
-		private static void TestEncoder(string fileName, ILZ4FrameInfo frameInfo)
+		private static void TestEncoder(string fileName, int chunkSize, LZ4Settings settings)
 		{
 			var original = Tools.FindFile(fileName);
 			var encoded = Path.GetTempFileName();
@@ -33,7 +34,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 			try
 			{
-				TestedLZ4.Encode(original, encoded, frameInfo);
+				TestedLZ4.Encode(original, encoded, chunkSize, settings);
 				TestedLZ4.Decode(encoded, decoded);
 				Tools.SameFiles(original, decoded);
 			}

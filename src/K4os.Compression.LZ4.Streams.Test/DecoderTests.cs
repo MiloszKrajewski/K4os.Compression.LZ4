@@ -14,14 +14,14 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("xml", "-9 -BD -B4")]
 		public void SmallBlockSize(string filename, string options)
 		{
-			TestDecoder(Path.Combine(".corpus", filename), options);
+			TestDecoder($".corpus/{filename}", options);
 		}
 
-#if DEBUG
+		#if DEBUG
 		[Theory(Skip = "Too long")]
-#else
+		#else
 		[Theory]
-#endif
+		#endif
 		[InlineData("-1 -BD -B4 -BX")]
 		[InlineData("-1 -BD -B5")]
 		[InlineData("-1 -BD -B6 -BX")]
@@ -68,15 +68,16 @@ namespace K4os.Compression.LZ4.Streams.Test
 			TestDecoder(filename, options);
 		}
 
-		private static void TestDecoder(string filename, string options)
+		private static void TestDecoder(string original, string options)
 		{
+			original = Tools.FindFile(original);
 			var encoded = Path.GetTempFileName();
 			var decoded = Path.GetTempFileName();
 			try
 			{
-				ReferenceLZ4.Encode(options, filename, encoded);
+				ReferenceLZ4.Encode(options, original, encoded);
 				TestedLZ4.Decode(encoded, decoded);
-				Tools.SameFiles(filename, decoded);
+				Tools.SameFiles(original, decoded);
 			}
 			finally
 			{

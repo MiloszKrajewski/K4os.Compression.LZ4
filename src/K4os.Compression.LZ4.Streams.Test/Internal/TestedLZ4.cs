@@ -3,6 +3,14 @@ using K4os.Compression.LZ4.Encoders;
 
 namespace K4os.Compression.LZ4.Streams.Test.Internal
 {
+	public class LZ4Settings
+	{
+		public LZ4Level Level { get; set; } = LZ4Level.L00_FAST;
+		public int BlockSize { get; set; } = Mem.K64;
+		public int ExtraBlocks { get; set; } = 0;
+		public bool Chaining { get; set; } = true;
+	}
+
 	public class TestedLZ4
 	{
 		public static void Decode(string encoded, string decoded)
@@ -25,15 +33,15 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 		}
 
 		public static void Encode(
-			string original, string encoded,
-			int chuckSize,
-			bool chain, LZ4Level level, int blockSize, int extraBlocks)
+			string original, string encoded, int chuckSize, LZ4Settings settings)
 		{
-			var frameInfo = new LZ4FrameInfo(false, chain, false, null, blockSize);
+			var frameInfo = new LZ4FrameInfo(
+				false, settings.Chaining, false, null, settings.BlockSize);
 			using (var input = File.OpenRead(original))
 			using (var output = File.Create(encoded))
 			using (var encode = new LZ4OutputStream(
-				output, frameInfo, i => LZ4StreamEncoder.Create(level, i.BlockSize, extraBlocks)))
+				output, frameInfo, i => LZ4StreamEncoder.Create(
+					settings.Level, i.BlockSize, settings.ExtraBlocks)))
 			{
 				var buffer = new byte[chuckSize];
 				while (true)

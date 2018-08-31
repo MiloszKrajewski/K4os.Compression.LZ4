@@ -11,9 +11,8 @@ namespace K4os.Compression.LZ4.Internal
 
 		protected void ThrowIfDisposed()
 		{
-			#warning exception
 			if (IsDisposed)
-				throw new InvalidOperationException();
+				throw new ObjectDisposedException($"{GetType().FullName} is already disposed");
 		}
 
 		protected virtual void ReleaseUnmanaged() { }

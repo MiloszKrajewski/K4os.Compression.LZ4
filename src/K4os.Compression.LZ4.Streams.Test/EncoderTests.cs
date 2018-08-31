@@ -4,35 +4,24 @@ using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
-	public class EncoderSettings
-	{
-		LZ4Level Level { get; set; } = LZ4Level.LZ4_00;
-	}
-
 	public class EncoderTests
 	{
-		private static readonly string[] CorpusNames = {
-			"dickens", "mozilla", "mr", "nci",
-			"ooffice", "osdb", "reymont", "samba",
-			"sao", "webster", "x-ray", "xml"
-		};
-
 		[Theory]
 		[InlineData("reymont", Mem.K64)]
 		[InlineData("xml", Mem.K64)]
 		public void SmallBlockSize(string filename, int blockSize)
 		{
-			var frameInfo = new LZ4FrameInfo(false, true, false, null, blockSize);
-			TestEncoder(Path.Combine(".corpus", filename), frameInfo);
+			TestEncoder($".corpus/{filename}", 1000, new LZ4Settings { BlockSize = blockSize });
 		}
 
-		private static void TestEncoder(string filename, ILZ4FrameInfo frameInfo)
+		private static void TestEncoder(string original, int chunkSize, LZ4Settings settings)
 		{
+			original = Tools.FindFile(original);
 			var encoded = Path.GetTempFileName();
-			string decoded = Path.GetTempFileName();
+			var decoded = Path.GetTempFileName();
 			try
 			{
-				TestedLZ4.Encode(filename, encoded, frameInfo);
+				TestedLZ4.Encode(original, encoded, chunkSize, settings);
 				ReferenceLZ4.Decode(encoded, decoded);
 				Tools.SameFiles(original, decoded);
 			}
