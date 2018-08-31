@@ -39,7 +39,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				try
 				{
-					TestDecoder(Path.Combine(".corpus", filename), options);
+					TestDecoder(Tools.FindFile($".corpus/{filename}"), options);
 				}
 				catch (Exception e)
 				{
@@ -70,14 +70,13 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 		private static void TestDecoder(string filename, string options)
 		{
-			var original = Tools.FindFile(filename);
 			var encoded = Path.GetTempFileName();
 			var decoded = Path.GetTempFileName();
 			try
 			{
-				ReferenceLZ4.Encode(options, original, encoded);
+				ReferenceLZ4.Encode(options, filename, encoded);
 				TestedLZ4.Decode(encoded, decoded);
-				Tools.SameFiles(original, decoded);
+				Tools.SameFiles(filename, decoded);
 			}
 			finally
 			{
