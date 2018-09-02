@@ -68,30 +68,31 @@ let ensureLZ4exe () =
         "./.tools/lz4/lz4.exe" |> CopyFile "./.tools/lz4.exe"
         DeleteDir "./.tools/lz4"
 
-let uncorpus fn (uri: string) =
+let uncorpus fn =
     let dataFile = sprintf "./.corpus/%s" fn
     if not (File.exists dataFile) then
+        let uri = sprintf "https://github.com/MiloszKrajewski/SilesiaCorpus/blob/master/%s.zip?raw=true" fn
         dataFile |> directory |> CreateDir
-        let bz2File = sprintf "%s.bz2" dataFile
-        File.download bz2File uri
-        Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory bz2File) bz2File)
-        DeleteFile bz2File
+        let zipFile = sprintf "%s.zip" dataFile
+        File.download zipFile uri
+        Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory zipFile) zipFile)
+        DeleteFile zipFile
 
 Target "Restore:Corpus" (fun _ ->
     enusure7Zexe ()
     ensureLZ4exe ()
-    uncorpus "dickens" "http://sun.aei.polsl.pl/~sdeor/corpus/dickens.bz2"
-    uncorpus "mozilla" "http://sun.aei.polsl.pl/~sdeor/corpus/mozilla.bz2"
-    uncorpus "mr" "http://sun.aei.polsl.pl/~sdeor/corpus/mr.bz2"
-    uncorpus "nci" "http://sun.aei.polsl.pl/~sdeor/corpus/nci.bz2"
-    uncorpus "ooffice" "http://sun.aei.polsl.pl/~sdeor/corpus/ooffice.bz2"
-    uncorpus "osdb" "http://sun.aei.polsl.pl/~sdeor/corpus/osdb.bz2"
-    uncorpus "reymont" "http://sun.aei.polsl.pl/~sdeor/corpus/reymont.bz2"
-    uncorpus "samba" "http://sun.aei.polsl.pl/~sdeor/corpus/samba.bz2"
-    uncorpus "sao" "http://sun.aei.polsl.pl/~sdeor/corpus/sao.bz2"
-    uncorpus "webster" "http://sun.aei.polsl.pl/~sdeor/corpus/webster.bz2"
-    uncorpus "xml" "http://sun.aei.polsl.pl/~sdeor/corpus/xml.bz2"
-    uncorpus "x-ray" "http://sun.aei.polsl.pl/~sdeor/corpus/x-ray.bz2"
+    uncorpus "dickens"
+    uncorpus "mozilla"
+    uncorpus "mr"
+    uncorpus "nci"
+    uncorpus "ooffice"
+    uncorpus "osdb"
+    uncorpus "reymont"
+    uncorpus "samba"
+    uncorpus "sao"
+    uncorpus "webster"
+    uncorpus "xml"
+    uncorpus "x-ray"
     
 )
 
