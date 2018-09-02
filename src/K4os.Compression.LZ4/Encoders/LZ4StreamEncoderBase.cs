@@ -38,7 +38,7 @@ namespace K4os.Compression.LZ4.Encoders
 				return 0;
 
 			var chunk = Math.Min(spaceLeft, length);
-			Mem.Copy(_inputBuffer + _inputPointer, source, chunk);
+			Mem.Move(_inputBuffer + _inputPointer, source, chunk);
 			_inputPointer += chunk;
 
 			return chunk;
@@ -76,7 +76,7 @@ namespace K4os.Compression.LZ4.Encoders
 			if (length < sourceLength)
 				throw new InvalidOperationException();
 
-			Mem.Copy(target, _inputBuffer + _inputIndex, sourceLength);
+			Mem.Move(target, _inputBuffer + _inputIndex, sourceLength);
 
 			Commit();
 

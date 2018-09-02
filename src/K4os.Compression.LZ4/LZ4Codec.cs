@@ -9,7 +9,7 @@ namespace K4os.Compression.LZ4
 
 		private static void Validate(byte[] buffer, int index, int length)
 		{
-			if (buffer == null) 
+			if (buffer == null)
 				throw new ArgumentNullException(
 					nameof(buffer), "cannot be null");
 
@@ -35,10 +35,10 @@ namespace K4os.Compression.LZ4
 		{
 			Validate(source, sourceIndex, sourceLength);
 			Validate(target, targetIndex, targetLength);
-			fixed (byte* sourceP = source)
-			fixed (byte* targetP = target)
+			fixed (byte* sourceP = &source[sourceIndex])
+			fixed (byte* targetP = &target[targetIndex])
 				return Encode(
-					sourceP + sourceIndex, targetP + targetIndex, sourceLength, targetLength,
+					sourceP, targetP, sourceLength, targetLength,
 					level);
 		}
 
@@ -69,9 +69,9 @@ namespace K4os.Compression.LZ4
 		{
 			Validate(source, sourceIndex, sourceLength);
 			Validate(target, targetIndex, targetLength);
-			fixed (byte* sourceP = source)
-			fixed (byte* targetP = target)
-				return Decode(sourceP, targetP, sourceLength, target.Length);
+			fixed (byte* sourceP = &source[sourceIndex])
+			fixed (byte* targetP = &target[targetIndex])
+				return Decode(sourceP, targetP, sourceLength, targetLength);
 		}
 
 		public static byte[] Decode(
@@ -87,5 +87,80 @@ namespace K4os.Compression.LZ4
 
 			return result;
 		}
+
+		public static unsafe byte[] Pickle(
+			byte[] source, int sourceIndex, int sourceLength,
+			LZ4Level level = LZ4Level.L00_FAST)
+		{
+			if (sourceLength <= 0)
+				return BitConverter.GetBytes((uint) 0);
+
+			Validate(source, sourceIndex, sourceLength);
+
+			var targetP = (byte*) Mem.Alloc(sourceLength);
+			try
+			{
+				fixed (byte* sourceP = source)
+				{
+					var encodedLength = Encode(
+						sourceP, targetP, sourceLength, sourceLength, level);
+
+					return encodedLength <= 0
+						? PickleCopy(sourceP, sourceLength, sourceLength)
+						: PickleCopy(targetP, encodedLength, sourceLength);
+				}
+			}
+			finally
+			{
+				Mem.Free(targetP);
+			}
+		}
+
+		private static unsafe byte[] PickleCopy(
+			byte* target, int targetLength, int sourceLength)
+		{
+			var result = new byte[sizeof(int) + targetLength];
+			fixed (byte* resultP = result)
+			{
+				Mem.Poke32(resultP, (uint) sourceLength);
+				Mem.Move(resultP + sizeof(int), target, targetLength);
+			}
+
+			return result;
+		}
+
+		public static byte[] Pickle(byte[] source, LZ4Level level = LZ4Level.L00_FAST) =>
+			Pickle(source, 0, source.Length);
+
+		public static byte[] Unpickle(
+			byte[] source, int sourceIndex, int sourceLength)
+		{
+			var targetLength = BitConverter.ToInt32(source, sourceIndex);
+			if (targetLength <= 0)
+				return Array.Empty<byte>();
+
+			sourceIndex += sizeof(int);
+			sourceLength -= sizeof(int);
+
+			var target = new byte[targetLength];
+
+			if (targetLength == sourceLength)
+			{
+				Buffer.BlockCopy(source, sourceIndex, target, 0, targetLength);
+			}
+			else
+			{
+				var decodedLength = Decode(
+					source, sourceIndex, sourceLength, target, 0, targetLength);
+				if (decodedLength != targetLength)
+					throw new ArgumentException(
+						$"Decoded length does not match expected value: {decodedLength}/{targetLength}");
+			}
+
+			return target;
+		}
+
+		public static byte[] Unpickle(byte[] source) =>
+			Unpickle(source, 0, source.Length);
 	}
 }

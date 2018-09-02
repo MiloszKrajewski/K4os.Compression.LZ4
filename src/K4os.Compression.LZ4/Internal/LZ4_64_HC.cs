@@ -70,7 +70,7 @@ namespace K4os.Compression.LZ4.Internal
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint LZ4HC_hashPtr(void* ptr) =>
-			(LZ4_read32(ptr) * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
+			(Mem.Peek32(ptr) * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
 
 		public static void LZ4HC_init(LZ4HC_CCtx_t* hc4, byte* start)
 		{
@@ -153,7 +153,7 @@ namespace K4os.Compression.LZ4.Internal
 
 			while (ip >= iLow + 4)
 			{
-				if (LZ4_read32(ip - 4) != pattern) break;
+				if (Mem.Peek32(ip - 4) != pattern) break;
 
 				ip -= 4;
 			}
@@ -196,7 +196,7 @@ namespace K4os.Compression.LZ4.Internal
 			var dictBase = hc4->dictBase;
 			var delta = (int) (ip - iLowLimit);
 			var nbAttempts = maxNbAttempts;
-			var pattern = LZ4_read32(ip);
+			var pattern = Mem.Peek32(ip);
 			var repeat = repeat_state_e.rep_untested;
 			var srcPatternLength = 0;
 
@@ -212,7 +212,7 @@ namespace K4os.Compression.LZ4.Internal
 					var matchPtr = basep + matchIndex;
 					if (*(iLowLimit + longest) == *(matchPtr - delta + longest))
 					{
-						if (LZ4_read32(matchPtr) == pattern)
+						if (Mem.Peek32(matchPtr) == pattern)
 						{
 							var mlt = MINMATCH + (int) LZ4_count(ip + MINMATCH, matchPtr + MINMATCH, iHighLimit);
 							var back = 0;
@@ -236,7 +236,7 @@ namespace K4os.Compression.LZ4.Internal
 				else
 				{
 					var matchPtr = dictBase + matchIndex;
-					if (LZ4_read32(matchPtr) == pattern)
+					if (Mem.Peek32(matchPtr) == pattern)
 					{
 						var back = 0;
 						var vLimit = ip + (dictLimit - matchIndex);
@@ -283,7 +283,7 @@ namespace K4os.Compression.LZ4.Internal
 						if (repeat == repeat_state_e.rep_confirmed && matchIndex >= dictLimit)
 						{
 							var matchPtr = basep + matchIndex;
-							if (LZ4_read32(matchPtr) == pattern)
+							if (Mem.Peek32(matchPtr) == pattern)
 							{
 								var forwardPatternLength =
 									(int) LZ4HC_countPattern(matchPtr + sizeof(uint), iHighLimit, pattern)
@@ -365,7 +365,7 @@ namespace K4os.Compression.LZ4.Internal
 			Mem.WildCopy(*op, *anchor, (*op) + length);
 
 			*op += length;
-			LZ4_write16(*op, (ushort) (*ip - match));
+			Mem.Poke16(*op, (ushort) (*ip - match));
 			*op += 2;
 
 			length = (size_t) (matchLength - MINMATCH);

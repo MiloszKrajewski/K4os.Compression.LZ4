@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Test.Internal
 {
@@ -13,14 +14,14 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 
 	public class TestedLZ4
 	{
-		public static void Decode(string encoded, string decoded)
+		public static void Decode(string encoded, string decoded, int chunkSize)
 		{
 			using (var input = File.OpenRead(encoded))
 			using (var output = File.Create(decoded))
 			using (var decode = new LZ4InputStream(
 				input, i => new LZ4StreamDecoder(i.BlockSize, 0)))
 			{
-				var buffer = new byte[4096];
+				var buffer = new byte[chunkSize];
 				while (true)
 				{
 					var read = decode.Read(buffer, 0, buffer.Length);

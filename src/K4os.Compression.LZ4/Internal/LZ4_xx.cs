@@ -43,21 +43,6 @@ namespace K4os.Compression.LZ4.Internal
 			public uint prefixSize;
 		};
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ushort LZ4_read16(void* p) => *(ushort*) p;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static uint LZ4_read32(void* p) => *(uint*) p;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static ulong LZ4_read64(void* p) => *(ulong*) p;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_write16(void* p, ushort v) => *(ushort*) p = v;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_write32(void* p, uint v) => *(uint*) p = v;
-
 		protected const int MINMATCH = 4;
 
 		protected const int WILDCOPYLENGTH = 8;
@@ -209,7 +194,7 @@ namespace K4os.Compression.LZ4.Internal
 					&& (token & ML_MASK) != 15)
 				{
 					var ll = (int) (token >> ML_BITS);
-					int off = LZ4_read16(ip + ll);
+					int off = Mem.Peek16(ip + ll);
 					var matchPtr = op + ll - off;
 					if (off >= 18 && matchPtr >= lowPrefix)
 					{
@@ -272,13 +257,13 @@ namespace K4os.Compression.LZ4.Internal
 				ip += length;
 				op = cpy;
 
-				int offset = LZ4_read16(ip);
+				int offset = Mem.Peek16(ip);
 				ip += 2;
 				var match = op - offset;
 				if (checkOffset && match + dictSize < lowPrefix)
 					goto _output_error;
 
-				LZ4_write32(op, (uint) offset);
+				Mem.Poke32(op, (uint) offset);
 
 				length = (int) (token & ML_MASK);
 				if (length == ML_MASK)

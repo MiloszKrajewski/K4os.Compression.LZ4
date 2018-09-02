@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
@@ -48,11 +49,11 @@ namespace K4os.Compression.LZ4.Streams
 
 		public override void Write(byte[] buffer, int offset, int count)
 		{
+			if (_encoder == null)
+				WriteFrame();
+
 			while (count > 0)
 			{
-				if (_encoder == null)
-					WriteFrame();
-
 				var action = _encoder.TopupAndEncode(
 					buffer, offset, count,
 					_buffer, 0, _buffer.Length,
@@ -73,16 +74,16 @@ namespace K4os.Compression.LZ4.Streams
 			Write32(0x184D2204);
 			Flush16();
 
-			const int version = 0x01;
-			var chaining = _frameInfo.Chaining;
-			var bchecksum = _frameInfo.BlockChecksum;
-			var cchecksum = _frameInfo.ContentChecksum;
+			const int versionCode = 0x01;
+			var blockChaining = _frameInfo.Chaining;
+			var blockChecksum = _frameInfo.BlockChecksum;
+			var contentChecksum = _frameInfo.ContentChecksum;
 
 			var FLG =
-				(version << 6) |
-				((chaining ? 0 : 1) << 5) |
-				((bchecksum ? 1 : 0) << 4) |
-				((cchecksum ? 1 : 0) << 2);
+				(versionCode << 6) |
+				((blockChaining ? 0 : 1) << 5) |
+				((blockChecksum ? 1 : 0) << 4) |
+				((contentChecksum ? 1 : 0) << 2);
 
 			const bool hasContentSize = false;
 			const bool hasDictionary = false;
@@ -265,7 +266,7 @@ namespace K4os.Compression.LZ4.Streams
 			new InvalidOperationException(
 				$"Operation {operation} is not allowed for {GetType().Name}");
 		
-		private ArgumentException InvalidValue(string description) =>
+		private static ArgumentException InvalidValue(string description) =>
 			new ArgumentException(description);
 
 		private ArgumentException InvalidBlockSize(int blockSize) =>

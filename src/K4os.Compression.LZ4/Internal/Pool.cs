@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace K4os.Compression.LZ4
+namespace K4os.Compression.LZ4.Internal
 {
 	internal class Pool<T>
 	{

@@ -9,15 +9,6 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class BlockRoundtripTests
 	{
-		const string Lorem =
-			"Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
-			"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-			"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris " +
-			"nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in " +
-			"reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
-			"Excepteur sint occaecat cupidatat non proident, " +
-			"sunt in culpa qui officia deserunt mollit anim id est laborum.";
-
 		private static byte[] Collect(IEnumerable<byte[]> chunks)
 		{
 			var arrays = chunks.ToArray();
@@ -84,8 +75,8 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(0x123456)]
 		public void RepeatLoremIpsum(int length)
 		{
-			var loremBytes = Encoding.UTF8.GetBytes(Lorem);
-			var buffer = Collect(Enumerable.Repeat(loremBytes, length / Lorem.Length + 1));
+			var buffer = new byte[length];
+			Lorem.Fill(buffer, 0, length);
 
 			Roundtrip(buffer);
 		}

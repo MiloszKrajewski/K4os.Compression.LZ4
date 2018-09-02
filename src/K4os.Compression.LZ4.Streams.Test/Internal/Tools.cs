@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using K4os.Compression.LZ4.Internal;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test.Internal
@@ -11,7 +12,7 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 			"ooffice", "osdb", "reymont", "samba",
 			"sao", "webster", "x-ray", "xml"
 		};
-		
+
 		public static unsafe uint Adler32(byte* data, int length)
 		{
 			const uint modAdler = 65521;
@@ -76,13 +77,15 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 		public static void SameBytes(byte[] source, byte[] target)
 		{
 			if (source.Length != target.Length)
-				throw new ArgumentException($"Arrays are not same length: {source.Length} vs {target.Length}");
+				throw new ArgumentException(
+					$"Arrays are not same length: {source.Length} vs {target.Length}");
 
 			var length = source.Length;
 			for (var i = 0; i < length; i++)
 			{
 				if (source[i] != target[i])
-					throw new ArgumentException($"Arrays differ at index {i}: {source[i]} vs {target[i]}");
+					throw new ArgumentException(
+						$"Arrays differ at index {i}: {source[i]} vs {target[i]}");
 			}
 		}
 
@@ -96,7 +99,8 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 			for (var i = 0; i < length; i++)
 			{
 				if (source[i] != target[i])
-					throw new ArgumentException($"Arrays differ at index {i}: {source[i]} vs {target[i]}");
+					throw new ArgumentException(
+						$"Arrays differ at index {i}: {source[i]} vs {target[i]}");
 			}
 		}
 
@@ -118,6 +122,69 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 						break;
 
 					SameBytes(bufferA, bufferB, readA);
+				}
+			}
+		}
+
+		public static LZ4Settings ParseSettings(string options)
+		{
+			var result = new LZ4Settings();
+
+			foreach (var option in options.Split(' '))
+			{
+				switch (option)
+				{
+					case "-1":
+						result.Level = LZ4Level.L00_FAST;
+						break;
+					case "-9":
+						result.Level = LZ4Level.L09_HC;
+						break;
+					case "-11":
+						result.Level = LZ4Level.L11_OPT;
+						break;
+					case "-12":
+						result.Level = LZ4Level.L12_MAX;
+						break;
+					case "-BD":
+						result.Chaining = true;
+						break;
+					case "-BX":
+						// ignored to be implemented
+						break;
+					case "-B4":
+						result.BlockSize = Mem.K64;
+						break;
+					case "-B5":
+						result.BlockSize = Mem.K256;
+						break;
+					case "-B6":
+						result.BlockSize = Mem.M1;
+						break;
+					case "-B7":
+						result.BlockSize = Mem.M4;
+						break;
+					default:
+						throw new NotImplementedException($"Option '{option}' not recognized");
+				}
+			}
+
+			return result;
+		}
+
+		public static void WriteRandom(string filename, int length, int seed = 0)
+		{
+			var random = new Random(seed);
+			var buffer = new byte[0x10000];
+			using (var file = File.Create(filename))
+			{
+				while (length > 0)
+				{
+					random.NextBytes(buffer);
+					var chunkSize = Math.Min(length, buffer.Length);
+
+					file.Write(buffer, 0, chunkSize);
+					length -= chunkSize;
 				}
 			}
 		}

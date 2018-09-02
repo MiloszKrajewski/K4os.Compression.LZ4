@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
 using Xunit;
 
@@ -6,27 +8,42 @@ namespace K4os.Compression.LZ4.Streams.Test
 {
 	public class RoundtripTests
 	{
+		#if DEBUG
+		[Theory(Skip = "Too long")]
+		#else
 		[Theory]
-		[InlineData("dickens", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("mozilla", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("mr", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("nci", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("ooffice", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("osdb", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("reymont", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("samba", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("sao", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("webster", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("x-ray", LZ4Level.L00_FAST, Mem.K64)]
-		[InlineData("xml", LZ4Level.L00_FAST, Mem.K64)]
-		public void SmallBlockSize(string fileName, LZ4Level level, int blockSize)
+		#endif
+		[InlineData("-1 -BD -B4 -BX", Mem.K8)]
+		[InlineData("-1 -BD -B5", Mem.K8)]
+		[InlineData("-1 -BD -B6 -BX", Mem.K8)]
+		[InlineData("-1 -BD -B7", Mem.K4)]
+		[InlineData("-9 -BD -B4", Mem.K4)]
+		[InlineData("-9 -BD -B5 -BX", Mem.K4)]
+		[InlineData("-9 -BD -B6", Mem.K4)]
+		[InlineData("-9 -BD -B7 -BX", Mem.K4)]
+		[InlineData("-1 -B4", Mem.K4)]
+		[InlineData("-1 -B7", Mem.K4)]
+		[InlineData("-9 -B7 -BX", Mem.K4)]
+		[InlineData("-1 -B4 -BD", Mem.M1)]
+		[InlineData("-9 -B4 -BD", 1337)]
+		public void WholeCorpus(string options, int chunkSize)
 		{
-			TestEncoder(
-				$".corpus/{fileName}", 1000,
-				new LZ4Settings { Level = level, BlockSize = blockSize });
+			var settings = Tools.ParseSettings(options);
+			foreach (var filename in Tools.CorpusNames)
+			{
+				try
+				{
+					TestRoundtrip($".corpus/{filename}", chunkSize, settings);
+				}
+				catch (Exception e)
+				{
+					throw new Exception(
+						$"Failed to process: {filename} @ {options}/{chunkSize}", e);
+				}
+			}
 		}
 
-		private static void TestEncoder(string fileName, int chunkSize, LZ4Settings settings)
+		private static void TestRoundtrip(string fileName, int chunkSize, LZ4Settings settings)
 		{
 			var original = Tools.FindFile(fileName);
 			var encoded = Path.GetTempFileName();
@@ -35,7 +52,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 			try
 			{
 				TestedLZ4.Encode(original, encoded, chunkSize, settings);
-				TestedLZ4.Decode(encoded, decoded);
+				TestedLZ4.Decode(encoded, decoded, chunkSize);
 				Tools.SameFiles(original, decoded);
 			}
 			finally

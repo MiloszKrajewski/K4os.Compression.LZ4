@@ -56,19 +56,19 @@ namespace K4os.Compression.LZ4.Encoders
 
 			if (_outputIndex + length < _outputLength)
 			{
-				Mem.Copy(_outputBuffer + _outputIndex, source, length);
+				Mem.Move(_outputBuffer + _outputIndex, source, length);
 				_outputIndex = ApplyDict(_outputIndex + length);
 			} 
 			else if (length >= Mem.K64)
 			{
-				Mem.Copy(_outputBuffer, source, length);
+				Mem.Move(_outputBuffer, source, length);
 				_outputIndex = ApplyDict(length);
 			}
 			else
 			{
 				var tailSize = Math.Min(Mem.K64 - length, _outputIndex);
-				Mem.Copy(_outputBuffer, _outputBuffer + _outputIndex - tailSize, tailSize);
-				Mem.Copy(_outputBuffer + tailSize, source, length);
+				Mem.Move(_outputBuffer, _outputBuffer + _outputIndex - tailSize, tailSize);
+				Mem.Move(_outputBuffer + tailSize, source, length);
 				_outputIndex = ApplyDict(tailSize + length);
 			}
 
@@ -81,7 +81,7 @@ namespace K4os.Compression.LZ4.Encoders
 			if (offset < 0 || length < 0 || offset + length > _outputIndex)
 				throw new InvalidOperationException();
 
-			Mem.Copy(target, _outputBuffer + offset, length);
+			Mem.Move(target, _outputBuffer + offset, length);
 		}
 
 		private void Prepare(int blockSize)
@@ -96,7 +96,7 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
-			Mem.Copy(_outputBuffer, _outputBuffer + dictStart, dictSize);
+			Mem.Move(_outputBuffer, _outputBuffer + dictStart, dictSize);
 			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
 			return dictSize;
 		}

@@ -1,9 +1,10 @@
 ﻿using System;
 using BenchmarkDotNet.Attributes;
+using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Benchmarks
 {
-	public unsafe class WildCopy
+	public unsafe class MemCopy
 	{
 		[Params(0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0)]
 		public int Size { get; set; }
@@ -26,20 +27,27 @@ namespace K4os.Compression.LZ4.Benchmarks
 		}
 
 		[Benchmark]
-		public void WildLoop()
+		public void WildCopy()
 		{
 			Mem.WildCopy(_target, _source, _target + Size);
 		}
-
+		
 		[Benchmark]
-		public void Builtin()
+		public void MemoryCopy()
+		{
+			var size = Size;
+			Buffer.MemoryCopy(_source, _target, size, size);
+		}
+		
+		[Benchmark]
+		public void MemoryCopyAligned()
 		{
 			var size = ((Size - 1) & ~0x7) + 8;
 			Buffer.MemoryCopy(_source, _target, size, size);
 		}
 
 		[Benchmark]
-		public void HybridWildLoop()
+		public void HybridWildCopy()
 		{
 			var size = Size;
 			if (size <= 128)

@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
@@ -37,12 +38,12 @@ namespace K4os.Compression.LZ4.Streams
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
+			if (_decoder == null)
+				ReadFrame();
+
 			var read = 0;
 			while (count > 0)
 			{
-				if (_decoder == null)
-					ReadFrame();
-
 				if (_decoded <= 0 && (_decoded = ReadBlock()) == 0)
 					break;
 
@@ -72,15 +73,15 @@ namespace K4os.Compression.LZ4.Streams
 			var FLG = FLG_BD & 0xFF;
 			var BD = (FLG_BD >> 8) & 0xFF;
 
-			var chaining = ((FLG >> 5) & 0x01) == 0;
-			var bchecksum = ((FLG >> 4) & 0x01) != 0;
-			var cchecksum = ((FLG >> 2) & 0x01) != 0;
+			var blockChaining = ((FLG >> 5) & 0x01) == 0;
+			var blockChecksum = ((FLG >> 4) & 0x01) != 0;
+			var contentChecksum = ((FLG >> 2) & 0x01) != 0;
 
 			var hasContentSize = (BD & (1 << 3)) != 0;
 			var hasDictionary = (BD & (1 << 0)) != 0;
 			var blockSizeCode = (BD >> 4) & 0x07;
 
-			if (hasContentSize) 
+			if (hasContentSize)
 				Read64(); // needs to be read (if present) but we don't care
 
 			var dictionaryId = hasDictionary ? (uint?) Read32() : null;
@@ -93,7 +94,8 @@ namespace K4os.Compression.LZ4.Streams
 
 			var blockSize = MaxBlockSize(blockSizeCode);
 
-			_frameInfo = new LZ4FrameInfo(cchecksum, chaining, bchecksum, dictionaryId, blockSize);
+			_frameInfo = new LZ4FrameInfo(
+				contentChecksum, blockChaining, blockChecksum, dictionaryId, blockSize);
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
 		}
@@ -179,10 +181,7 @@ namespace K4os.Compression.LZ4.Streams
 			return true;
 		}
 
-		private void Read0()
-		{
-			_index16 = 0;
-		}
+		private void Read0() { _index16 = 0; }
 
 		private ulong Read64()
 		{
@@ -272,6 +271,7 @@ namespace K4os.Compression.LZ4.Streams
 			new InvalidDataException("LZ4 frame magic number expected");
 
 		private InvalidOperationException InvalidOperation(string operation) =>
-			new InvalidOperationException($"Operation {operation} is not allowed for {GetType().Name}");
+			new InvalidOperationException(
+				$"Operation {operation} is not allowed for {GetType().Name}");
 	}
 }
