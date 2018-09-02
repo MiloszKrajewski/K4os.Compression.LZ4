@@ -1,6 +1,8 @@
-﻿namespace K4os.Compression.LZ4.Encoders
+﻿using System;
+
+namespace K4os.Compression.LZ4.Encoders
 {
-	public interface ILZ4StreamDecoder
+	public interface ILZ4Decoder: IDisposable
 	{
 		int BlockSize { get; }
 		int BytesReady { get; }

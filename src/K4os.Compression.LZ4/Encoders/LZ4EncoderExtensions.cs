@@ -1,9 +1,9 @@
 ﻿namespace K4os.Compression.LZ4.Encoders
 {
-	public static class LZ4StreamEncoderExtensions
+	public static class LZ4EncoderExtensions
 	{
 		public static unsafe bool Topup(
-			this ILZ4StreamEncoder encoder, ref byte* source, int length)
+			this ILZ4Encoder encoder, ref byte* source, int length)
 		{
 			var loaded = encoder.Topup(source, length);
 			source += loaded;
@@ -11,14 +11,14 @@
 		}
 
 		public static unsafe int Topup(
-			this ILZ4StreamEncoder encoder, byte[] source, int index, int length)
+			this ILZ4Encoder encoder, byte[] source, int index, int length)
 		{
 			fixed (byte* sourceP = source)
 				return encoder.Topup(sourceP + index, length);
 		}
 
 		public static bool Topup(
-			this ILZ4StreamEncoder encoder, byte[] source, ref int index, int length)
+			this ILZ4Encoder encoder, byte[] source, ref int index, int length)
 		{
 			var loaded = encoder.Topup(source, index, length);
 			index += loaded;
@@ -26,21 +26,21 @@
 		}
 
 		public static unsafe int Encode(
-			this ILZ4StreamEncoder encoder, byte[] target, int index, int length)
+			this ILZ4Encoder encoder, byte[] target, int index, int length)
 		{
 			fixed (byte* targetP = target)
 				return encoder.Encode(targetP + index, length);
 		}
 
 		public static unsafe int Copy(
-			this ILZ4StreamEncoder encoder, byte[] target, int index, int length)
+			this ILZ4Encoder encoder, byte[] target, int index, int length)
 		{
 			fixed (byte* targetP = target)
 				return encoder.Copy(targetP + index, length);
 		}
 
 		public static bool Encode(
-			this ILZ4StreamEncoder encoder, byte[] target, ref int index, int length)
+			this ILZ4Encoder encoder, byte[] target, ref int index, int length)
 		{
 			var encoded = encoder.Encode(target, index, length);
 			index += encoded;
@@ -48,7 +48,7 @@
 		}
 
 		public static unsafe bool Encode(
-			this ILZ4StreamEncoder encoder, ref byte* target, int length)
+			this ILZ4Encoder encoder, ref byte* target, int length)
 		{
 			var encoded = encoder.Encode(target, length);
 			target += encoded;
@@ -56,7 +56,7 @@
 		}
 
 		public static unsafe EncoderAction TopupAndEncode(
-			this ILZ4StreamEncoder encoder,
+			this ILZ4Encoder encoder,
 			byte* source, int sourceLength,
 			byte* target, int targetLength,
 			bool force,
@@ -73,7 +73,7 @@
 		}
 
 		public static unsafe EncoderAction TopupAndEncode(
-			this ILZ4StreamEncoder encoder,
+			this ILZ4Encoder encoder,
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
 			bool force,
@@ -89,7 +89,7 @@
 		}
 
 		private static unsafe EncoderAction FlushAndEncode(
-			this ILZ4StreamEncoder encoder,
+			this ILZ4Encoder encoder,
 			byte* target, int targetLength,
 			bool force,
 			int loaded, out int encoded)
@@ -115,11 +115,11 @@
 		}
 
 		public static unsafe EncoderAction FlushAndEncode(
-			this ILZ4StreamEncoder encoder, byte* target, int targetLength, out int encoded) =>
+			this ILZ4Encoder encoder, byte* target, int targetLength, out int encoded) =>
 			encoder.FlushAndEncode(target, targetLength, true, 0, out encoded);
 		
 		public static unsafe EncoderAction FlushAndEncode(
-			this ILZ4StreamEncoder encoder,
+			this ILZ4Encoder encoder,
 			byte[] target, int targetIndex, int targetLength,
 			out int encoded)
 		{
@@ -130,7 +130,7 @@
 
 
 		public static unsafe void Drain(
-			this ILZ4StreamDecoder decoder,
+			this ILZ4Decoder decoder,
 			byte[] target, int targetIndex,
 			int offset, int length)
 		{
@@ -139,7 +139,7 @@
 		}
 
 		public static unsafe bool DecodeAndDrain(
-			this ILZ4StreamDecoder decoder,
+			this ILZ4Decoder decoder,
 			byte* source, int sourceLength,
 			byte* target, int targetLength,
 			out int decoded)
@@ -159,7 +159,7 @@
 		}
 
 		public static unsafe bool DecodeAndDrain(
-			this ILZ4StreamDecoder decoder,
+			this ILZ4Decoder decoder,
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
 			out int decoded)

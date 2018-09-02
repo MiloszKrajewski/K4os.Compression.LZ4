@@ -9,7 +9,7 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
 {
-	public class LZ4InputStream: Stream
+	public class LZ4DecoderStream: Stream, IDisposable
 	{
 		private readonly Stream _inner;
 		private readonly byte[] _buffer16 = new byte[16];
@@ -18,13 +18,13 @@ namespace K4os.Compression.LZ4.Streams
 		private int _decoded;
 		private readonly bool _interactive = true;
 
-		private ILZ4StreamDecoder _decoder;
-		private readonly Func<ILZ4FrameInfo, ILZ4StreamDecoder> _decoderFactory;
+		private ILZ4Decoder _decoder;
+		private readonly Func<ILZ4FrameInfo, ILZ4Decoder> _decoderFactory;
 
 		private ILZ4FrameInfo _frameInfo;
 		private byte[] _buffer;
 
-		public LZ4InputStream(Stream inner, Func<ILZ4FrameInfo, ILZ4StreamDecoder> decoderFactory)
+		public LZ4DecoderStream(Stream inner, Func<ILZ4FrameInfo, ILZ4Decoder> decoderFactory)
 		{
 			_inner = inner;
 			_decoderFactory = decoderFactory;
@@ -102,9 +102,22 @@ namespace K4os.Compression.LZ4.Streams
 
 		private void CloseFrame()
 		{
-			_decoder = null;
-			_frameInfo = null;
-			_buffer = null;
+			if (_decoder == null)
+				return;
+
+			try
+			{
+				_frameInfo = null;
+				_buffer = null;
+
+				// if you need any exceptions throw them here
+
+				_decoder.Dispose();
+			}
+			finally
+			{
+				_decoder = null;
+			}
 		}
 
 		private static int MaxBlockSize(int blockSizeCode)
@@ -215,11 +228,19 @@ namespace K4os.Compression.LZ4.Streams
 			return _buffer16[_index16 - 1];
 		}
 
+		public new void Dispose()
+		{
+			Dispose(true);
+			base.Dispose();
+		}
+
 		protected override void Dispose(bool disposing)
 		{
+			base.Dispose(disposing);
 			if (!disposing)
 				return;
 
+			CloseFrame();
 			_inner.Dispose();
 		}
 

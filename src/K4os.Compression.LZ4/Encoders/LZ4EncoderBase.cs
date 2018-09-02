@@ -3,7 +3,7 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
-	public abstract unsafe class LZ4StreamEncoderBase: UnmanagedResources, ILZ4StreamEncoder
+	public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 	{
 		private readonly byte* _inputBuffer;
 		private readonly int _inputLength;
@@ -12,7 +12,7 @@ namespace K4os.Compression.LZ4.Encoders
 		private int _inputIndex;
 		private int _inputPointer;
 
-		protected LZ4StreamEncoderBase(int blockSize, int extraBlocks = 0)
+		protected LZ4EncoderBase(int blockSize, int extraBlocks = 0)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
 			extraBlocks = Math.Max(extraBlocks, 0);

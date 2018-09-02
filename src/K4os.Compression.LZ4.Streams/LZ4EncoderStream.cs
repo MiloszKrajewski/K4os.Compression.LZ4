@@ -9,21 +9,21 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
 {
-	public class LZ4OutputStream: Stream
+	public class LZ4EncoderStream: Stream, IDisposable
 	{
 		private readonly Stream _inner;
 		private readonly byte[] _buffer16 = new byte[16];
 		private int _index16;
 
-		private ILZ4StreamEncoder _encoder;
-		private readonly Func<ILZ4FrameInfo, ILZ4StreamEncoder> _encoderFactory;
+		private ILZ4Encoder _encoder;
+		private readonly Func<ILZ4FrameInfo, ILZ4Encoder> _encoderFactory;
 
 		private readonly ILZ4FrameInfo _frameInfo;
 		private byte[] _buffer;
 
-		public LZ4OutputStream(
+		public LZ4EncoderStream(
 			Stream inner, ILZ4FrameInfo frameInfo,
-			Func<ILZ4FrameInfo, ILZ4StreamEncoder> encoderFactory)
+			Func<ILZ4FrameInfo, ILZ4Encoder> encoderFactory)
 		{
 			_inner = inner;
 			_frameInfo = frameInfo;
@@ -113,7 +113,7 @@ namespace K4os.Compression.LZ4.Streams
 			_buffer = new byte[blockSize];
 		}
 
-		private ILZ4StreamEncoder CreateEncoder()
+		private ILZ4Encoder CreateEncoder()
 		{
 			var encoder = _encoderFactory(_frameInfo);
 			if (encoder.BlockSize > _frameInfo.BlockSize)
@@ -124,17 +124,28 @@ namespace K4os.Compression.LZ4.Streams
 
 		public void CloseFrame()
 		{
-			var action = _encoder.FlushAndEncode(_buffer, 0, _buffer.Length, out var encoded);
-			WriteBlock(encoded, action);
+			if (_encoder == null)
+				return;
 
-			Write32(0);
-			Flush16();
+			try
+			{
+				var action = _encoder.FlushAndEncode(_buffer, 0, _buffer.Length, out var encoded);
+				WriteBlock(encoded, action);
 
-			if (_frameInfo.ContentChecksum)
-				throw NotImplemented("ContentChecksum");
+				Write32(0);
+				Flush16();
+				
+				if (_frameInfo.ContentChecksum)
+					throw NotImplemented("ContentChecksum");
 
-			_encoder = null;
-			_buffer = null;
+				_buffer = null;
+
+				_encoder.Dispose();
+			}
+			finally
+			{
+				_encoder = null;
+			}
 		}
 
 		private int MaxBlockSizeCode(int blockSize) =>
@@ -171,11 +182,20 @@ namespace K4os.Compression.LZ4.Streams
 				throw NotImplemented("BlockChecksum");
 		}
 
+		public new void Dispose()
+		{
+			Dispose(true);
+			base.Dispose();
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
-			if (disposing)
-				Close();
+			if (!disposing)
+				return;
+
+			CloseFrame();
+			_inner.Dispose();
 		}
 
 		private void Write8(byte value) { _buffer16[_index16++] = value; }
@@ -265,7 +285,7 @@ namespace K4os.Compression.LZ4.Streams
 		private InvalidOperationException InvalidOperation(string operation) =>
 			new InvalidOperationException(
 				$"Operation {operation} is not allowed for {GetType().Name}");
-		
+
 		private static ArgumentException InvalidValue(string description) =>
 			new ArgumentException(description);
 

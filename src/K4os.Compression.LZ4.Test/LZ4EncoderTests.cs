@@ -58,7 +58,7 @@ namespace K4os.Compression.LZ4.Test
 
 			Lorem.Fill(source, 0, source.Length);
 
-			using (var encoder = new LZ4FastStreamEncoder(blockLength, extraBlocks))
+			using (var encoder = new LZ4FastEncoder(blockLength, extraBlocks))
 			{
 				var sourceP = 0;
 				var targetP = 0;

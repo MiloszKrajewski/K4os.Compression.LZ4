@@ -5,11 +5,11 @@ namespace K4os.Compression.LZ4.Encoders
 	// high encoder context
 	using LZ4Context = LZ4_64_HC.LZ4HC_CCtx_t;
 
-	public unsafe class LZ4HighStreamEncoder: LZ4StreamEncoderBase
+	public unsafe class LZ4HighEncoder: LZ4EncoderBase
 	{
 		private readonly LZ4Context* _context;
 
-		public LZ4HighStreamEncoder(
+		public LZ4HighEncoder(
 			LZ4Level level, int blockSize, int extraBlocks = 0): base(blockSize, extraBlocks)
 		{
 			if (level < LZ4Level.L03_HC) level = LZ4Level.L03_HC;

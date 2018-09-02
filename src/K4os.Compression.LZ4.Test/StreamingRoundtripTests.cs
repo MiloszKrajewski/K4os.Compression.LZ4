@@ -92,7 +92,7 @@ namespace K4os.Compression.LZ4.Test
 			{
 				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
 				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var encoder = new LZ4FastStreamEncoder(blockSize, extraBlocks))
+				using (var encoder = new LZ4FastEncoder(blockSize, extraBlocks))
 				{
 					var inputBuffer = new byte[topupSize];
 					var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
@@ -123,7 +123,7 @@ namespace K4os.Compression.LZ4.Test
 			{
 				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
 				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var decoder = new LZ4StreamDecoder(blockSize, extraBlocks))
+				using (var decoder = new LZ4Decoder(blockSize, extraBlocks))
 				{
 					var maximumInputBlock = LZ4Codec.MaximumOutputSize(blockSize);
 					var inputBuffer = new byte[maximumInputBlock];
@@ -157,7 +157,7 @@ namespace K4os.Compression.LZ4.Test
 
 		private static void Write(
 			BinaryWriter outputWriter,
-			ILZ4StreamEncoder encoder,
+			ILZ4Encoder encoder,
 			byte[] inputBuffer, int bytes,
 			byte[] outputBuffer)
 		{
@@ -188,7 +188,7 @@ namespace K4os.Compression.LZ4.Test
 		}
 
 		private static void Flush(
-			BinaryWriter outputWriter, ILZ4StreamEncoder encoder, byte[] outputBuffer)
+			BinaryWriter outputWriter, ILZ4Encoder encoder, byte[] outputBuffer)
 		{
 			if (encoder.BytesReady <= 0)
 				return;

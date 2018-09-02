@@ -6,7 +6,7 @@ namespace K4os.Compression.LZ4.Encoders
 	// fast decoder context
 	using LZ4Context = LZ4_xx.LZ4_streamDecode_t;
 
-	public unsafe class LZ4StreamDecoder: UnmanagedResources, ILZ4StreamDecoder
+	public unsafe class LZ4Decoder: UnmanagedResources, ILZ4Decoder
 	{
 		private readonly LZ4Context* _context;
 		private readonly int _blockSize;
@@ -14,7 +14,7 @@ namespace K4os.Compression.LZ4.Encoders
 		private readonly int _outputLength;
 		private int _outputIndex;
 
-		public LZ4StreamDecoder(int blockSize, int extraBlocks)
+		public LZ4Decoder(int blockSize, int extraBlocks)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
 			extraBlocks = Math.Max(extraBlocks, 0);
