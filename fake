@@ -8,7 +8,7 @@ tempDir=$(mktemp -d)
 if [ ! -f $fake ]
 then
 	mkdir $target
-	nuget install -out $tempDir/nuget -excludeversion fake
+	nuget install -out $tempDir/nuget -excludeversion fake -version 4.64.13
 	cp $tempDir/nuget/fake/tools/* $target
 	rm -rf $tempDir
 fi
