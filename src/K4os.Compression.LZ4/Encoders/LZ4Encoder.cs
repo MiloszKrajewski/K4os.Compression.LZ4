@@ -24,9 +24,11 @@
 		public int BlockSize => _encoder.BlockSize;
 		public int BytesReady => _encoder.BytesReady;
 
-		public unsafe int Topup(byte* source, int length) => _encoder.Topup(source, length);
-		public unsafe int Encode(byte* target, int length) => _encoder.Encode(target, length);
-		public unsafe int Copy(byte* target, int length) => _encoder.Copy(target, length);
+		public unsafe int Topup(byte* source, int length) => 
+			_encoder.Topup(source, length);
+
+		public unsafe int Encode(byte* target, int length, bool allowCopy) =>
+			_encoder.Encode(target, length, allowCopy);
 
 		public void Dispose() => _encoder.Dispose();
 	}

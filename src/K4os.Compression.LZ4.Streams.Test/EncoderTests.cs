@@ -9,10 +9,10 @@ namespace K4os.Compression.LZ4.Streams.Test
 	public class EncoderTests
 	{
 		[Theory]
-		[InlineData("reymont", "-1 -BD -B4", 1337)]
-		[InlineData("reymont", "-9 -BD -B7", 1337)]
+		//[InlineData("reymont", "-1 -BD -B4", 1337)]
+		//[InlineData("reymont", "-9 -BD -B7", 1337)]
 		[InlineData("x-ray", "-1 -BD -B4", 1337)]
-		[InlineData("x-ray", "-9 -BD -B7", 1337)]
+		//[InlineData("x-ray", "-9 -BD -B7", 1337)]
 		public void OddChunkSize(string filename, string options, int chunkSize)
 		{
 			TestEncoder($".corpus/{filename}", chunkSize, Tools.ParseSettings(options));

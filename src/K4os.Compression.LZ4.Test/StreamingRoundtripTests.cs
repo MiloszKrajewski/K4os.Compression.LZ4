@@ -189,7 +189,7 @@ namespace K4os.Compression.LZ4.Test
 			if (encoder.BytesReady <= 0)
 				return;
 
-			var encoded = encoder.Encode(outputBuffer, 0, outputBuffer.Length);
+			var encoded = encoder.Encode(outputBuffer, 0, outputBuffer.Length, false);
 			outputWriter.Write(encoded);
 			outputWriter.Write(outputBuffer, 0, encoded);
 		}

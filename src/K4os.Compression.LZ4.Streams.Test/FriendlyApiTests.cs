@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Streams.Test.Internal;
 using Xunit;
 

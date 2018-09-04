@@ -1004,8 +1004,8 @@ namespace K4os.Compression.LZ4.Internal
 			}
 
 			/* End */
-			*srcSizePtr = (int) (((byte*) ip) - source);
-			return (int) (((byte*) op) - dest);
+			*srcSizePtr = (int) (ip - source);
+			return (int) (op - dest);
 
 			_dest_overflow:
 			if (limit != limitedOutput_directive.limitedDestSize)

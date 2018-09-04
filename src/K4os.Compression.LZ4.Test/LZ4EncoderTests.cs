@@ -47,6 +47,22 @@ namespace K4os.Compression.LZ4.Test
 				FastStreamManual(blockSize, totalSize),
 				FastStreamEncoder(blockSize, totalSize, extraBlocks));
 		}
+		
+		[Fact]
+		public void HighEntropyRepeated()
+		{
+			var random = new Random(0);
+			var encoder = new LZ4FastEncoder(256);
+			var source = new byte[256];
+			random.NextBytes(source);
+			var target = new byte[1024];
+			
+			Assert.Equal(256, encoder.Topup(source, 0, 256));
+			Assert.Equal(-256, encoder.Encode(target, 0, 1024, true));
+			
+			Assert.Equal(256, encoder.Topup(source, 0, 256));
+			Assert.True(encoder.Encode(target, 0, 1024, true) < 32);
+		}
 
 		public uint FastStreamEncoder(int blockLength, int sourceLength, int extraBlocks = 0)
 		{

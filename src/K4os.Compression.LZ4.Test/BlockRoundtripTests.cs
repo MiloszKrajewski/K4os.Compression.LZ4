@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Xunit;
 using _LZ4 = LZ4.LZ4Codec;
 
@@ -9,21 +7,6 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class BlockRoundtripTests
 	{
-		private static byte[] Collect(IEnumerable<byte[]> chunks)
-		{
-			var arrays = chunks.ToArray();
-			var length = arrays.Select(x => x.Length).Sum();
-			var result = new byte[length];
-			var index = 0;
-			foreach (var c in arrays)
-			{
-				Array.Copy(c, 0, result, index, c.Length);
-				index += c.Length;
-			}
-
-			return result;
-		}
-
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = _LZ4.Encode(source, 0, source.Length);
@@ -87,7 +70,7 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(2, 0xFFFF)]
 		[InlineData(3, 0xFFFF)]
 		[InlineData(4, 0x123456)]
-		public void UncompressibleData(int seed, int length)
+		public void IncompressibleData(int seed, int length)
 		{
 			var buffer = new byte[length];
 			new Random(seed).NextBytes(buffer);
