@@ -166,13 +166,9 @@ namespace K4os.Compression.LZ4.Test
 			while (bytes > 0)
 			{
 				encoder.TopupAndEncode(
-					inputBuffer,
-					offset,
-					bytes,
-					outputBuffer,
-					0,
-					outputBuffer.Length,
-					false,
+					inputBuffer, offset, bytes,
+					outputBuffer, 0, outputBuffer.Length,
+					false, false,
 					out var loaded,
 					out var encoded);
 

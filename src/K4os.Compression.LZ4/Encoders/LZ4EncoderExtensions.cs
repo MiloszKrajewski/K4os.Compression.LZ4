@@ -59,7 +59,7 @@
 			this ILZ4Encoder encoder,
 			byte* source, int sourceLength,
 			byte* target, int targetLength,
-			bool force,
+			bool force, bool allowCopy,
 			out int loaded, out int encoded)
 		{
 			loaded = 0;
@@ -69,14 +69,14 @@
 				loaded = encoder.Topup(source, sourceLength);
 
 			return encoder.FlushAndEncode(
-				target, targetLength, force, loaded, out encoded);
+				target, targetLength, force, allowCopy, loaded, out encoded);
 		}
 
 		public static unsafe EncoderAction TopupAndEncode(
 			this ILZ4Encoder encoder,
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
-			bool force,
+			bool force, bool allowCopy,
 			out int loaded, out int encoded)
 		{
 			fixed (byte* sourceP = source)
@@ -84,14 +84,14 @@
 				return encoder.TopupAndEncode(
 					sourceP + sourceIndex, sourceLength,
 					targetP + targetIndex, targetLength,
-					force,
+					force, allowCopy,
 					out loaded, out encoded);
 		}
 
 		private static unsafe EncoderAction FlushAndEncode(
 			this ILZ4Encoder encoder,
 			byte* target, int targetLength,
-			bool force,
+			bool force, bool allowCopy,
 			int loaded, out int encoded)
 		{
 			encoded = 0;
@@ -103,7 +103,7 @@
 				return loaded > 0 ? EncoderAction.Loaded : EncoderAction.None;
 
 			encoded = encoder.Encode(target, targetLength);
-			if (encoded <= 0)
+			if (allowCopy && encoded >= bytesReady)
 			{
 				encoded = encoder.Copy(target, targetLength);
 				return EncoderAction.Copied;
@@ -115,19 +115,22 @@
 		}
 
 		public static unsafe EncoderAction FlushAndEncode(
-			this ILZ4Encoder encoder, byte* target, int targetLength, out int encoded) =>
-			encoder.FlushAndEncode(target, targetLength, true, 0, out encoded);
-		
+			this ILZ4Encoder encoder,
+			byte* target, int targetLength,
+			bool allowCopy,
+			out int encoded) =>
+			encoder.FlushAndEncode(target, targetLength, true, allowCopy, 0, out encoded);
+
 		public static unsafe EncoderAction FlushAndEncode(
 			this ILZ4Encoder encoder,
 			byte[] target, int targetIndex, int targetLength,
+			bool allowCopy,
 			out int encoded)
 		{
 			fixed (byte* targetP = target)
 				return encoder.FlushAndEncode(
-					targetP + targetIndex, targetLength, true, 0, out encoded);
+					targetP + targetIndex, targetLength, true, allowCopy, 0, out encoded);
 		}
-
 
 		public static unsafe void Drain(
 			this ILZ4Decoder decoder,

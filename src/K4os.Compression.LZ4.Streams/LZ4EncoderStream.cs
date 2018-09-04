@@ -57,7 +57,7 @@ namespace K4os.Compression.LZ4.Streams
 				var action = _encoder.TopupAndEncode(
 					buffer, offset, count,
 					_buffer, 0, _buffer.Length,
-					false,
+					false, true,
 					out var loaded,
 					out var encoded);
 				WriteBlock(encoded, action);
@@ -110,7 +110,7 @@ namespace K4os.Compression.LZ4.Streams
 			Flush16();
 
 			_encoder = CreateEncoder();
-			_buffer = new byte[blockSize];
+			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
 		}
 
 		private ILZ4Encoder CreateEncoder()
@@ -129,7 +129,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			try
 			{
-				var action = _encoder.FlushAndEncode(_buffer, 0, _buffer.Length, out var encoded);
+				var action = _encoder.FlushAndEncode(_buffer, 0, _buffer.Length, true, out var encoded);
 				WriteBlock(encoded, action);
 
 				Write32(0);

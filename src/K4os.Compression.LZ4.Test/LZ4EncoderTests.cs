@@ -66,13 +66,9 @@ namespace K4os.Compression.LZ4.Test
 				while (sourceP < sourceLength && targetP < targetLength)
 				{
 					encoder.TopupAndEncode(
-						source,
-						sourceP,
-						Math.Min(blockLength, sourceLength - sourceP),
-						target,
-						targetP,
-						targetLength - targetP,
-						true,
+						source, sourceP, Math.Min(blockLength, sourceLength - sourceP),
+						target, targetP, targetLength - targetP,
+						true, false,
 						out var loaded,
 						out var encoded);
 					sourceP += loaded;

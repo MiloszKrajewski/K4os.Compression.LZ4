@@ -11,6 +11,7 @@ namespace K4os.Compression.LZ4.Encoders
 
 		private int _inputIndex;
 		private int _inputPointer;
+		private int _encodedLimit;
 
 		protected LZ4EncoderBase(int blockSize, int extraBlocks = 0)
 		{
@@ -18,6 +19,7 @@ namespace K4os.Compression.LZ4.Encoders
 			extraBlocks = Math.Max(extraBlocks, 0);
 
 			_blockSize = blockSize;
+			_encodedLimit = LZ4Codec.MaximumOutputSize(blockSize);
 			_inputLength = Mem.K64 + (1 + extraBlocks) * blockSize + 8;
 			_inputIndex = _inputPointer = 0;
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
@@ -54,11 +56,9 @@ namespace K4os.Compression.LZ4.Encoders
 
 			var encoded = EncodeBlock(_inputBuffer + _inputIndex, sourceLength, target, length);
 
-			if (encoded < 0)
-				throw new InvalidOperationException();
-
-			if (encoded == 0)
-				return 0;
+			if (encoded <= 0)
+				throw new InvalidOperationException(
+					"Failed to compress chunk. Encoder has been corrupted.");
 
 			Commit();
 

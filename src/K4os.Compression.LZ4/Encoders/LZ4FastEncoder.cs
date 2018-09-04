@@ -9,8 +9,8 @@ namespace K4os.Compression.LZ4.Encoders
 	{
 		private readonly LZ4Context* _context;
 
-		public LZ4FastEncoder(int blockSize, int extraBlocks = 0): base(
-			blockSize, extraBlocks)
+		public LZ4FastEncoder(int blockSize, int extraBlocks = 0): 
+			base(blockSize, extraBlocks)
 		{
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}
