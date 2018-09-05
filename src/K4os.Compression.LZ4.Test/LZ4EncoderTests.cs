@@ -10,6 +10,7 @@ namespace K4os.Compression.LZ4.Test
 {
 	public unsafe class LZ4EncoderTests
 	{
+		// ReSharper disable once UnusedParameter.Local
 		public LZ4EncoderTests(ITestOutputHelper output) { }
 
 		[Theory]

@@ -196,6 +196,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		private void Read0() { _index16 = 0; }
 
+		// ReSharper disable once UnusedMethodReturnValue.Local
 		private ulong Read64()
 		{
 			ReadN(sizeof(ulong));

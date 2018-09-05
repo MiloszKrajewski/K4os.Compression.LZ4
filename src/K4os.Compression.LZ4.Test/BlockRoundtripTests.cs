@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Xunit;
 using _LZ4 = LZ4.LZ4Codec;
 
@@ -7,6 +6,7 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class BlockRoundtripTests
 	{
+
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = _LZ4.Encode(source, 0, source.Length);

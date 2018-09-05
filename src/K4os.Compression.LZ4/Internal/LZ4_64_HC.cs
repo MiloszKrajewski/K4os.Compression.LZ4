@@ -470,7 +470,7 @@ namespace K4os.Compression.LZ4.Internal
 			byte* mflimit = iend - MFLIMIT;
 			byte* matchlimit = iend - LASTLITERALS;
 			byte* op = dst;
-			byte* opSaved = dst;
+			byte* opSaved;
 			byte* oend = op + dstCapacity;
 
 			*srcSizePtr = 0;
@@ -482,7 +482,7 @@ namespace K4os.Compression.LZ4.Internal
 			{
 				int llen = (int) (ip - anchor);
 				int best_mlen, best_off;
-				int cur, last_match_pos = 0;
+				int cur, last_match_pos;
 
 				var firstMatch = LZ4HC_FindLongerMatch(ctx, ip, matchlimit, MINMATCH - 1, nbSearches);
 				if (firstMatch.len == 0)

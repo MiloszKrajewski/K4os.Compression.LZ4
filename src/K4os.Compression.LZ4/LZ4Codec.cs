@@ -20,30 +20,35 @@ namespace K4os.Compression.LZ4
 		}
 
 		public static unsafe int Encode(
-			byte* source, byte* target,
-			int sourceLength, int targetLength,
-			LZ4Level level) =>
-			level == LZ4Level.L00_FAST
+			byte* source, int sourceLength,
+			byte* target, int targetLength,
+			LZ4Level level = LZ4Level.L00_FAST)
+		{
+			if (sourceLength == 0)
+				return 0;
+			var encoded =
+				level == LZ4Level.L00_FAST
 				? LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength)
 				: LZ4_64_HC.LZ4_compress_HC(
 					source, target, sourceLength, targetLength, (int) level);
+			return encoded <= 0 ? -1 : encoded;
+		}
 
 		public static unsafe int Encode(
 			byte[] source, int sourceIndex, int sourceLength,
 			byte[] target, int targetIndex, int targetLength,
-			LZ4Level level)
+			LZ4Level level = LZ4Level.L00_FAST)
 		{
 			Validate(source, sourceIndex, sourceLength);
 			Validate(target, targetIndex, targetLength);
 			fixed (byte* sourceP = &source[sourceIndex])
 			fixed (byte* targetP = &target[targetIndex])
-				return Encode(
-					sourceP, targetP, sourceLength, targetLength,
-					level);
+				return Encode(sourceP, sourceLength, targetP, targetLength, level);
 		}
 
 		public static byte[] Encode(
-			byte[] source, int sourceIndex, int sourceLength, LZ4Level level)
+			byte[] source, int sourceIndex, int sourceLength,
+			LZ4Level level = LZ4Level.L00_FAST)
 		{
 			Validate(source, sourceIndex, sourceLength);
 
@@ -102,8 +107,7 @@ namespace K4os.Compression.LZ4
 			{
 				fixed (byte* sourceP = source)
 				{
-					var encodedLength = Encode(
-						sourceP, targetP, sourceLength, sourceLength, level);
+					var encodedLength = Encode(sourceP, sourceLength, targetP, sourceLength, level);
 
 					return encodedLength <= 0
 						? PickleCopy(sourceP, sourceLength, sourceLength)
