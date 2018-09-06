@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Test
 {
 	public class ChecksumBlockTests
 	{
+		[SuppressMessage("ReSharper", "StringLiteralTypo")]
+		[SuppressMessage("ReSharper", "CommentTypo")]
 #if DEBUG
 		[Theory(Skip = "Too long")]
 #else
@@ -41,8 +44,8 @@ namespace K4os.Compression.LZ4.Test
 		{
 			var src = Tools.LoadChunk(Tools.FindFile(filename), index, length);
 
-			var dst = LZ4Codec.Encode(src, 0, src.Length, LZ4Level.L00_FAST);
-			var cmp = LZ4Codec.Decode(dst, 0, dst.Length, src.Length);
+			var dst = LZ4CodecHelper.Encode(src, 0, src.Length, LZ4Level.L00_FAST);
+			var cmp = LZ4CodecHelper.Decode(dst, 0, dst.Length, src.Length);
 
 			string AsHex(uint value) => $"0x{value:x8}";
 
@@ -112,8 +115,8 @@ namespace K4os.Compression.LZ4.Test
 		{
 			var src = Tools.LoadChunk(Tools.FindFile(filename), index, length);
 
-			var dst = LZ4Codec.Encode(src, 0, src.Length, (LZ4Level) level);
-			var cmp = LZ4Codec.Decode(dst, 0, dst.Length, src.Length);
+			var dst = LZ4CodecHelper.Encode(src, 0, src.Length, (LZ4Level) level);
+			var cmp = LZ4CodecHelper.Decode(dst, 0, dst.Length, src.Length);
 
 			string AsHex(uint value) => $"0x{value:x8}";
 

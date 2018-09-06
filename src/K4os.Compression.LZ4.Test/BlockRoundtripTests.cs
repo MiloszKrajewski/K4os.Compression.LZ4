@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Test
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = _LZ4.Encode(source, 0, source.Length);
-			var compressedNew = LZ4Codec.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
+			var compressedNew = LZ4CodecHelper.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 
 			Tools.SameBytes(
 				source,
@@ -18,11 +18,11 @@ namespace K4os.Compression.LZ4.Test
 
 			Tools.SameBytes(
 				source,
-				LZ4Codec.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+				LZ4CodecHelper.Decode(compressedNew, 0, compressedNew.Length, source.Length));
 
 			Tools.SameBytes(
 				source,
-				LZ4Codec.Decode(compressedOld, 0, compressedOld.Length, source.Length));
+				LZ4CodecHelper.Decode(compressedOld, 0, compressedOld.Length, source.Length));
 		}
 
 		[Theory]
