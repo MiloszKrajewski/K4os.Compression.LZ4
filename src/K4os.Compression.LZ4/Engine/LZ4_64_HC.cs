@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using K4os.Compression.LZ4.Internal;
 using uint32 = System.UInt32;
 
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4.Internal
+namespace K4os.Compression.LZ4.Engine
 {
 #if BIT32
 	using size_t = UInt32;

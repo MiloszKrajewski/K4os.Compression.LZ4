@@ -5,7 +5,7 @@
 
 namespace K4os.Compression.LZ4
 {
-	public class AssemblyHook
+	internal class AssemblyHook
 	{
 		private AssemblyHook() { }
 	}

@@ -3,6 +3,7 @@ framework auto-detect
 source https://www.nuget.org/api/v2
 
 nuget K4os.Hash.xxHash
+nuget System.Memory
 
 nuget lz4net
 nuget SharpZipLib

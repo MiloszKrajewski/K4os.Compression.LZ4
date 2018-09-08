@@ -1,8 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Internal;
 
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4.Internal
+namespace K4os.Compression.LZ4.Engine
 {
 #if BIT32
 	internal unsafe class LZ4_32: LZ4_xx
