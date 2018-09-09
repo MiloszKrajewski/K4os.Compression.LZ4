@@ -23,11 +23,16 @@ namespace K4os.Compression.LZ4.Streams
 
 		private ILZ4FrameInfo _frameInfo;
 		private byte[] _buffer;
+		private bool _leaveOpen;
 
-		public LZ4DecoderStream(Stream inner, Func<ILZ4FrameInfo, ILZ4Decoder> decoderFactory)
+		public LZ4DecoderStream(
+			Stream inner,
+			Func<ILZ4FrameInfo, ILZ4Decoder> decoderFactory,
+			bool leaveOpen = false)
 		{
 			_inner = inner;
 			_decoderFactory = decoderFactory;
+			_leaveOpen = leaveOpen;
 		}
 
 		public override void Flush() =>
@@ -241,7 +246,8 @@ namespace K4os.Compression.LZ4.Streams
 				return;
 
 			CloseFrame();
-			_inner.Dispose();
+			if (!_leaveOpen)
+				_inner.Dispose();
 		}
 
 		public override bool CanRead => _inner.CanRead;

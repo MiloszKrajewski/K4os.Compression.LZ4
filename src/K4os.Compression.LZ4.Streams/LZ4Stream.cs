@@ -7,26 +7,15 @@ namespace K4os.Compression.LZ4.Streams
 {
 	public static class LZ4Stream
 	{
-		private static int ExtraBlocks(int blockSize, int extraMemory) =>
-			Math.Max(0, extraMemory) / blockSize;
-
-		public static LZ4DecoderStream Decode(Stream stream, int extraMemory = 0)
+		/// <summary>Created compression stream on top of inner stream.</summary>
+		/// <param name="stream">Inner stream.</param>
+		/// <param name="settings">Compression settings.</param>
+		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
+		/// <returns>Compression stream.</returns>
+		public static LZ4EncoderStream Encode(
+			Stream stream, LZ4EncoderSettings settings = null, bool leaveOpen = false)
 		{
-			var settings = new LZ4DecoderSettings { ExtraMemory = extraMemory };
-			return Decode(stream, settings);
-		}
-
-		public static LZ4DecoderStream Decode(Stream stream, LZ4DecoderSettings settings)
-		{
-			var extraMemory = settings.ExtraMemory;
-			return new LZ4DecoderStream(
-				stream,
-				i => new LZ4Decoder(
-					i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)));
-		}
-
-		public static LZ4EncoderStream Encode(Stream stream, LZ4EncoderSettings settings)
-		{
+			settings = settings ?? LZ4EncoderSettings.Default;
 			var frameInfo = new LZ4FrameInfo(
 				settings.ContentLength,
 				settings.ContentChecksum,
@@ -40,12 +29,19 @@ namespace K4os.Compression.LZ4.Streams
 			return new LZ4EncoderStream(
 				stream,
 				frameInfo,
-				i => LZ4Encoder.Create(
-					level, i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)));
+				i => LZ4Encoder.Create(level, i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
+				leaveOpen);
 		}
-
+		
+		/// <summary>Created compression stream on top of inner stream.</summary>
+		/// <param name="stream">Inner stream.</param>
+		/// <param name="level">Compression level.</param>
+		/// <param name="extraMemory">Extra memory used for compression.</param>
+		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
+		/// <returns>Compression stream.</returns>
 		public static LZ4EncoderStream Encode(
-			Stream stream, LZ4Level level = LZ4Level.L00_FAST, int extraMemory = 0)
+			Stream stream, LZ4Level level, int extraMemory = 0, 
+			bool leaveOpen = false)
 		{
 			var settings = new LZ4EncoderSettings {
 				ChainBlocks = true,
@@ -53,7 +49,38 @@ namespace K4os.Compression.LZ4.Streams
 				BlockSize = Mem.K64,
 				CompressionLevel = level
 			};
-			return Encode(stream, settings);
+			return Encode(stream, settings, leaveOpen);
 		}
+		
+		/// <summary>Creates decompression stream on top of inner stream.</summary>
+		/// <param name="stream">Inner stream.</param>
+		/// <param name="settings">Decompression settings.</param>
+		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
+		/// <returns>Decompression stream.</returns>
+		public static LZ4DecoderStream Decode(
+			Stream stream, LZ4DecoderSettings settings = null, bool leaveOpen = false)
+		{
+			settings = settings ?? LZ4DecoderSettings.Default;
+			var extraMemory = settings.ExtraMemory;
+			return new LZ4DecoderStream(
+				stream,
+				i => new LZ4Decoder(i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
+				leaveOpen);
+		}
+		
+		/// <summary>Creates decompression stream on top of inner stream.</summary>
+		/// <param name="stream">Inner stream.</param>
+		/// <param name="extraMemory">Extra memory used for decompression.</param>
+		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
+		/// <returns>Decompression stream.</returns>
+		public static LZ4DecoderStream Decode(
+			Stream stream, int extraMemory, bool leaveOpen = false)
+		{
+			var settings = new LZ4DecoderSettings { ExtraMemory = extraMemory };
+			return Decode(stream, settings, leaveOpen);
+		}
+		
+		private static int ExtraBlocks(int blockSize, int extraMemory) =>
+			Math.Max(extraMemory > 0 ? blockSize : 0, extraMemory) / blockSize;
 	}
 }

@@ -1,6 +1,7 @@
 # K4os.Compression.LZ4
 
 [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4)
+[![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.Streams.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4.Streams)
 
 # LZ4
 
@@ -34,12 +35,13 @@ enum LZ4Level
 }
 ```
 
-There are multiple compression levels. LZ4 comes with 4 flavours of compression algorithms. You can notice suffixes of those levels: `FAST`, `HC`, `OPT` and `MAX` (while `MAX` is just `OPT` with "ultra" settings). Please note that compression speed drops rapidly when not using `FAST` mode, while decompressions speed stays the same (actually, it is usually faster for high compression levels as there is less data to process).
+There are multiple compression levels. LZ4 comes in 3 (4?) flavors of compression algorithms. You can notice suffixes of those levels: `FAST`, `HC`, `OPT` and `MAX` (while `MAX` is just `OPT` with "ultra" settings). Please note that compression speed drops rapidly when not using `FAST` mode, while decompression speed stays the same (actually, it is usually faster for high compression levels as there is less data to process).
 
 ### Utility
 
 ```csharp
-static class LZ4Codec {
+static class LZ4Codec
+{
     static int MaximumOutputSize(int length);
 }
 ```
@@ -56,255 +58,197 @@ var target = new[LZ4Codec.MaximumOutputSize(source.Length)];
 
 ### Compression
 
-Block can be compressed using `Encode(...)` method family. It is realtively low level level funtions as it is your job to allocate all memory.
-
+Block can be compressed using `Encode(...)` method family. They are relatively low level functions as it is your job to allocate all memory.
 
 ```csharp
-static class LZ4Codec {
+static class LZ4Codec
+{
     static int Encode(
         byte* source, int sourceLength,
         byte* target, int targetLength,
         LZ4Level level = LZ4Level.L00_FAST);
 
     static int Encode(
-        byte[] source, int sourceIndex, int sourceLength,
-        byte[] target, int targetIndex, int targetLength,
+        ReadOnlySpan<byte> source, Span<byte> target,
+        LZ4Level level = LZ4Level.L00_FAST);
+
+    static int Encode(
+        byte[] source, int sourceOffset, int sourceLength,
+        byte[] target, int targetOffset, int targetLength,
         LZ4Level level = LZ4Level.L00_FAST);
 }
 ```
 
-They both return number of bytes which were actually used after compression. If this value is negative it the error has occured which in most cases mean that `target` buffer is too small. Please note, it might be tempting to use target buffer the same size (or even one byte smaller) as source buffer, and use copy as a fallback. This will work yet compression into buffer that is smaller than `MaximumOutputSize(source.Length)` is slower.
+All of them compress `source` buffer into `target` buffer and return number of bytes actually used after compression. If this value is negative it means that error has occurred and compression failed. In most cases mean that `target` buffer is too small.
 
-There is one more method in `Encode(...)` family which does exactly that:
+Please note, it might be tempting to use `target` buffer the same size (or even one byte smaller) then `source` buffer, and use copy as a fallback. This will work just fine, yet compression into buffer that is smaller than `MaximumOutputSize(source.Length)` is a little bit slower.
+
+Example:
 
 ```csharp
-static class LZ4Codec {
-    static byte[] Encode(
-        byte[] source, int sourceIndex, int sourceLength,
+var source = new byte[1000];
+var target = new[LZ4Codec.MaximumOutputSize(source.Length)];
+var encodedLength = LZ4Codec.Encode(
+    source, 0, source.Length,
+    target, 0, target.Length);
+```
+
+## Decompression
+
+Previously compressed block can be decompressed with `Decode(...)` functions.
+
+```csharp
+static class LZ4Codec
+{
+    static int Decode(
+        byte* source, int sourceLength,
+        byte* target, int targetLength);
+
+    static int Decode(
+        ReadOnlySpan<byte> source, Span<byte> target);
+
+    static int Decode(
+        byte[] source, int sourceOffset, int sourceLength,
+        byte[] target, int targetOffset, int targetLength);
+}
+```
+
+You have to know upfront how much memory you need to decompress, as there is almost no way to guess it. I did not investigate theoretical maximum compression ration, yet all-zero buffer gets compressed 245 times, therefore when decompressing output buffer would need to be 245 times bigger than input buffer. Yet, encoding itself does not store that information anywhere therefore it is your job.
+
+```csharp
+var source = new byte[1000];
+var target = new byte[knownOutputLength]; // or source.Length * 255 to be safe
+var decoded = LZ4Codec.Decode(
+    source, 0, source.Length, 
+    target, 0, target.Length);
+```
+
+## Pickler
+
+Sometime all you need is too quickly compress a small chunk of data, let's say serialized message to send it over the network. You can use `LZ4Pickler` in such case. It does encode original length within a message and handles incompressible data (by copying).
+
+```csharp
+static class LZ4Pickler
+{
+    static byte[] Pickle(
+        byte[] source,
+        LZ4Level level = LZ4Level.L00_FAST);
+
+    static byte[] Pickle(
+        byte[] source, int sourceOffset, int sourceLength,
+        LZ4Level level = LZ4Level.L00_FAST);
+
+    static byte[] Pickle(
+        ReadOnlySpan<byte> source,
+        LZ4Level level = LZ4Level.L00_FAST);
+
+    static byte[] Pickle(
+        byte* source, int sourceLength,
         LZ4Level level = LZ4Level.L00_FAST);
 }
 ```
 
-It was available in lz4net, so I've reimplented it in this library, but I have mixed feeling about it as it has some pitfalls and leaky abstractions. I suggest to use `Pickle` (see below) instead.
-
-This method returns a potentially compressed buffer, but if it's size if equal to `sourceLength` it means that is was not actually compressed but just copied.
-
-
-int Decode(
-    byte* source, byte* target, int sourceLength, int targetLength);
-
-int Decode(
-    byte[] source, int sourceIndex, int sourceLength,
-    byte[] target, int targetIndex, int targetLength);
-
-byte[] Decode(
-    byte[] source, int sourceIndex, int sourceLength,
-    int targetLength);
-
-byte[] Pickle(
-    byte[] source, int sourceIndex, int sourceLength,
-    LZ4Level level = LZ4Level.L00_FAST);
-
-byte[] Pickle(
-    byte[] source, LZ4Level level = LZ4Level.L00_FAST);
-
-byte[] Unpickle(
-    byte[] source, int sourceIndex, int sourceLength);
-
-byte[] Unpickle(byte[] source);
-```
-
-
-
-
-## Use with streams
+Example:
 
 ```csharp
-LZ4DecoderStream Decode(Stream stream, int extraMemory = 0);
-
-LZ4DecoderStream Decode(Stream stream, LZ4DecoderSettings settings);
-
-LZ4EncoderStream Encode(Stream stream, LZ4EncoderSettings settings);
-
-LZ4EncoderStream Encode(Stream stream, LZ4Level level = LZ4Level.L00_FAST, int extraMemory = 0);
+var source = new byte[1000];
+var encoded = LZ4Pickler.Pickle(source);
+var decoded = LZ4Pickler.Unpickle(encoded);
 ```
 
-Compressing streams follow decorator pattern: `LZ4Stream` is-a `Stream` and takes-a `Stream`. Let's start with some imports as text we are going to compress:
+Please note that this approach is slightly slower (copy after failed compression) and has one extra memory allocation (as it resizes buffer after compression).
+
+## Streams
+
+Stream implementation is in different package (`K4os.Compression.LZ4.Streams`) as it has dependency on [`K4os.Hash.xxHash`](https://github.com/MiloszKrajewski/K4os.Hash.xxHash). 
+It is fully compatible with [LZ4 Frame format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) although not all features are supported on compression (they are "properly" ignored on decompression).
+
+### Stream compression settings
+
+There are some thing which can be configured when compressing data:
 
 ```csharp
-using System;
-using System.IO;
-using LZ4;
-
-const string LoremIpsum =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sit amet mauris diam. " +
-    "Mauris mollis tristique sollicitudin. Nunc nec lectus nec ipsum pharetra venenatis. " +
-    "Fusce et consequat massa, eu vestibulum erat. Proin in lectus a lacus fermentum viverra. " +
-    "Aliquam vel tellus aliquam, eleifend justo ultrices, elementum elit. " +
-    "Donec sed ullamcorper ex, ac sagittis ligula. Pellentesque vel risus lacus. " +
-    "Proin aliquet lectus et tellus tristique, eget tristique magna placerat. " +
-    "Maecenas ut ipsum efficitur, lobortis mauris at, bibendum libero. " +
-    "Curabitur ultricies rutrum velit, eget blandit lorem facilisis sit amet. " +
-    "Nunc dignissim nunc iaculis diam congue tincidunt. Suspendisse et massa urna. " +
-    "Aliquam sagittis ornare nisl, quis feugiat justo eleifend iaculis. " +
-    "Ut pulvinar id purus non convallis.";
-```
-
-Now, we can write this text to compressed stream:
-
-```csharp
-static void WriteToStream()
+class LZ4EncoderSettings
 {
-    using (var fileStream = new FileStream("lorem.lz4", FileMode.Create))
-    using (var lz4Stream = new LZ4Stream(fileStream, LZ4StreamMode.Compress))
-    using (var writer = new StreamWriter(lz4Stream))
-    {
-        for (var i = 0; i < 100; i++)
-            writer.WriteLine(LoremIpsum);
-    }
+    long? ContentLength { get; set; } = null;
+    bool ChainBlocks { get; set; } = true;
+    int BlockSize { get; set; } = Mem.K64;
+    bool ContentChecksum => false;
+    bool BlockChecksum => false;
+    uint? Dictionary => null;
+    LZ4Level CompressionLevel { get; set; } = LZ4Level.L00_FAST;
+    int ExtraMemory { get; set; } = 0;
 }
 ```
 
-and read it back:
+Default options are good enough so you don't change anything. Refer to [original documentation](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) for more detailed information.
+
+Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` ae not currently supported and trying to use values other than defaults will throw exceptions.
+
+### Stream compression
+
+The class responsible for compression is `LZ4EncoderStream` but its usage is not obvious. For easy access two [static factory methods](https://stackoverflow.com/questions/194496/static-factory-methods-vs-instance-normal-constructors) has been created:
 
 ```csharp
-static void ReadFromStream()
+static class LZ4Stream
 {
-    using (var fileStream = new FileStream("lorem.lz4", FileMode.Open))
-    using (var lz4Stream = new LZ4Stream(fileStream, LZ4StreamMode.Decompress))
-    using (var reader = new StreamReader(lz4Stream))
-    {
-        string line;
-        while ((line = reader.ReadLine()) != null)
-            Console.WriteLine(line);
-    }
+    static LZ4EncoderStream Encode(
+        Stream stream, LZ4EncoderSettings settings = null, bool leaveOpen = false);
+
+    static LZ4EncoderStream Encode(
+        Stream stream, LZ4Level level, int extraMemory = 0,
+        bool leaveOpen = false);
 }
 ```
 
-`LZ4Stream` constructor requires inner stream and compression mode, plus takes some optional arguments, but their defaults are relatively sane:
+Both of them will take a stream (a file, a network stream, a memory stream) and wrap it adding compression on top of it.
+
+Example:
 
 ```csharp
-LZ4Stream(
-    Stream innerStream,
-    LZ4StreamMode compressionMode,
-    LZ4StreamFlags compressionFlags = LZ4StreamFlags.Default,
-    int blockSize = 1024*1024);
-```
-
-where:
-
-```csharp
-enum LZ4StreamMode {
-    Compress,
-    Decompress
-};
-
-[Flags] enum LZ4StreamFlags {
-    None,
-    InteractiveRead,
-    HighCompression,
-    IsolateInnerStream,
-    Default = None
-}
-```
-
-`compressionMode` configures `LZ4Stream` to either `Compress` or `Decompress`. `compressionFlags` is optional argument and allows to:
-
-* use `HighCompression` mode, which provides better compression ratio for the price of performance. This is relevant on compression only.
-* use `IsolateInnerStream` mode to leave inner stream open after disposing `LZ4Stream`.
-* use `InteractiveRead` mode to read bytes as soon as they are available. This option may be useful when dealing with network stream, but not particularly useful with regular file streams.
-
-`blockSize` is set 1MB by default but can be changed. Bigger `blockSize` allows better compression ratio, but uses more memory, stresses garbage collector and increases latency. It might be worth to experiment with it.
-
-## Use with byte arrays
-
-You can also compress byte arrays. It is useful when compressed chunks are relatively small and their size in known when compressing. `LZ4Codec.Wrap` compresses byte array and returns byte array:
-
-```csharp
-static string CompressBuffer()
+using (var source = File.OpenRead(filename))
+using (var target = LZ4Stream.Encode(File.Create(filename + ".lz4")))
 {
-    var text = Enumerable.Repeat(LoremIpsum, 5).Aggregate((a, b) => a + "\n" + b);
-
-    var compressed = Convert.ToBase64String(
-        LZ4Codec.Wrap(Encoding.UTF8.GetBytes(text)));
-
-    return compressed;
+    source.CopyTo(target);
 }
 ```
 
-In the example above we a little bit more, of course: first we concatenate multiple strings (`Enumerable.Repeat(...).Aggregate(...)`), then encode text as UTF8 (`Encoding.UTF8.GetBytes(...)`), then compress it (`LZ4Codec.Wrap(...)`) and then encode it with Base64 (`Convert.ToBase64String(...)`). On the end we have base64-encoded compressed string.
+### Stream decompression settings
 
-To decompress it we can use something like this:
+Decompression settings are pretty simple and class has been added for symmetry with `LZ4EncoderSettings`.
 
 ```csharp
-static string DecompressBuffer(string compressed)
+class LZ4DecoderSettings
 {
-    var lorems =
-        Encoding.UTF8.GetString(
-                LZ4Codec.Unwrap(Convert.FromBase64String(compressed)))
-            .Split('\n');
-
-    foreach (var lorem in lorems)
-        Console.WriteLine(lorem);
+    int ExtraMemory { get; set; } = 0;
 }
 ```
 
-Which is a reverse operation: decoding base64 string (`Convert.FromBase64String(...)`), decompression (`LZ4Codec.Unwrap(...)`), decoding UTF8 (`Encoding.UTF8.GetString(...)`) and splitting the string (`Split('\n')`).
+Adding extra memory to decompression process may increase decompression speed. Not significantly, though so there is no reason to stress about it too much.
 
-## Compatibility
+### Stream decompression
 
-Both `LZ4Stream` and `LZ4Codec.Wrap` is not compatible with original LZ4. It is an outstanding task to implement compatible streaming protocol and, to be honest, it does not seem to be likely in nearest future, but...
-
-If you want to do it yourself, you can. It requires a little bit more understanding though, so let's look at "low level" compression. Let's create some compressible data:
-
-```charp
-var inputBuffer =
-    Encoding.UTF8.GetBytes(
-        Enumerable.Repeat(LoremIpsum, 5).Aggregate((a, b) => a + "\n" + b));
-```
-
-we also need to allocate buffer for compressed data.
-Please note, it might be actually more than input data (as not all data can be compressed):
+Same as before, there are two static factory methods to wrap existing stream and provide decompression.
 
 ```csharp
-var inputLength = inputBuffer.Length;
-var maximumLength = LZ4Codec.MaximumOutputLength(inputLength);
-var outputBuffer = new byte[maximumLength];
+static class LZ4Stream
+{
+    static LZ4DecoderStream Decode(
+        Stream stream, LZ4DecoderSettings settings = null, bool leaveOpen = false);
+
+    static LZ4DecoderStream Decode(
+        Stream stream, int extraMemory, bool leaveOpen = false);
+}
 ```
 
-Now, we can run actual compression:
+Example:
 
 ```csharp
-var outputLength = LZ4Codec.Encode(
-    inputBuffer, 0, inputLength,
-    outputBuffer, 0, maximumLength);
+using (var source = LZ4Stream.Decode(File.OpenRead(filename + ".lz4")))
+using (var target = File.Create(filename))
+{
+    source.CopyTo(target);
+}
 ```
 
-`Encode` method returns number of bytes which were actually used. It might be less or equal to `maximumLength`. It me be also `0` (or less) to indicate that compression failed. This happens when provided buffer is too small.
-
-Buffer compressed this way can be decompressed with:
-
-```csharp
-LZ4Codec.Decode(
-    inputBuffer, 0, inputLength,
-    outputBuffer, 0, outputLength,
-    true);
-```
-
-Last argument (`true`) indicates that we actually know output length. Alternatively we don't have to provide it, and use:
-
-```csharp
-var guessedOutputLength = inputLength * 10; // ???
-var outputBuffer = new byte[guessedOutputLength];
-var actualOutputLength = LZ4Codec.Decode(
-    inputBuffer, 0, inputLength,
-    outputBuffer, 0, guessedOutputLength);
-```
-
-but this will require guessing outputBuffer size (`guessedOutputLength`) which might be quite inefficient.
-
-**Buffers compressed this way are fully compatible with original implementation if LZ4.**
-
-Both `LZ4Stream` and `LZ4Codec.Wrap/Unwrap` use them internally.
-
-
+Please note that stream decompression is (at least I hope it is) fully compatible with original specification. Well, it does not handle predefined dictionaries but `lz4.exe` does not either. All the other features which are not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does not cause decompression to fail.

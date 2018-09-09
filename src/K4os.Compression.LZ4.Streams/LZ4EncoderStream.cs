@@ -20,14 +20,18 @@ namespace K4os.Compression.LZ4.Streams
 
 		private readonly ILZ4FrameInfo _frameInfo;
 		private byte[] _buffer;
+		private bool _leaveOpen;
 
 		public LZ4EncoderStream(
-			Stream inner, ILZ4FrameInfo frameInfo,
-			Func<ILZ4FrameInfo, ILZ4Encoder> encoderFactory)
+			Stream inner,
+			ILZ4FrameInfo frameInfo,
+			Func<ILZ4FrameInfo, ILZ4Encoder> encoderFactory,
+			bool leaveOpen = false)
 		{
 			_inner = inner;
 			_frameInfo = frameInfo;
 			_encoderFactory = encoderFactory;
+			_leaveOpen = leaveOpen;
 		}
 
 		public override void Flush() => _inner.Flush();
@@ -128,12 +132,13 @@ namespace K4os.Compression.LZ4.Streams
 
 			try
 			{
-				var action = _encoder.FlushAndEncode(_buffer, 0, _buffer.Length, true, out var encoded);
+				var action = _encoder.FlushAndEncode(
+					_buffer, 0, _buffer.Length, true, out var encoded);
 				WriteBlock(encoded, action);
 
 				Write32(0);
 				Flush16();
-				
+
 				if (_frameInfo.ContentChecksum)
 					throw NotImplemented("ContentChecksum");
 
@@ -194,7 +199,8 @@ namespace K4os.Compression.LZ4.Streams
 				return;
 
 			CloseFrame();
-			_inner.Dispose();
+			if (!_leaveOpen)
+				_inner.Dispose();
 		}
 
 		private void Write8(byte value) { _buffer16[_index16++] = value; }

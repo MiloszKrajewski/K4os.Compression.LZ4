@@ -49,6 +49,18 @@ namespace K4os.Compression.LZ4.Test
 				FastStreamManual(blockSize, totalSize),
 				FastStreamEncoder(blockSize, totalSize, extraBlocks));
 		}
+
+		[Fact]
+		public void CompressionRatio()
+		{
+			var input = new byte[0x10000];
+			var output = new byte[0x10000];
+			var encoded = LZ4Codec.Encode(
+				input, 0, input.Length, 
+				output, 0, output.Length, 
+				LZ4Level.L12_MAX);
+			Assert.True(encoded < input.Length / 200);
+		}
 		
 		[Fact]
 		public void HighEntropyRepeated()

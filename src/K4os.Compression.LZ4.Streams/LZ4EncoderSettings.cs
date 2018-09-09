@@ -4,6 +4,8 @@ namespace K4os.Compression.LZ4.Streams
 {
 	public class LZ4EncoderSettings
 	{
+		internal static LZ4EncoderSettings Default = new LZ4EncoderSettings();
+
 		public long? ContentLength { get; set; } = null;
 		public bool ChainBlocks { get; set; } = true;
 		public int BlockSize { get; set; } = Mem.K64;

@@ -39,7 +39,6 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				File.Delete(encoded);
 			}
-
 		}
 
 
