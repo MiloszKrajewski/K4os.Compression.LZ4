@@ -46,5 +46,26 @@ namespace K4os.Compression.LZ4.Test
 
 			Tools.SameBytes(original, unpickled);
 		}
+
+		[Theory]
+		[InlineData(0, 0)]
+		[InlineData(0, 1337)]
+		[InlineData(1337, 1337)]
+		[InlineData(1337, 1)]
+		[InlineData(1337, 0)]
+		public void PicklingSpansGivesIdenticalResults(int offset, int length)
+		{
+			var source = new byte[offset + length + offset];
+			Lorem.Fill(source, 0, source.Length);
+
+			var array = LZ4Pickler.Pickle(source, offset, length);
+			var span = LZ4Pickler.Pickle(source.AsSpan(offset, length));
+
+			Assert.Equal(array, span);
+
+			Assert.Equal(
+				LZ4Pickler.Unpickle(array),
+				LZ4Pickler.Unpickle(span.AsSpan()));
+		}
 	}
 }

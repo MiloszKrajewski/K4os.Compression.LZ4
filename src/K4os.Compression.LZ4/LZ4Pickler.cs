@@ -40,8 +40,12 @@ namespace K4os.Compression.LZ4
 		public static unsafe byte[] Pickle(
 			ReadOnlySpan<byte> source, LZ4Level level = LZ4Level.L00_FAST)
 		{
+			var sourceLength = source.Length;
+			if (sourceLength <= 0)
+				return Array.Empty<byte>();
+
 			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
-				return Pickle(sourceP, source.Length, level);
+				return Pickle(sourceP, sourceLength, level);
 		}
 
 		/// <summary>Compresses input buffer into self-contained package.</summary>
@@ -93,6 +97,19 @@ namespace K4os.Compression.LZ4
 
 			fixed (byte* sourceP = source)
 				return Unpickle(sourceP + sourceOffset, sourceLength);
+		}
+
+		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <returns>Output buffer.</returns>
+		public static unsafe byte[] Unpickle(ReadOnlySpan<byte> source)
+		{
+			var sourceLength = source.Length;
+			if (sourceLength <= 0)
+				return Array.Empty<byte>();
+
+			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
+				return Unpickle(sourceP, source.Length);
 		}
 
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>

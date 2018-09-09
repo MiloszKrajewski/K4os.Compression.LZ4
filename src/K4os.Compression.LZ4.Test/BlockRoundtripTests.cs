@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Xunit;
 using _LZ4 = LZ4.LZ4Codec;
 
@@ -79,6 +80,7 @@ namespace K4os.Compression.LZ4.Test
 		}
 
 		[Fact]
+		[SuppressMessage("ReSharper", "RedundantArgumentDefaultValue")]
 		public void BorderLineCompressions()
 		{
 			var original = Tools.LoadChunk(Tools.FindFile(".corpus/x-ray"), 0, 0x10000);

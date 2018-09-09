@@ -28,6 +28,7 @@ namespace K4os.Compression.LZ4.Streams
 		public static LZ4EncoderStream Encode(Stream stream, LZ4EncoderSettings settings)
 		{
 			var frameInfo = new LZ4FrameInfo(
+				settings.ContentLength,
 				settings.ContentChecksum,
 				settings.ChainBlocks,
 				settings.BlockChecksum,

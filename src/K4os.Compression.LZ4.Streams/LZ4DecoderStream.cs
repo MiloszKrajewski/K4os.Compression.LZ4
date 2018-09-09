@@ -81,9 +81,7 @@ namespace K4os.Compression.LZ4.Streams
 			var hasDictionary = (BD & (1 << 0)) != 0;
 			var blockSizeCode = (BD >> 4) & 0x07;
 
-			if (hasContentSize)
-				Read64(); // needs to be read (if present) but we don't care
-
+			var contentLength = hasContentSize ? (long?) Read64() : null;
 			var dictionaryId = hasDictionary ? (uint?) Read32() : null;
 
 			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
@@ -95,7 +93,8 @@ namespace K4os.Compression.LZ4.Streams
 			var blockSize = MaxBlockSize(blockSizeCode);
 
 			_frameInfo = new LZ4FrameInfo(
-				contentChecksum, blockChaining, blockChecksum, dictionaryId, blockSize);
+				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
+				blockSize);
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
 		}

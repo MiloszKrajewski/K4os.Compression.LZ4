@@ -68,7 +68,6 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
-		[SuppressMessage("ReSharper", "UnreachableCode")]
 		private void WriteFrame()
 		{
 			Write32(0x184D2204);
@@ -85,8 +84,8 @@ namespace K4os.Compression.LZ4.Streams
 				((blockChecksum ? 1 : 0) << 4) |
 				((contentChecksum ? 1 : 0) << 2);
 
-			const bool hasContentSize = false;
-			const bool hasDictionary = false;
+			var hasContentSize = _frameInfo.ContentLength.HasValue;
+			var hasDictionary = _frameInfo.Dictionary.HasValue;
 			var blockSize = _frameInfo.BlockSize;
 
 			var BD =

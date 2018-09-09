@@ -2,6 +2,7 @@
 {
 	public class LZ4FrameInfo: ILZ4FrameInfo
 	{
+		public long? ContentLength { get; }
 		public bool ContentChecksum { get; }
 		public bool Chaining { get; }
 		public bool BlockChecksum { get; }
@@ -9,8 +10,11 @@
 		public int BlockSize { get; }
 
 		public LZ4FrameInfo(
-			bool contentChecksum, bool chaining, bool blockChecksum, uint? dictionary, int blockSize)
+			long? contentLength, bool contentChecksum,
+			bool chaining, bool blockChecksum,
+			uint? dictionary, int blockSize)
 		{
+			ContentLength = contentLength;
 			ContentChecksum = contentChecksum;
 			Chaining = chaining;
 			BlockChecksum = blockChecksum;

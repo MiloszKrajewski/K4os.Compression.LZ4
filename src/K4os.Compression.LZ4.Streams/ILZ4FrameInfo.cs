@@ -2,6 +2,7 @@
 {
 	public interface ILZ4FrameInfo
 	{
+		long? ContentLength { get; }
 		bool ContentChecksum { get; }
 
 		bool Chaining { get; }
