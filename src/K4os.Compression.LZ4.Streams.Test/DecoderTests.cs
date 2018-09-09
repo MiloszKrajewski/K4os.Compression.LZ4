@@ -19,6 +19,29 @@ namespace K4os.Compression.LZ4.Streams.Test
 		{
 			TestDecoder($".corpus/{filename}", options, chunkSize);
 		}
+		
+		[Fact]
+		public void InteractiveReadingReturnsBytesAsSoonAsTheyAreAvailable()
+		{
+			var original = Tools.FindFile($".corpus/reymont");
+			var encoded = Path.GetTempFileName();
+			try
+			{
+				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
+				using (var input = LZ4Stream.Decode(File.OpenRead(encoded), Mem.M1))
+				{
+					var buffer = new byte[0x80000];
+					Assert.Equal(5000, input.Read(buffer, 0, 5000));
+					Assert.Equal(0x10000 - 5000, input.Read(buffer, 0, 0x10000));
+				}
+			}
+			finally
+			{
+				File.Delete(encoded);
+			}
+
+		}
+
 
 		[Theory]
 		[InlineData("-1 -BD -B4 -BX", Mem.K64)]
