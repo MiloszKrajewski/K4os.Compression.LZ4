@@ -4,9 +4,20 @@
     <TargetFrameworks>netstandard1.6;netstandard2.0;net46</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup>
+    <Authors>Milosz Krajewski</Authors>
+    <PackageId>K4os.Compression.LZ4.Streams</PackageId>
+    <Product>K4os.Compression.LZ4.Streams</Product>
+    <Description>Port of LZ4 compression algorithm for .NET (streams)</Description>
+    <PackageTags>compression lz4 stream</PackageTags>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/MiloszKrajewski/K4os.Compression.LZ4/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</RepositoryUrl>
+    <PackageIconUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4/blob/master/doc/icon.png?raw=true</PackageIconUrl>
+  </PropertyGroup>
   <Import Project="..\..\Common.targets" />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
