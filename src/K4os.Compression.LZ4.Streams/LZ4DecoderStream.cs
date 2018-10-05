@@ -23,7 +23,8 @@ namespace K4os.Compression.LZ4.Streams
 
 		private ILZ4FrameInfo _frameInfo;
 		private byte[] _buffer;
-		private bool _leaveOpen;
+		private readonly bool _leaveOpen;
+		private long _position;
 
 		public LZ4DecoderStream(
 			Stream inner,
@@ -33,6 +34,7 @@ namespace K4os.Compression.LZ4.Streams
 			_inner = inner;
 			_decoderFactory = decoderFactory;
 			_leaveOpen = leaveOpen;
+			_position = 0;
 		}
 
 		public override void Flush() =>
@@ -43,8 +45,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			if (_decoder == null)
-				ReadFrame();
+			EnsureFrame();
 
 			var read = 0;
 			while (count > 0)
@@ -61,6 +62,12 @@ namespace K4os.Compression.LZ4.Streams
 
 		public override int ReadByte() =>
 			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
+		
+		private void EnsureFrame()
+		{
+			if (_decoder == null)
+				ReadFrame();
+		}
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private void ReadFrame()
@@ -78,16 +85,19 @@ namespace K4os.Compression.LZ4.Streams
 			var FLG = FLG_BD & 0xFF;
 			var BD = (FLG_BD >> 8) & 0xFF;
 
+			var version = (FLG >> 6) & 0x11;
+
+			if (version != 1)
+				throw UnknownFrameVersion(version);
+			
 			var blockChaining = ((FLG >> 5) & 0x01) == 0;
 			var blockChecksum = ((FLG >> 4) & 0x01) != 0;
+			var hasContentSize = ((FLG >> 3) & 0x01) != 0;
 			var contentChecksum = ((FLG >> 2) & 0x01) != 0;
 
-			var hasContentSize = (BD & (1 << 3)) != 0;
-			var hasDictionary = (BD & (1 << 0)) != 0;
 			var blockSizeCode = (BD >> 4) & 0x07;
 
 			var contentLength = hasContentSize ? (long?) Read64() : null;
-			var dictionaryId = hasDictionary ? (uint?) Read32() : null;
 
 			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
 			var expectedHC = Read8();
@@ -97,9 +107,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			var blockSize = MaxBlockSize(blockSizeCode);
 
-			_frameInfo = new LZ4FrameInfo(
-				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
-				blockSize);
+			_frameInfo = new LZ4FrameInfo(contentLength, contentChecksum, blockChaining, blockChecksum, blockSize);
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
 		}
@@ -168,6 +176,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			var length = Math.Min(count, _decoded);
 			_decoder.Drain(buffer, offset, -_decoded, length);
+			_position += length;
 			_decoded -= length;
 			offset += length;
 			count -= length;
@@ -253,11 +262,19 @@ namespace K4os.Compression.LZ4.Streams
 		public override bool CanRead => _inner.CanRead;
 		public override bool CanSeek => false;
 		public override bool CanWrite => false;
-		public override long Length => -1;
+
+		public override long Length
+		{
+			get
+			{
+				EnsureFrame();
+				return _frameInfo?.ContentLength ?? -1;
+			}
+		}
 
 		public override long Position
 		{
-			get => -1;
+			get => _position;
 			set => throw InvalidOperation("SetPosition");
 		}
 
@@ -296,6 +313,9 @@ namespace K4os.Compression.LZ4.Streams
 
 		private static InvalidDataException MagicNumberExpected() =>
 			new InvalidDataException("LZ4 frame magic number expected");
+		
+		private static InvalidDataException UnknownFrameVersion(int version) =>
+			new InvalidDataException($"LZ4 frame version {version} is not supported");
 
 		private InvalidOperationException InvalidOperation(string operation) =>
 			new InvalidOperationException(

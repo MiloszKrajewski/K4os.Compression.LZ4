@@ -21,7 +21,6 @@ namespace K4os.Compression.LZ4.Streams
 				settings.ContentChecksum,
 				settings.ChainBlocks,
 				settings.BlockChecksum,
-				settings.Dictionary,
 				settings.BlockSize);
 			var level = settings.CompressionLevel;
 			var extraMemory = settings.ExtraMemory;

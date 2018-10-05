@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
 using Xunit;
@@ -19,13 +20,55 @@ namespace K4os.Compression.LZ4.Streams.Test
 		{
 			TestDecoder($".corpus/{filename}", options, chunkSize);
 		}
-		
+
+		[Theory]
+		[InlineData("reymont", "-1 -BD -B4 --content-size", Mem.K8)]
+		[InlineData("xml", "-1 -BD -B4 --content-size", Mem.K8)]
+		[InlineData("x-ray", "-1 -BD -B4 --content-size", Mem.K8)]
+		public void LengthAndPositionInStream(string filename, string options, int chunkSize)
+		{
+			var original = Tools.FindFile($".corpus/{filename}");
+			var expectedLength = new FileInfo(original).Length;
+			var expectedPosition = 0L;
+			var encoded = Path.GetTempFileName();
+
+			try
+			{
+				ReferenceLZ4.Encode(options, original, encoded);
+
+				using (var stream = LZ4Stream.Decode(File.OpenRead(encoded)))
+				{
+					var random = new Random(0);
+					Assert.Equal(expectedLength, stream.Length);
+					
+					var buffer = new byte[chunkSize];
+					while (true)
+					{
+						var read = stream.Read(buffer, 0, random.Next(1, chunkSize));
+						if (read == 0)
+							break;
+
+						expectedPosition += read;
+						Assert.Equal(expectedPosition, stream.Position);
+					}
+					
+					Assert.Equal(expectedLength, stream.Position);
+				}
+			}
+			finally
+			{
+				File.Delete(encoded);
+			}
+		}
+
 		[Fact]
 		public void InteractiveReadingReturnsBytesAsSoonAsTheyAreAvailable()
 		{
 			var original = Tools.FindFile($".corpus/reymont");
+
 			var encoded = Path.GetTempFileName();
 			try
+
 			{
 				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
 				using (var input = LZ4Stream.Decode(File.OpenRead(encoded), Mem.M1))
@@ -41,7 +84,6 @@ namespace K4os.Compression.LZ4.Streams.Test
 			}
 		}
 
-
 		[Theory]
 		[InlineData("-1 -BD -B4 -BX", Mem.K64)]
 		[InlineData("-1 -BD -B4 -BX", 1337)]
@@ -51,6 +93,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		{
 			var filename = Path.GetTempFileName();
 			try
+
 			{
 				Tools.WriteRandom(filename, 10 * Mem.M1 + 1337);
 				TestDecoder(filename, options, chunkSize);
@@ -60,7 +103,6 @@ namespace K4os.Compression.LZ4.Streams.Test
 				File.Delete(filename);
 			}
 		}
-		
 		#if DEBUG
 		[Theory(Skip = "Too long")]
 		#else

@@ -81,31 +81,24 @@ namespace K4os.Compression.LZ4.Streams
 			var blockChaining = _frameInfo.Chaining;
 			var blockChecksum = _frameInfo.BlockChecksum;
 			var contentChecksum = _frameInfo.ContentChecksum;
+			var hasContentSize = _frameInfo.ContentLength.HasValue;
 
 			var FLG =
 				(versionCode << 6) |
 				((blockChaining ? 0 : 1) << 5) |
 				((blockChecksum ? 1 : 0) << 4) |
+				((hasContentSize ? 1 : 0) << 3) |
 				((contentChecksum ? 1 : 0) << 2);
 
-			var hasContentSize = _frameInfo.ContentLength.HasValue;
-			var hasDictionary = _frameInfo.Dictionary.HasValue;
 			var blockSize = _frameInfo.BlockSize;
 
-			var BD =
-				((hasContentSize ? 1 : 0) << 3) |
-				((hasDictionary ? 1 : 0) << 0) |
-				(MaxBlockSizeCode(blockSize) << 4);
+			var BD = MaxBlockSizeCode(blockSize) << 4;
 
 			Write16((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
 				throw NotImplemented(
 					"ContentSize feature is not implemented"); // Write64(contentSize);
-
-			if (hasDictionary)
-				throw NotImplemented(
-					"Predefined dictionaries feature is not implemented"); // Write32(dictionaryId);
 
 			var HC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
 

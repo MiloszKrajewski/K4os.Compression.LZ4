@@ -8,7 +8,6 @@
 		bool Chaining { get; }
 		bool BlockChecksum { get; }
 
-		uint? Dictionary { get; }
 		int BlockSize { get; }
 	}
 }
