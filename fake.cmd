@@ -6,7 +6,7 @@ set fake=%target%\fake.exe
 
 if not exist %fake% (
     rmdir /q /s %temp%\nuget\fake 2> nul
-    nuget install -out %temp%\nuget -excludeversion fake -version 4.64.13
+    call %~dp0\nuget install -out %temp%\nuget -excludeversion fake -version 4.64.13
     xcopy %temp%\nuget\fake\tools\* %target%\
 	rmdir /q /s %temp%\nuget\fake 2> nul
 )

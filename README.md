@@ -18,6 +18,24 @@ paket restore
 fake build
 ```
 
+## What is 'Fast compression algorithm'?
+
+While compression algorithms you use day-to-day to archive your data work around the speed of 10MB/s giving you quite decent compression ratios, 'fast algorithms' are designed to work 'faster than your hard drive' sacrificing compression ratio.
+One of the most famous fast compression algorithms in Google's own [Snappy](http://code.google.com/p/snappy/) which is advertised as 250MB/s compression, 500MB/s decompression on i7 in 64-bit mode.
+Fast compression algorithms help reduce network traffic / hard drive load compressing data on the fly with no noticeable latency.
+
+I just tried to compress some sample data (Silesia Corpus) receiving:
+* **zlib** (7zip) - 7.5M/s compression, 110MB/s decompression, 44% compression ratio
+* **lzma** (7zip) - 1.5MB/s compression, 50MB/s decompression, 37% compression ratio
+* **lz4** - 280MB/s compression, 520MB/s decompression, 57% compression ratio
+
+**Note**: Values above are for illustration only. they are affected by HDD read/write speed (in fact LZ4 decompression in much faster). The 'real' tests are taking HDD speed out of equation. For detailed performance tests see [Performance Testing] and [Comparison to other algorithms].
+
+## Other 'Fast compression algorithms'
+
+There are multiple fast compression algorithms, to name a few: [LZO](http://lzohelper.codeplex.com/), [QuickLZ](http://www.quicklz.com/index.php), [LZF](http://csharplzfcompression.codeplex.com/), [Snappy](https://github.com/Kintaro/SnappySharp), FastLZ.
+You can find comparison of them on [LZ4 webpage](http://code.google.com/p/lz4/) or [here](http://www.technofumbles.com/weblog/2011/04/22/survey-of-fast-compression-algorithms-part-1-2/)
+
 # Usage
 
 This LZ4 library can be used in two distinctive ways: to compress streams and blocks.
@@ -119,7 +137,7 @@ You have to know upfront how much memory you need to decompress, as there is alm
 var source = new byte[1000];
 var target = new byte[knownOutputLength]; // or source.Length * 255 to be safe
 var decoded = LZ4Codec.Decode(
-    source, 0, source.Length, 
+    source, 0, source.Length,
     target, 0, target.Length);
 ```
 
@@ -160,7 +178,7 @@ Please note that this approach is slightly slower (copy after failed compression
 
 ## Streams
 
-Stream implementation is in different package (`K4os.Compression.LZ4.Streams`) as it has dependency on [`K4os.Hash.xxHash`](https://github.com/MiloszKrajewski/K4os.Hash.xxHash). 
+Stream implementation is in different package (`K4os.Compression.LZ4.Streams`) as it has dependency on [`K4os.Hash.xxHash`](https://github.com/MiloszKrajewski/K4os.Hash.xxHash).
 It is fully compatible with [LZ4 Frame format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) although not all features are supported on compression (they are "properly" ignored on decompression).
 
 ### Stream compression settings

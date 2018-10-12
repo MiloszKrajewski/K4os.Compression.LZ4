@@ -1,3 +1,8 @@
+## 1.0.3 (2018/10/12)
+* added auto-download of nuget (Windows only)
+* merged fix for slow streams (https://github.com/MiloszKrajewski/K4os.Compression.LZ4/pull/8)
+* Dictionary is back (although, it is still ignored)
+
 ## 1.0.2 (2018/10/03)
 * updated package information
 * added Position to Decode stream
