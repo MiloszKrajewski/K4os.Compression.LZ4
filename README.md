@@ -18,7 +18,7 @@ paket restore
 fake build
 ```
 
-## What is 'Fast compression algorithm'?
+# What is 'Fast compression algorithm'?
 
 While compression algorithms you use day-to-day to archive your data work around the speed of 10MB/s giving you quite decent compression ratios, 'fast algorithms' are designed to work 'faster than your hard drive' sacrificing compression ratio.
 One of the most famous fast compression algorithms in Google's own [Snappy](http://code.google.com/p/snappy/) which is advertised as 250MB/s compression, 500MB/s decompression on i7 in 64-bit mode.
