@@ -37,7 +37,7 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 			string original, string encoded, int chuckSize, LZ4Settings settings)
 		{
 			var frameInfo = new LZ4FrameInfo(
-				null, false, settings.Chaining, false, settings.BlockSize);
+				null, false, settings.Chaining, false, null, settings.BlockSize);
 			using (var input = File.OpenRead(original))
 			using (var output = File.Create(encoded))
 			using (var encode = new LZ4EncoderStream(

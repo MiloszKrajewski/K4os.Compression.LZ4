@@ -19,8 +19,9 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly Func<ILZ4FrameInfo, ILZ4Encoder> _encoderFactory;
 
 		private readonly ILZ4FrameInfo _frameInfo;
+		private readonly bool _leaveOpen;
+
 		private byte[] _buffer;
-		private bool _leaveOpen;
 
 		public LZ4EncoderStream(
 			Stream inner,
@@ -82,13 +83,15 @@ namespace K4os.Compression.LZ4.Streams
 			var blockChecksum = _frameInfo.BlockChecksum;
 			var contentChecksum = _frameInfo.ContentChecksum;
 			var hasContentSize = _frameInfo.ContentLength.HasValue;
+			var hasDictionary = _frameInfo.Dictionary.HasValue;
 
 			var FLG =
 				(versionCode << 6) |
 				((blockChaining ? 0 : 1) << 5) |
 				((blockChecksum ? 1 : 0) << 4) |
 				((hasContentSize ? 1 : 0) << 3) |
-				((contentChecksum ? 1 : 0) << 2);
+				((contentChecksum ? 1 : 0) << 2) |
+				(hasDictionary ? 1 : 0);
 
 			var blockSize = _frameInfo.BlockSize;
 
@@ -99,6 +102,10 @@ namespace K4os.Compression.LZ4.Streams
 			if (hasContentSize)
 				throw NotImplemented(
 					"ContentSize feature is not implemented"); // Write64(contentSize);
+
+			if (hasDictionary)
+				throw NotImplemented(
+					"Predefined dictionaries feature is not implemented"); // Write32(dictionaryId);
 
 			var HC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
 

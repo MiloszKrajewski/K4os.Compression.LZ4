@@ -19,7 +19,7 @@ namespace K4os.Compression.LZ4.Encoders
 
 		/// <summary>
 		/// Inject already decompressed block and caches it in decoder.
-		/// Used with uncompressed-yet-chained blocks and premade dictionaries.
+		/// Used with uncompressed-yet-chained blocks and pre-made dictionaries.
 		/// These bytes can be read with <see cref="Drain" />.
 		/// </summary>
 		/// <param name="source">Points to uncompressed block.</param>

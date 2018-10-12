@@ -11,19 +11,20 @@ namespace K4os.Compression.LZ4.Streams
 {
 	public class LZ4DecoderStream: Stream, IDisposable
 	{
+		private readonly bool _interactive = true;
+		private readonly bool _leaveOpen;
+
 		private readonly Stream _inner;
 		private readonly byte[] _buffer16 = new byte[16];
 		private int _index16;
 
-		private int _decoded;
-		private readonly bool _interactive = true;
-
-		private ILZ4Decoder _decoder;
 		private readonly Func<ILZ4FrameInfo, ILZ4Decoder> _decoderFactory;
 
 		private ILZ4FrameInfo _frameInfo;
+		private ILZ4Decoder _decoder;
+		private int _decoded;
 		private byte[] _buffer;
-		private readonly bool _leaveOpen;
+
 		private long _position;
 
 		public LZ4DecoderStream(
@@ -62,7 +63,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		public override int ReadByte() =>
 			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
-		
+
 		private void EnsureFrame()
 		{
 			if (_decoder == null)
@@ -89,15 +90,16 @@ namespace K4os.Compression.LZ4.Streams
 
 			if (version != 1)
 				throw UnknownFrameVersion(version);
-			
+
 			var blockChaining = ((FLG >> 5) & 0x01) == 0;
 			var blockChecksum = ((FLG >> 4) & 0x01) != 0;
 			var hasContentSize = ((FLG >> 3) & 0x01) != 0;
 			var contentChecksum = ((FLG >> 2) & 0x01) != 0;
-
+			var hasDictionary = (FLG & 0x01) != 0;
 			var blockSizeCode = (BD >> 4) & 0x07;
 
 			var contentLength = hasContentSize ? (long?) Read64() : null;
+			var dictionaryId = hasDictionary ? (uint?) Read32() : null;
 
 			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
 			var expectedHC = Read8();
@@ -107,7 +109,14 @@ namespace K4os.Compression.LZ4.Streams
 
 			var blockSize = MaxBlockSize(blockSizeCode);
 
-			_frameInfo = new LZ4FrameInfo(contentLength, contentChecksum, blockChaining, blockChecksum, blockSize);
+			if (hasDictionary)
+				throw NotImplemented(
+					"Predefined dictionaries feature is not implemented"); // Write32(dictionaryId);
+
+			// ReSharper disable once ExpressionIsAlwaysNull
+			_frameInfo = new LZ4FrameInfo(
+				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
+				blockSize);
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
 		}
@@ -159,7 +168,9 @@ namespace K4os.Compression.LZ4.Streams
 
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
-			_inner.Read(_buffer, 0, blockLength);
+
+			ReadN(_buffer, 0, blockLength);
+
 			if (_frameInfo.BlockChecksum)
 				Read32();
 
@@ -185,29 +196,40 @@ namespace K4os.Compression.LZ4.Streams
 			return _interactive;
 		}
 
-		private bool ReadN(int count, bool optional = false)
+		private int ReadN(byte[] buffer, int offset, int count, bool optional = false)
 		{
 			var index = 0;
-			while (index < count)
+			while (count > 0)
 			{
-				var read = _inner.Read(_buffer16, _index16 + index, count - index);
+				var read = _inner.Read(buffer, index + offset, count);
 				if (read == 0)
 				{
 					if (index == 0 && optional)
-						return false;
+						return 0;
 
-					throw new IOException();
+					throw EndOfStream();
 				}
 
 				index += read;
+				count -= read;
 			}
 
-			_index16 += index;
-
-			return true;
+			return index;
 		}
 
-		private void Read0() { _index16 = 0; }
+		private bool ReadN(int count, bool optional = false)
+		{
+			if (count == 0) return true;
+
+			var read = ReadN(_buffer16, _index16, count, optional);
+			_index16 += read;
+			return read > 0;
+		}
+
+		private void Read0()
+		{
+			_index16 = 0;
+		}
 
 		// ReSharper disable once UnusedMethodReturnValue.Local
 		private ulong Read64()
@@ -308,17 +330,24 @@ namespace K4os.Compression.LZ4.Streams
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("WriteAsync");
 
+		private NotImplementedException NotImplemented(string operation) =>
+			new NotImplementedException(
+				$"Feature {operation} has not been implemented in {GetType().Name}");
+
 		private static InvalidDataException InvalidHeaderChecksum() =>
 			new InvalidDataException("Invalid LZ4 frame header checksum");
 
 		private static InvalidDataException MagicNumberExpected() =>
 			new InvalidDataException("LZ4 frame magic number expected");
-		
+
 		private static InvalidDataException UnknownFrameVersion(int version) =>
 			new InvalidDataException($"LZ4 frame version {version} is not supported");
 
 		private InvalidOperationException InvalidOperation(string operation) =>
 			new InvalidOperationException(
 				$"Operation {operation} is not allowed for {GetType().Name}");
+
+		private EndOfStreamException EndOfStream() =>
+			new EndOfStreamException("Unexpected end of stream. Data might be corrupted.");
 	}
 }

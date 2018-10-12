@@ -175,6 +175,7 @@ class LZ4EncoderSettings
     int BlockSize { get; set; } = Mem.K64;
     bool ContentChecksum => false;
     bool BlockChecksum => false;
+    uint? Dictionary => null;
     LZ4Level CompressionLevel { get; set; } = LZ4Level.L00_FAST;
     int ExtraMemory { get; set; } = 0;
 }
@@ -182,7 +183,7 @@ class LZ4EncoderSettings
 
 Default options are good enough so you don't change anything. Refer to [original documentation](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) for more detailed information.
 
-Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` ae not currently supported and trying to use values other than defaults will throw exceptions.
+Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` ae not currently supported and trying to use values other than defaults will throw exceptions.
 
 ### Stream compression
 
@@ -250,4 +251,4 @@ using (var target = File.Create(filename))
 }
 ```
 
-Please note that stream decompression is (at least I hope it is) fully compatible with original specification. Well, it does not handle predefined dictionaries, but I assume it is not frequently feature, and is not in LZ4Frame specification anymore. All the other features which are not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does not cause decompression to fail.
+Please note that stream decompression is (at least I hope it is) fully compatible with original specification. Well, it does not handle predefined dictionaries but `lz4.exe` does not either. All the other features which are not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does not cause decompression to fail.

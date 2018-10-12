@@ -26,6 +26,25 @@ namespace K4os.Compression.LZ4.Test
 				LZ4CodecHelper.Decode(compressedOld, 0, compressedOld.Length, source.Length));
 		}
 
+		[Fact]
+		public void QuickFoxRoundtrip()
+		{
+			var text = "The quick brown fox jumps over the lazy dog";
+			var textBytes = System.Text.Encoding.UTF8.GetBytes(text);
+
+			var encoded = new byte[LZ4Codec.MaximumOutputSize(textBytes.Length)];
+			var encodedLength = LZ4Codec.Encode(
+				textBytes, 0, textBytes.Length,
+				encoded, 0, encoded.Length);
+
+			var decoded = new byte[textBytes.Length * 2];
+			var decodedLength = LZ4Codec.Decode(
+				encoded, 0, encodedLength,
+				decoded, 0, decoded.Length);
+
+			Assert.Equal(textBytes.Length, decodedLength); // -1 instead of 43
+		}
+
 		[Theory]
 		[InlineData(160)]
 		[InlineData(0)]
