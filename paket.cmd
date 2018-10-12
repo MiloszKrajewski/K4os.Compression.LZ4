@@ -1,5 +1,10 @@
 @echo off
 
+@where /q nuget
+@IF ERRORLEVEL 1 (
+	powershell -Command "Invoke-WebRequest https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile nuget.exe"
+)
+
 setlocal
 set target=%~dp0\.paket
 set paket=%target%\paket.exe

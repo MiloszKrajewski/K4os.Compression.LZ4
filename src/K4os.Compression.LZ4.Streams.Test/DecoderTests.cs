@@ -62,6 +62,32 @@ namespace K4os.Compression.LZ4.Streams.Test
 		}
 
 		[Fact]
+		public void DecodeFromSlowStream()
+		{
+			var original = Tools.FindFile($".corpus/reymont");
+
+			var encoded = Path.GetTempFileName();
+			try
+
+			{
+				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
+				var origStream = File.OpenRead(encoded);
+				// We need this to work even if the stream gives us only a single byte at a time
+				var slowStream = new FakeNetworkStream(origStream, 1);
+				using (var input = LZ4Stream.Decode(slowStream, Mem.M1))
+				{
+					var buffer = new byte[0x80000];
+					Assert.Equal(5000, input.Read(buffer, 0, 5000));
+					Assert.Equal(0x10000 - 5000, input.Read(buffer, 0, 0x10000));
+				}
+			}
+			finally
+			{
+				File.Delete(encoded);
+			}
+		}
+
+		[Fact]
 		public void InteractiveReadingReturnsBytesAsSoonAsTheyAreAvailable()
 		{
 			var original = Tools.FindFile($".corpus/reymont");
@@ -149,6 +175,47 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				File.Delete(encoded);
 				File.Delete(decoded);
+			}
+		}
+
+		/// <summary>
+		/// Fake the behavior of a network stream where <see cref="Stream.Read(byte[], int, int)"/> will often
+		/// return before the specified requested length has been read.
+		/// </summary>
+		private class FakeNetworkStream : Stream
+		{
+			private Stream Inner { get; }
+			private int Threshold { get; }
+
+			public FakeNetworkStream(Stream inner, int threshold = 1)
+			{
+				Inner = inner;
+				Threshold = threshold;
+			}
+
+			public override bool CanRead => Inner.CanRead;
+			public override bool CanSeek => Inner.CanSeek;
+			public override bool CanWrite => Inner.CanWrite;
+			public override long Length => Inner.Length;
+			public override long Position { get => Inner.Position; set => Inner.Position = value; }
+			public override void Flush() => Inner.Flush();
+			public override long Seek(long offset, SeekOrigin origin)
+				=> Inner.Seek(offset, origin);
+			public override void SetLength(long value)
+				=> Inner.SetLength(value);
+			public override void Write(byte[] buffer, int offset, int count)
+				=> Inner.Write(buffer, offset, count);
+
+			public override int Read(byte[] buffer, int offset, int count)
+			{
+				if (count > Threshold)
+					count = Threshold;
+				return Inner.Read(buffer, offset, count);
+			}
+
+			protected override void Dispose(bool disposing)
+			{
+				using (Inner) { };
 			}
 		}
 	}
