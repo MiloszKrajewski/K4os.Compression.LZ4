@@ -19,3 +19,4 @@ Release/
 *.user
 *.suo
 BenchmarkDotNet.Artifacts/
+/nuget.exe

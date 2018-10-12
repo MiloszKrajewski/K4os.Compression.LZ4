@@ -159,7 +159,16 @@ namespace K4os.Compression.LZ4.Streams
 
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
-			_inner.Read(_buffer, 0, blockLength);
+
+			// keep reading from the stream until it gives us every byte we've asked for
+			for (var blockCursor = 0; blockCursor < blockLength; )
+			{
+				var advance = _inner.Read(_buffer, blockCursor, blockLength - blockCursor);
+				if (advance == 0)
+					break; // Note: this probably means the stream is truncated and could just be a throw instead
+				blockCursor += advance;
+			}
+
 			if (_frameInfo.BlockChecksum)
 				Read32();
 
