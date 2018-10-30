@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Security.Cryptography;
+using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
 using Xunit;
@@ -40,7 +40,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 				{
 					var random = new Random(0);
 					Assert.Equal(expectedLength, stream.Length);
-					
+
 					var buffer = new byte[chunkSize];
 					while (true)
 					{
@@ -51,7 +51,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 						expectedPosition += read;
 						Assert.Equal(expectedPosition, stream.Position);
 					}
-					
+
 					Assert.Equal(expectedLength, stream.Position);
 				}
 			}
@@ -129,9 +129,41 @@ namespace K4os.Compression.LZ4.Streams.Test
 				File.Delete(filename);
 			}
 		}
-		#if DEBUG
+
+		[Theory]
+		[InlineData(".corpus/reymont", "-1 -B4 -BX")]
+		[InlineData(".corpus/xml", "-1 -B4 -BX")]
+		[InlineData(".corpus/x-ray", "-1 -B4 -BX")]
+		[InlineData(".corpus/mozilla", "-9 -B7")]
+		public void IndependentBlockDecoder(string filename, string options)
+		{
+			var original = Tools.FindFile(filename);
+			var encoded = Path.GetTempFileName();
+			var decoded = Path.GetTempFileName();
+
+			try
+			{
+				ReferenceLZ4.Encode(options, original, encoded);
+				using (var decoder = new LZ4DecoderStream(
+					File.OpenRead(encoded), 
+					fi => new LZ4IndependentBlockDecoder(fi.BlockSize))) 
+				using (var writer = File.OpenWrite(decoded))
+				{
+					decoder.CopyTo(writer);
+				}
+
+				Tools.SameFiles(original, decoded);
+			}
+			finally
+			{
+				File.Delete(encoded);
+				File.Delete(decoded);
+			}
+		}
+
+#if DEBUG
 		[Theory(Skip = "Too long")]
-		#else
+#else
 		[Theory]
 		#endif
 		[InlineData("-1 -BD -B4 -BX", Mem.K8)]

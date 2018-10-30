@@ -53,7 +53,7 @@ namespace K4os.Compression.LZ4.Encoders
 				return 0;
 
 			if (length > Math.Max(_blockSize, Mem.K64))
-				throw new Exception();
+				throw new InvalidOperationException();
 
 			if (_outputIndex + length < _outputLength)
 			{
