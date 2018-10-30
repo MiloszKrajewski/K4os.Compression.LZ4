@@ -66,7 +66,7 @@ namespace K4os.Compression.LZ4.Test
 		public void HighEntropyRepeated()
 		{
 			var random = new Random(0);
-			var encoder = new LZ4FastEncoder(256);
+			var encoder = new LZ4FastChainEncoder(256);
 			var source = new byte[256];
 			random.NextBytes(source);
 			var target = new byte[1024];
@@ -88,7 +88,7 @@ namespace K4os.Compression.LZ4.Test
 
 			Lorem.Fill(source, 0, source.Length);
 
-			using (var encoder = new LZ4FastEncoder(blockLength, extraBlocks))
+			using (var encoder = new LZ4FastChainEncoder(blockLength, extraBlocks))
 			{
 				var sourceP = 0;
 				var targetP = 0;

@@ -12,13 +12,13 @@ namespace K4os.Compression.LZ4.Encoders
 		private int _inputIndex;
 		private int _inputPointer;
 
-		protected LZ4EncoderBase(int blockSize, int extraBlocks = 0)
+		protected LZ4EncoderBase(int dictSize, int blockSize, int extraBlocks)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
 			extraBlocks = Math.Max(extraBlocks, 0);
 
 			_blockSize = blockSize;
-			_inputLength = Mem.K64 + (1 + extraBlocks) * blockSize + 8;
+			_inputLength = dictSize + (1 + extraBlocks) * blockSize + 8;
 			_inputIndex = _inputPointer = 0;
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
 		}

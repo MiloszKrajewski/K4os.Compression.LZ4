@@ -3,18 +3,18 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
-	public unsafe class LZ4IndependentBlockDecoder: UnmanagedResources, ILZ4Decoder
+	public unsafe class LZ4BlockDecoder: UnmanagedResources, ILZ4Decoder
 	{
-		private int _blockSize;
-		private int _outputLength;
+		private readonly int _blockSize;
+		private readonly int _outputLength;
 		private int _outputIndex;
-		private byte* _outputBuffer;
+		private readonly byte* _outputBuffer;
 
 		public int BlockSize => _blockSize;
 
 		public int BytesReady => _outputIndex;
 
-		public LZ4IndependentBlockDecoder(int blockSize)
+		public LZ4BlockDecoder(int blockSize)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
 			_blockSize = blockSize;
@@ -25,6 +25,8 @@ namespace K4os.Compression.LZ4.Encoders
 
 		public int Decode(byte* source, int length, int blockSize = 0)
 		{
+			ThrowIfDisposed();
+			
 			if (blockSize <= 0)
 				blockSize = _blockSize;
 
@@ -41,19 +43,23 @@ namespace K4os.Compression.LZ4.Encoders
 
 		public int Inject(byte* source, int length)
 		{
+			ThrowIfDisposed();
+			
 			if (length <= 0)
-				return 0;
+				return _outputIndex = 0;
 
 			if (length > _outputLength)
 				throw new InvalidOperationException();
 
-			Mem.Copy(_outputBuffer, source, length);
+			Mem.Move(_outputBuffer, source, length);
 			_outputIndex = length;
 			return length;
 		}
 
 		public void Drain(byte* target, int offset, int length)
 		{
+			ThrowIfDisposed();
+
 			offset = _outputIndex + offset; // NOTE: negative value
 			if (offset < 0 || length < 0 || offset + length > _outputIndex)
 				throw new InvalidOperationException();

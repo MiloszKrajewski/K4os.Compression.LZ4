@@ -92,7 +92,7 @@ namespace K4os.Compression.LZ4.Test
 			{
 				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
 				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var encoder = new LZ4FastEncoder(blockSize, extraBlocks))
+				using (var encoder = new LZ4FastChainEncoder(blockSize, extraBlocks))
 				{
 					var inputBuffer = new byte[topupSize];
 					var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
@@ -123,7 +123,7 @@ namespace K4os.Compression.LZ4.Test
 			{
 				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
 				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var decoder = new LZ4Decoder(blockSize, extraBlocks))
+				using (var decoder = new LZ4ChainDecoder(blockSize, extraBlocks))
 				{
 					var maximumInputBlock = LZ4Codec.MaximumOutputSize(blockSize);
 					var inputBuffer = new byte[maximumInputBlock];

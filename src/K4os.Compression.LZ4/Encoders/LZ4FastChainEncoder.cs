@@ -6,12 +6,12 @@ namespace K4os.Compression.LZ4.Encoders
 	// fast encoder context
 	using LZ4Context = LZ4_xx.LZ4_stream_t;
 
-	public unsafe class LZ4FastEncoder: LZ4EncoderBase
+	public unsafe class LZ4FastChainEncoder: LZ4EncoderBase
 	{
 		private readonly LZ4Context* _context;
 
-		public LZ4FastEncoder(int blockSize, int extraBlocks = 0): 
-			base(blockSize, extraBlocks)
+		public LZ4FastChainEncoder(int blockSize, int extraBlocks = 0): 
+			base(Mem.K64, blockSize, extraBlocks)
 		{
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}

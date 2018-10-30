@@ -19,7 +19,7 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 			using (var input = File.OpenRead(encoded))
 			using (var output = File.Create(decoded))
 			using (var decode = new LZ4DecoderStream(
-				input, i => new LZ4Decoder(i.BlockSize, 0)))
+				input, i => new LZ4ChainDecoder(i.BlockSize, 0)))
 			{
 				var buffer = new byte[chunkSize];
 				while (true)
@@ -42,7 +42,7 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 			using (var output = File.Create(encoded))
 			using (var encode = new LZ4EncoderStream(
 				output, frameInfo, i => LZ4Encoder.Create(
-					settings.Level, i.BlockSize, settings.ExtraBlocks)))
+					i.Chaining, settings.Level, i.BlockSize, settings.ExtraBlocks)))
 			{
 				var buffer = new byte[chuckSize];
 				while (true)

@@ -29,10 +29,11 @@ namespace K4os.Compression.LZ4.Streams
 			return new LZ4EncoderStream(
 				stream,
 				frameInfo,
-				i => LZ4Encoder.Create(level, i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
+				i => LZ4Encoder.Create(
+					i.Chaining, level, i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
 				leaveOpen);
 		}
-		
+
 		/// <summary>Created compression stream on top of inner stream.</summary>
 		/// <param name="stream">Inner stream.</param>
 		/// <param name="level">Compression level.</param>
@@ -40,7 +41,7 @@ namespace K4os.Compression.LZ4.Streams
 		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
 		/// <returns>Compression stream.</returns>
 		public static LZ4EncoderStream Encode(
-			Stream stream, LZ4Level level, int extraMemory = 0, 
+			Stream stream, LZ4Level level, int extraMemory = 0,
 			bool leaveOpen = false)
 		{
 			var settings = new LZ4EncoderSettings {
@@ -51,7 +52,7 @@ namespace K4os.Compression.LZ4.Streams
 			};
 			return Encode(stream, settings, leaveOpen);
 		}
-		
+
 		/// <summary>Creates decompression stream on top of inner stream.</summary>
 		/// <param name="stream">Inner stream.</param>
 		/// <param name="settings">Decompression settings.</param>
@@ -64,10 +65,11 @@ namespace K4os.Compression.LZ4.Streams
 			var extraMemory = settings.ExtraMemory;
 			return new LZ4DecoderStream(
 				stream,
-				i => new LZ4Decoder(i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
+				i => LZ4Decoder.Create(
+					i.Chaining, i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
 				leaveOpen);
 		}
-		
+
 		/// <summary>Creates decompression stream on top of inner stream.</summary>
 		/// <param name="stream">Inner stream.</param>
 		/// <param name="extraMemory">Extra memory used for decompression.</param>
@@ -79,7 +81,7 @@ namespace K4os.Compression.LZ4.Streams
 			var settings = new LZ4DecoderSettings { ExtraMemory = extraMemory };
 			return Decode(stream, settings, leaveOpen);
 		}
-		
+
 		private static int ExtraBlocks(int blockSize, int extraMemory) =>
 			Math.Max(extraMemory > 0 ? blockSize : 0, extraMemory) / blockSize;
 	}

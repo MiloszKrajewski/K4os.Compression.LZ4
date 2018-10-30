@@ -131,13 +131,13 @@ namespace K4os.Compression.LZ4.Streams.Test
 		}
 
 		[Theory]
-		[InlineData(".corpus/reymont", "-1 -B4 -BX")]
-		[InlineData(".corpus/xml", "-1 -B4 -BX")]
-		[InlineData(".corpus/x-ray", "-1 -B4 -BX")]
-		[InlineData(".corpus/mozilla", "-9 -B7")]
+		[InlineData("reymont", "-1 -B4 -BX")]
+		[InlineData("xml", "-1 -B4 -BX")]
+		[InlineData("x-ray", "-1 -B4 -BX")]
+		[InlineData("mozilla", "-9 -B7")]
 		public void IndependentBlockDecoder(string filename, string options)
 		{
-			var original = Tools.FindFile(filename);
+			var original = Tools.FindFile($".corpus/{filename}");
 			var encoded = Path.GetTempFileName();
 			var decoded = Path.GetTempFileName();
 
@@ -146,7 +146,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 				ReferenceLZ4.Encode(options, original, encoded);
 				using (var decoder = new LZ4DecoderStream(
 					File.OpenRead(encoded), 
-					fi => new LZ4IndependentBlockDecoder(fi.BlockSize))) 
+					fi => new LZ4BlockDecoder(fi.BlockSize))) 
 				using (var writer = File.OpenWrite(decoded))
 				{
 					decoder.CopyTo(writer);

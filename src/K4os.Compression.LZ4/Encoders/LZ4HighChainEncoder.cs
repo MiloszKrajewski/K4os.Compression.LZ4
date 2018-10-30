@@ -6,12 +6,12 @@ namespace K4os.Compression.LZ4.Encoders
 	// high encoder context
 	using LZ4Context = LZ4_64_HC.LZ4HC_CCtx_t;
 
-	public unsafe class LZ4HighEncoder: LZ4EncoderBase
+	public unsafe class LZ4HighChainEncoder: LZ4EncoderBase
 	{
 		private readonly LZ4Context* _context;
 
-		public LZ4HighEncoder(
-			LZ4Level level, int blockSize, int extraBlocks = 0): base(blockSize, extraBlocks)
+		public LZ4HighChainEncoder(LZ4Level level, int blockSize, int extraBlocks = 0):
+			base(Mem.K64, blockSize, extraBlocks)
 		{
 			if (level < LZ4Level.L03_HC) level = LZ4Level.L03_HC;
 			if (level > LZ4Level.L12_MAX) level = LZ4Level.L12_MAX;
@@ -27,7 +27,8 @@ namespace K4os.Compression.LZ4.Encoders
 
 		protected override int EncodeBlock(
 			byte* source, int sourceLength, byte* target, int targetLength) =>
-			LZ4_64_HC.LZ4_compress_HC_continue(_context, source, target, sourceLength, targetLength);
+			LZ4_64_HC.LZ4_compress_HC_continue(
+				_context, source, target, sourceLength, targetLength);
 
 		protected override int CopyDict(byte* buffer, int length) =>
 			LZ4_64_HC.LZ4_saveDictHC(_context, buffer, length);

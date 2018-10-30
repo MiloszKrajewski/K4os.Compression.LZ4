@@ -1,35 +1,21 @@
 ﻿namespace K4os.Compression.LZ4.Encoders
 {
-	public class LZ4Encoder: ILZ4Encoder
+	public static class LZ4Encoder
 	{
-		private readonly ILZ4Encoder _encoder;
+		public static ILZ4Encoder Create(
+			bool chaining, LZ4Level level, int blockSize, int extraBlocks = 0) =>
+			!chaining ? CreateBlockEncoder(level, blockSize) :
+			level == LZ4Level.L00_FAST ? CreateFastEncoder(blockSize, extraBlocks) :
+			CreateHighEncoder(level, blockSize, extraBlocks);
 
-		public LZ4Encoder(LZ4Level level, int blockSize, int extraBlocks)
-		{
-			_encoder = Create(level, blockSize, extraBlocks);
-		}
+		private static ILZ4Encoder CreateBlockEncoder(LZ4Level level, int blockSize) =>
+			new LZ4BlockEncoder(level, blockSize);
 
-		public static ILZ4Encoder Create(LZ4Level level, int blockSize, int extraBlocks) =>
-			level == LZ4Level.L00_FAST
-				? CreateFastEncoder(blockSize, extraBlocks)
-				: CreateHighEncoder(level, blockSize, extraBlocks);
+		private static ILZ4Encoder CreateFastEncoder(int blockSize, int extraBlocks) =>
+			new LZ4FastChainEncoder(blockSize, extraBlocks);
 
 		private static ILZ4Encoder CreateHighEncoder(
 			LZ4Level level, int blockSize, int extraBlocks) =>
-			new LZ4HighEncoder(level, blockSize, extraBlocks);
-
-		private static ILZ4Encoder CreateFastEncoder(int blockSize, int extraBlocks) =>
-			new LZ4FastEncoder(blockSize, extraBlocks);
-
-		public int BlockSize => _encoder.BlockSize;
-		public int BytesReady => _encoder.BytesReady;
-
-		public unsafe int Topup(byte* source, int length) => 
-			_encoder.Topup(source, length);
-
-		public unsafe int Encode(byte* target, int length, bool allowCopy) =>
-			_encoder.Encode(target, length, allowCopy);
-
-		public void Dispose() => _encoder.Dispose();
+			new LZ4HighChainEncoder(level, blockSize, extraBlocks);
 	}
 }
