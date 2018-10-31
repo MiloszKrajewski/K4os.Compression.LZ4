@@ -1,7 +1,4 @@
-﻿using System;
-using K4os.Compression.LZ4.Internal;
-
-namespace K4os.Compression.LZ4.Encoders
+﻿namespace K4os.Compression.LZ4.Encoders
 {
 	public unsafe class LZ4BlockEncoder: LZ4EncoderBase
 	{

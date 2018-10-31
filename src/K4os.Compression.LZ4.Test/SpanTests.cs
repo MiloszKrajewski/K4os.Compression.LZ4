@@ -1,7 +1,8 @@
 using System;
-using System.Drawing.Drawing2D;
 using K4os.Compression.LZ4.Internal;
 using Xunit;
+
+// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
 namespace K4os.Compression.LZ4.Test
 {

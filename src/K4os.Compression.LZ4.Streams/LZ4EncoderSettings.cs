@@ -13,6 +13,6 @@ namespace K4os.Compression.LZ4.Streams
 		public bool BlockChecksum => false;
 		public uint? Dictionary => null;
 		public LZ4Level CompressionLevel { get; set; } = LZ4Level.L00_FAST;
-		public int ExtraMemory { get; set; } = 0;
+		public int ExtraMemory { get; set; }
 	}
 }

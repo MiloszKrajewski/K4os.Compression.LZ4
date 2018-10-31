@@ -4,6 +4,6 @@ namespace K4os.Compression.LZ4.Streams
 	{
 		internal static LZ4DecoderSettings Default = new LZ4DecoderSettings();
 
-		public int ExtraMemory { get; set; } = 0;
+		public int ExtraMemory { get; set; }
 	}
 }
