@@ -20,12 +20,6 @@ namespace K4os.Compression.LZ4.Engine
 	internal unsafe class LZ4_64_HC: LZ4_64
 	{
 #endif
-		private static readonly Pool<IntPtr> CtxPool = new Pool<IntPtr>(
-			() => new IntPtr(Mem.Alloc(sizeof(LZ4HC_CCtx_t))),
-			null,
-			ptr => Mem.Free(ptr.ToPointer()),
-			4);
-
 		private const int LZ4HC_CLEVEL_MIN = 3;
 		private const int LZ4HC_CLEVEL_DEFAULT = 9;
 		private const int LZ4HC_CLEVEL_OPT_MIN = 10;
@@ -1114,8 +1108,8 @@ namespace K4os.Compression.LZ4.Engine
 					: limitedOutput_directive.noLimit);
 		}
 
-		private static LZ4HC_CCtx_t* AllocCtx() => (LZ4HC_CCtx_t*) CtxPool.Borrow().ToPointer();
-		private static void FreeCtx(LZ4HC_CCtx_t* context) => CtxPool.Return(new IntPtr(context));
+		private static LZ4HC_CCtx_t* AllocCtx() => (LZ4HC_CCtx_t*) Mem.Alloc(sizeof(LZ4HC_CCtx_t));
+		private static void FreeCtx(LZ4HC_CCtx_t* context) => Mem.Free(context);
 
 		internal static int LZ4_compress_HC(
 			byte* src, byte* dst, int srcSize, int dstCapacity, int compressionLevel)

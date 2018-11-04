@@ -20,7 +20,10 @@ let publish apiKey = packages |> Seq.iter (Proj.publishNugetOrg apiKey)
 
 Target "Clean" (fun _ -> clean ())
 
-Target "Restore" (fun _ -> restore ())
+Target "Restore" (fun _ -> 
+    restore ()
+    Proj.snkGen "K4os.snk"
+)
 
 Target "Build" (fun _ -> build ())
 
@@ -93,7 +96,6 @@ Target "Restore:Corpus" (fun _ ->
     uncorpus "webster"
     uncorpus "xml"
     uncorpus "x-ray"
-    
 )
 
 "Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"

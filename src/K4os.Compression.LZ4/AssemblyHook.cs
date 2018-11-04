@@ -1,7 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("K4os.Compression.LZ4.Test")]
-[assembly: InternalsVisibleTo("K4os.Compression.LZ4.Benchmarks")]
+using System.Runtime.CompilerServices;
 
 namespace K4os.Compression.LZ4
 {

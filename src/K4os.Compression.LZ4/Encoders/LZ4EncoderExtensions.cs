@@ -1,7 +1,18 @@
-﻿namespace K4os.Compression.LZ4.Encoders
+﻿using System;
+
+namespace K4os.Compression.LZ4.Encoders
 {
+	/// <summary>
+	/// Functionality of encoders added on top of fixed interface.
+	/// </summary>
 	public static class LZ4EncoderExtensions
 	{
+		/// <summary>Tops encoder up with some data.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="source">Buffer pointer, will be shifted after operation by the number of
+		/// bytes actually loaded.</param>
+		/// <param name="length">Length of buffer.</param>
+		/// <returns><c>true</c> if buffer was topped up, <c>false</c> if no bytes were loaded.</returns>
 		public static unsafe bool Topup(
 			this ILZ4Encoder encoder, ref byte* source, int length)
 		{
@@ -10,42 +21,85 @@
 			return loaded != 0;
 		}
 
+		/// <summary>Tops encoder up with some data.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="source">Buffer.</param>
+		/// <param name="offset">Buffer offset.</param>
+		/// <param name="length">Length of buffer.</param>
+		/// <returns>Number of bytes actually loaded.</returns>
 		public static unsafe int Topup(
-			this ILZ4Encoder encoder, byte[] source, int index, int length)
+			this ILZ4Encoder encoder, byte[] source, int offset, int length)
 		{
 			fixed (byte* sourceP = source)
-				return encoder.Topup(sourceP + index, length);
+				return encoder.Topup(sourceP + offset, length);
 		}
 
+		/// <summary>Tops encoder up with some data.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="source">Buffer.</param>
+		/// <param name="offset">Buffer offset, will be increased after operation by the number
+		/// of bytes actually loaded.</param>
+		/// <param name="length">Length of buffer.</param>
+		/// <returns><c>true</c> if buffer was topped up, <c>false</c> if no bytes were loaded.</returns>
 		public static bool Topup(
-			this ILZ4Encoder encoder, byte[] source, ref int index, int length)
+			this ILZ4Encoder encoder, byte[] source, ref int offset, int length)
 		{
-			var loaded = encoder.Topup(source, index, length);
-			index += loaded;
+			var loaded = encoder.Topup(source, offset, length);
+			offset += loaded;
 			return loaded != 0;
 		}
 
+		/// <summary>Encodes all bytes currently stored in encoder into target buffer.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="offset">Offset in target buffer.</param>
+		/// <param name="length">Length of target buffer.</param>
+		/// <param name="allowCopy">if <c>true</c> copying bytes is allowed.</param>
+		/// <returns>Number of bytes encoder. If bytes were copied than this value is negative.</returns>
 		public static unsafe int Encode(
-			this ILZ4Encoder encoder, byte[] target, int index, int length, bool allowCopy)
+			this ILZ4Encoder encoder, byte[] target, int offset, int length, bool allowCopy)
 		{
 			fixed (byte* targetP = target)
-				return encoder.Encode(targetP + index, length, allowCopy);
+				return encoder.Encode(targetP + offset, length, allowCopy);
 		}
 
-		public static bool Encode(
-			this ILZ4Encoder encoder, byte[] target, ref int index, int length, bool allowCopy)
+		/// <summary>Encodes all bytes currently stored in encoder into target buffer.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="offset">Offset in target buffer. Will be updated after operation.</param>
+		/// <param name="length">Length of target buffer.</param>
+		/// <param name="allowCopy">if <c>true</c> copying bytes is allowed.</param>
+		/// <returns>Result of this action. Bytes can be Copied (<see cref="EncoderAction.Copied"/>),
+		/// Encoded (<see cref="EncoderAction.Encoded"/>) or nothing could have
+		/// happened (<see cref="EncoderAction.None"/>).</returns>
+		public static EncoderAction Encode(
+			this ILZ4Encoder encoder, byte[] target, ref int offset, int length, bool allowCopy)
 		{
-			var encoded = encoder.Encode(target, index, length, allowCopy);
-			index += encoded;
-			return encoded != 0;
+			var encoded = encoder.Encode(target, offset, length, allowCopy);
+			offset += Math.Abs(encoded);
+			return 
+				encoded == 0 ? EncoderAction.None : 
+				encoded < 0 ? EncoderAction.Copied : 
+				EncoderAction.Encoded;
 		}
 
-		public static unsafe bool Encode(
+		/// <summary>Encodes all bytes currently stored in encoder into target buffer.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer. Will be updated after operation.</param>
+		/// <param name="length">Length of buffer.</param>
+		/// <param name="allowCopy">if <c>true</c> copying bytes is allowed.</param>
+		/// <returns>Result of this action. Bytes can be Copied (<see cref="EncoderAction.Copied"/>),
+		/// Encoded (<see cref="EncoderAction.Encoded"/>) or nothing could have
+		/// happened (<see cref="EncoderAction.None"/>).</returns>
+		public static unsafe EncoderAction Encode(
 			this ILZ4Encoder encoder, ref byte* target, int length, bool allowCopy)
 		{
 			var encoded = encoder.Encode(target, length, allowCopy);
-			target += encoded;
-			return encoded != 0;
+			target += Math.Abs(encoded);
+			return 
+				encoded == 0 ? EncoderAction.None : 
+				encoded < 0 ? EncoderAction.Copied : 
+				EncoderAction.Encoded;
 		}
 
 		public static unsafe EncoderAction TopupAndEncode(

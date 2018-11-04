@@ -84,6 +84,8 @@ namespace K4os.Compression.LZ4.Test
 			var decoded = Decode(encoded, blockSize, decoderExtraBlocks);
 			Tools.SameBytes(content, decoded);
 		}
+		
+		// TODO: Roundtrip for BlockEncoder
 
 		private static byte[] Encode(byte[] input, int topupSize, int blockSize, int extraBlocks)
 		{

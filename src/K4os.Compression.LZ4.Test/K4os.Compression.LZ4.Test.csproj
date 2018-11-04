@@ -8,5 +8,16 @@
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\K4os.Compression.LZ4\Engine\LZ4_64.cs">
+      <Link>Injected\LZ4_64.cs</Link>
+    </Compile>
+    <Compile Include="..\K4os.Compression.LZ4\Engine\LZ4_64_HC.cs">
+      <Link>Injected\LZ4_64_HC.cs</Link>
+    </Compile>
+    <Compile Include="..\K4os.Compression.LZ4\Engine\LZ4_xx.cs">
+      <Link>Injected\LZ4_xx.cs</Link>
+    </Compile>
+  </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

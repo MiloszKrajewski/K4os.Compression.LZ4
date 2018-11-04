@@ -9,7 +9,6 @@ open System.Net
 open System.Text.RegularExpressions
 open System.Diagnostics
 
-
 [<AutoOpen>]
 module Fx =
     let inline tap f a = f a; a
@@ -122,7 +121,10 @@ module Proj =
         DateTime.Now.Subtract(baseline).TotalSeconds |> int |> sprintf "%8x"
     let productVersion = releaseNotes.NugetVersion |> Regex.replace "-wip$" (timestamp |> sprintf "-wip%s")
     let assemblyVersion = releaseNotes.AssemblyVersion
-    let settings = [ "settings.config"; ".secrets.config" ] |> Seq.map Config.tryLoadFile |> Config.merge
+    let settings = 
+        [ "settings"; ".secrets" ]
+        |> Seq.collect (fun fn -> [".ini"; ".cfg"] |> Seq.map (fun ext -> sprintf "%s%s" fn ext))
+        |> Seq.map Config.tryLoadFile |> Config.merge
     let listProj () =
         let isValidProject projectPath =
             let projectFolder = projectPath |> directory |> filename
@@ -157,6 +159,13 @@ module Proj =
 
     let xtestAll () =
         listProj () |> Seq.filter isTestProj |> Seq.iter (directory >> xtest)
+        
+    let snkGen snk =
+        let sn = !! "C:/Program Files (x86)/Microsoft SDKs/Windows/**/bin/**/sn.exe" |> Seq.tryHead
+        match TestFile snk, sn with 
+        | true, _ -> () 
+        | _, Some sn -> snk |> sprintf "-k %s" |> StrongNamingHelper.StrongName (fun p -> { p with ToolPath = sn })
+        | _ -> failwith "SN.exe could not be found"
 
     let pack version project =
         DotNetCli.Pack (fun p ->

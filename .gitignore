@@ -7,7 +7,6 @@
 .tools/
 .corpus/
 paket-files/
-.secrets.config
 
 **/bin/
 **/obj/
@@ -18,4 +17,8 @@ Release/
 *.bak
 *.user
 *.suo
+*.snk
+
+.secrets.config
+
 BenchmarkDotNet.Artifacts/
