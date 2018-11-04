@@ -43,6 +43,16 @@ namespace K4os.Compression.LZ4.Streams.Test
 			}
 		}
 
+        [Theory]
+        [InlineData("reymont", "-1 -B4")]
+        [InlineData("mozilla", "-9 -B5")]
+        [InlineData("x-ray", "-12 -B7")]
+        public void SelectiveRoundtrip(string filename, string options)
+		{
+			var settings = Tools.ParseSettings(options);
+			TestRoundtrip($".corpus/{filename}", 1337, settings);
+		}
+
 		private static void TestRoundtrip(string fileName, int chunkSize, LZ4Settings settings)
 		{
 			var original = Tools.FindFile(fileName);

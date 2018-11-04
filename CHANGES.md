@@ -1,3 +1,9 @@
+## 1.1.0 (2018/11/04)
+* Signed assemblies
+* Independent block encoder and decoder (performance)
+* Better XML doc
+* Breaking changes to pubternals 
+
 ## 1.0.3 (2018/10/12)
 * added auto-download of nuget (Windows only)
 * merged fix for slow streams (https://github.com/MiloszKrajewski/K4os.Compression.LZ4/pull/8)

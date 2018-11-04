@@ -73,6 +73,24 @@ namespace K4os.Compression.LZ4.Test
 		{
 			Roundtrip(filename, 4096, 0x10000, 8, 8);
 		}
+		
+		[Theory]
+		[InlineData(".corpus/dickens")]
+		[InlineData(".corpus/mozilla")]
+		[InlineData(".corpus/mr")]
+		[InlineData(".corpus/nci")]
+		[InlineData(".corpus/ooffice")]
+		[InlineData(".corpus/osdb")]
+		[InlineData(".corpus/reymont")]
+		[InlineData(".corpus/samba")]
+		[InlineData(".corpus/sao")]
+		[InlineData(".corpus/webster")]
+		[InlineData(".corpus/xml")]
+		[InlineData(".corpus/x-ray")]
+		public void AllFilesBlock(string filename)
+		{
+			RoundtripBlock(filename, 4096, 0x10000, 8);
+		}
 
 		private static void Roundtrip(
 			string filename, 
@@ -85,7 +103,48 @@ namespace K4os.Compression.LZ4.Test
 			Tools.SameBytes(content, decoded);
 		}
 		
-		// TODO: Roundtrip for BlockEncoder
+		private static void RoundtripBlock(
+			string filename, 
+			int topupSize, int blockSize, 
+			int decoderExtraBlocks)
+		{
+			var content = File.ReadAllBytes(Tools.FindFile(filename));
+			var encoded = EncodeBlock(content, topupSize, blockSize);
+			var decoded = Decode(encoded, blockSize, decoderExtraBlocks);
+			Tools.SameBytes(content, decoded);
+		}
+
+		
+		private static byte[] EncodeBlock(byte[] input, int topupSize, int blockSize)
+		{
+			using (var outputStream = new MemoryStream())
+			using (var inputStream = new MemoryStream(input))
+			{
+				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
+				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
+				using (var encoder = new LZ4BlockEncoder(LZ4Level.L00_FAST, blockSize))
+				{
+					var inputBuffer = new byte[topupSize];
+					var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
+
+					while (true)
+					{
+						var bytes = inputReader.Read(inputBuffer, 0, inputBuffer.Length);
+
+						if (bytes == 0)
+						{
+							Flush(outputWriter, encoder, outputBuffer);
+							outputWriter.Write(-1);
+							break;
+						}
+
+						Write(outputWriter, encoder, inputBuffer, bytes, outputBuffer);
+					}
+				}
+
+				return outputStream.ToArray();
+			}
+		}
 
 		private static byte[] Encode(byte[] input, int topupSize, int blockSize, int extraBlocks)
 		{

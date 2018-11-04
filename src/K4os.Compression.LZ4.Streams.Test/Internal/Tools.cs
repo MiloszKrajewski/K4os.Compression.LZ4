@@ -128,7 +128,7 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 
 		public static LZ4Settings ParseSettings(string options)
 		{
-			var result = new LZ4Settings();
+			var result = new LZ4Settings { Chaining = false };
 
 			foreach (var option in options.Split(' '))
 			{
