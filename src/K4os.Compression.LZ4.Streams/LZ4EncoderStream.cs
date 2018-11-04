@@ -9,6 +9,9 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
 {
+	/// <summary>
+	/// LZ4 compression stream. 
+	/// </summary>
 	public class LZ4EncoderStream: Stream, IDisposable
 	{
 		private readonly Stream _inner;
@@ -16,42 +19,55 @@ namespace K4os.Compression.LZ4.Streams
 		private int _index16;
 
 		private ILZ4Encoder _encoder;
-		private readonly Func<ILZ4FrameInfo, ILZ4Encoder> _encoderFactory;
+		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
-		private readonly ILZ4FrameInfo _frameInfo;
+		private readonly ILZ4Descriptor _descriptor;
 		private readonly bool _leaveOpen;
 
 		private byte[] _buffer;
 
+		/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
+		/// <param name="inner">Inner stream.</param>
+		/// <param name="descriptor">LZ4 Descriptor.</param>
+		/// <param name="encoderFactory">Function which will take descriptor and return
+		/// appropriate encoder.</param>
+		/// <param name="leaveOpen">Indicates if <paramref name="inner"/> stream should be left
+		/// open after disposing.</param>
 		public LZ4EncoderStream(
 			Stream inner,
-			ILZ4FrameInfo frameInfo,
-			Func<ILZ4FrameInfo, ILZ4Encoder> encoderFactory,
+			ILZ4Descriptor descriptor,
+			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 			bool leaveOpen = false)
 		{
 			_inner = inner;
-			_frameInfo = frameInfo;
+			_descriptor = descriptor;
 			_encoderFactory = encoderFactory;
 			_leaveOpen = leaveOpen;
 		}
 
+		/// <inheritdoc />
 		public override void Flush() => _inner.Flush();
 
+		/// <inheritdoc />
 		public override Task FlushAsync(CancellationToken cancellationToken) =>
 			_inner.FlushAsync(cancellationToken);
 
 		#if NET46 || NETSTANDARD2_0
+		/// <inheritdoc />
 		public override void Close() { CloseFrame(); }
 		#else
+		/// <summary>Closes stream.</summary>
 		public void Close() { CloseFrame(); }
 		#endif
 
+		/// <inheritdoc />
 		public override void WriteByte(byte value)
 		{
 			_buffer16[_index16] = value;
 			Write(_buffer16, _index16, 1);
 		}
 
+		/// <inheritdoc />
 		public override void Write(byte[] buffer, int offset, int count)
 		{
 			if (_encoder == null)
@@ -79,11 +95,11 @@ namespace K4os.Compression.LZ4.Streams
 			Flush16();
 
 			const int versionCode = 0x01;
-			var blockChaining = _frameInfo.Chaining;
-			var blockChecksum = _frameInfo.BlockChecksum;
-			var contentChecksum = _frameInfo.ContentChecksum;
-			var hasContentSize = _frameInfo.ContentLength.HasValue;
-			var hasDictionary = _frameInfo.Dictionary.HasValue;
+			var blockChaining = _descriptor.Chaining;
+			var blockChecksum = _descriptor.BlockChecksum;
+			var contentChecksum = _descriptor.ContentChecksum;
+			var hasContentSize = _descriptor.ContentLength.HasValue;
+			var hasDictionary = _descriptor.Dictionary.HasValue;
 
 			var FLG =
 				(versionCode << 6) |
@@ -93,7 +109,7 @@ namespace K4os.Compression.LZ4.Streams
 				((contentChecksum ? 1 : 0) << 2) |
 				(hasDictionary ? 1 : 0);
 
-			var blockSize = _frameInfo.BlockSize;
+			var blockSize = _descriptor.BlockSize;
 
 			var BD = MaxBlockSizeCode(blockSize) << 4;
 
@@ -118,14 +134,14 @@ namespace K4os.Compression.LZ4.Streams
 
 		private ILZ4Encoder CreateEncoder()
 		{
-			var encoder = _encoderFactory(_frameInfo);
-			if (encoder.BlockSize > _frameInfo.BlockSize)
+			var encoder = _encoderFactory(_descriptor);
+			if (encoder.BlockSize > _descriptor.BlockSize)
 				throw InvalidValue("BlockSize is greater than declared");
 
 			return encoder;
 		}
 
-		public void CloseFrame()
+		private void CloseFrame()
 		{
 			if (_encoder == null)
 				return;
@@ -139,7 +155,7 @@ namespace K4os.Compression.LZ4.Streams
 				Write32(0);
 				Flush16();
 
-				if (_frameInfo.ContentChecksum)
+				if (_descriptor.ContentChecksum)
 					throw NotImplemented("ContentChecksum");
 
 				_buffer = null;
@@ -182,16 +198,18 @@ namespace K4os.Compression.LZ4.Streams
 
 			_inner.Write(_buffer, 0, length);
 
-			if (_frameInfo.BlockChecksum)
+			if (_descriptor.BlockChecksum)
 				throw NotImplemented("BlockChecksum");
 		}
 
+		/// <inheritdoc />
 		public new void Dispose()
 		{
 			Dispose(true);
 			base.Dispose();
 		}
 
+		/// <inheritdoc />
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -243,44 +261,61 @@ namespace K4os.Compression.LZ4.Streams
 			_index16 = 0;
 		}
 
+		/// <inheritdoc />
 		public override bool CanRead => false;
+
+		/// <inheritdoc />
 		public override bool CanSeek => false;
+
+		/// <inheritdoc />
 		public override bool CanWrite => _inner.CanWrite;
+
+		/// <summary>Length of the stream. Not implemented, so always returns <c>-1</c>.</summary>
 		public override long Length => -1;
 
+		/// <summary>Position in the stream. Not implemented, so always returns <c>-1</c> and
+		/// throws exception if you try to set it.</summary>
 		public override long Position
 		{
 			get => -1;
 			set => throw InvalidOperation("Position");
 		}
 
+		/// <inheritdoc />
 		public override bool CanTimeout => _inner.CanTimeout;
 
+		/// <inheritdoc />
 		public override int ReadTimeout
 		{
 			get => _inner.ReadTimeout;
 			set => _inner.ReadTimeout = value;
 		}
 
+		/// <inheritdoc />
 		public override int WriteTimeout
 		{
 			get => _inner.WriteTimeout;
 			set => _inner.WriteTimeout = value;
 		}
 
+		/// <inheritdoc />
 		public override long Seek(long offset, SeekOrigin origin) =>
 			throw InvalidOperation("Seek");
 
+		/// <inheritdoc />
 		public override void SetLength(long value) =>
 			throw InvalidOperation("SetLength");
 
+		/// <inheritdoc />
 		public override int Read(byte[] buffer, int offset, int count) =>
 			throw InvalidOperation("Read");
 
+		/// <inheritdoc />
 		public override Task<int> ReadAsync(
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("ReadAsync");
 
+		/// <inheritdoc />
 		public override int ReadByte() => throw InvalidOperation("ReadByte");
 
 		private NotImplementedException NotImplemented(string operation) =>

@@ -1,8 +1,14 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
+	/// <summary>
+	/// Base class for LZ4 encoders. Provides basic functionality shared by
+	/// <see cref="LZ4BlockEncoder"/>, <see cref="LZ4FastChainEncoder"/>,
+	/// and <see cref="LZ4HighChainEncoder"/> encoders. Do not used directly.
+	/// </summary>
 	public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 	{
 		private readonly byte* _inputBuffer;
@@ -12,10 +18,15 @@ namespace K4os.Compression.LZ4.Encoders
 		private int _inputIndex;
 		private int _inputPointer;
 
-		protected LZ4EncoderBase(int dictSize, int blockSize, int extraBlocks)
+		/// <summary>Creates new instance of encoder.</summary>
+		/// <param name="chaining">Needs to be <c>true</c> if using dependent blocks.</param>
+		/// <param name="blockSize">Block size.</param>
+		/// <param name="extraBlocks">Number of extra blocks.</param>
+		protected LZ4EncoderBase(bool chaining, int blockSize, int extraBlocks)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
 			extraBlocks = Math.Max(extraBlocks, 0);
+			var dictSize = chaining ? Mem.K64 : 0;
 
 			_blockSize = blockSize;
 			_inputLength = dictSize + (1 + extraBlocks) * blockSize + 8;
@@ -23,9 +34,13 @@ namespace K4os.Compression.LZ4.Encoders
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
 		}
 
+		/// <inheritdoc />
 		public int BlockSize => _blockSize;
+
+		/// <inheritdoc />
 		public int BytesReady => _inputPointer - _inputIndex;
 
+		/// <inheritdoc />
 		public int Topup(byte* source, int length)
 		{
 			ThrowIfDisposed();
@@ -44,6 +59,7 @@ namespace K4os.Compression.LZ4.Encoders
 			return chunk;
 		}
 
+		/// <inheritdoc />
 		public int Encode(byte* target, int length, bool allowCopy)
 		{
 			ThrowIfDisposed();
@@ -78,11 +94,22 @@ namespace K4os.Compression.LZ4.Encoders
 			_inputIndex = _inputPointer = CopyDict(_inputBuffer, _inputPointer);
 		}
 
+		/// <summary>Encodes single block using appropriate algorithm.</summary>
+		/// <param name="source">Source buffer.</param>
+		/// <param name="sourceLength">Source buffer length.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <returns>Number of bytes actually written to target buffer.</returns>
 		protected abstract int EncodeBlock(
 			byte* source, int sourceLength, byte* target, int targetLength);
 
-		protected abstract int CopyDict(byte* buffer, int dictionaryLength);
+		/// <summary>Copies current dictionary.</summary>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="dictionaryLength">Dictionary length.</param>
+		/// <returns>Dictionary length.</returns>
+		protected abstract int CopyDict(byte* target, int dictionaryLength);
 
+		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();

@@ -2,9 +2,16 @@
 
 namespace K4os.Compression.LZ4.Encoders
 {
+	/// <summary>
+	/// Interface of LZ4 decoder used by LZ4 streams.
+	/// </summary>
 	public interface ILZ4Decoder: IDisposable
 	{
+		/// <summary>Block size.</summary>
 		int BlockSize { get; }
+
+		/// <summary>Bytes already decoded and available to be read.
+		/// Always smaller than <see cref="BlockSize"/></summary>
 		int BytesReady { get; }
 
 		/// <summary>
@@ -32,7 +39,8 @@ namespace K4os.Compression.LZ4.Encoders
 		/// negative number, pointing to bytes before current head. 
 		/// </summary>
 		/// <param name="target">Buffer to write to.</param>
-		/// <param name="offset">Offset in source buffer relatively to current head</param>
+		/// <param name="offset">Offset in source buffer relatively to current head.
+		/// Please note, it should be negative value.</param>
 		/// <param name="length">Number of bytes to read.</param>
 		unsafe void Drain(byte* target, int offset, int length);
 	}

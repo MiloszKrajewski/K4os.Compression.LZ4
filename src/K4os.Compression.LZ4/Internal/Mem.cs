@@ -4,20 +4,44 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Internal
 {
+	/// <summary>Utility class with memory related functions.</summary>
 	public unsafe class Mem
 	{
+		/// <summary>1 KiB</summary>
 		public const int K1 = 1024;
+
+		/// <summary>2 KiB</summary>
 		public const int K2 = 2 * K1;
+
+		/// <summary>4 KiB</summary>
 		public const int K4 = 4 * K1;
+
+		/// <summary>8 KiB</summary>
 		public const int K8 = 8 * K1;
+
+		/// <summary>16 KiB</summary>
 		public const int K16 = 16 * K1;
+
+		/// <summary>32 KiB</summary>
 		public const int K32 = 32 * K1;
+
+		/// <summary>64 KiB</summary>
 		public const int K64 = 64 * K1;
+
+		/// <summary>128 KiB</summary>
 		public const int K128 = 128 * K1;
+
+		/// <summary>256 KiB</summary>
 		public const int K256 = 256 * K1;
+
+		/// <summary>512 KiB</summary>
 		public const int K512 = 512 * K1;
+
+		/// <summary>1 MiB</summary>
 		public const int M1 = 1024 * K1;
-		public const int M4 = M1 * 4;
+
+		/// <summary>4 MiB</summary>
+		public const int M4 = 4 * M1;
 
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
 		/// <param name="value">A value.</param>
@@ -76,9 +100,7 @@ namespace K4os.Compression.LZ4.Internal
 			while (target < limit);
 		}
 
-		/// <summary>
-		/// Fill block of memory with zeroes.
-		/// </summary>
+		/// <summary>Fill block of memory with zeroes.</summary>
 		/// <param name="target">Address.</param>
 		/// <param name="length">Length.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -111,9 +133,7 @@ namespace K4os.Compression.LZ4.Internal
 			}
 		}
 
-		/// <summary>
-		/// Fills memory block with repeating pattern of a single byte.
-		/// </summary>
+		/// <summary>Fills memory block with repeating pattern of a single byte.</summary>
 		/// <param name="target">Address.</param>
 		/// <param name="value">A pattern.</param>
 		/// <param name="length">Length.</param>

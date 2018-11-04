@@ -7,6 +7,7 @@ namespace K4os.Compression.LZ4.Encoders
 	// fast decoder context
 	using LZ4Context = LZ4_xx.LZ4_streamDecode_t;
 
+	/// <summary>LZ4 decoder handling dependent blocks.</summary>
 	public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 	{
 		private readonly LZ4Context* _context;
@@ -15,6 +16,9 @@ namespace K4os.Compression.LZ4.Encoders
 		private readonly int _outputLength;
 		private int _outputIndex;
 
+		/// <summary>Creates new instance of <see cref="LZ4ChainDecoder"/>.</summary>
+		/// <param name="blockSize">Block size.</param>
+		/// <param name="extraBlocks">Number of extra blocks.</param>
 		public LZ4ChainDecoder(int blockSize, int extraBlocks)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
@@ -27,9 +31,13 @@ namespace K4os.Compression.LZ4.Encoders
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
 		}
 
+		/// <inheritdoc />
 		public int BlockSize => _blockSize;
+
+		/// <inheritdoc />
 		public int BytesReady => _outputIndex;
 
+		/// <inheritdoc />
 		public int Decode(byte* source, int length, int blockSize)
 		{
 			if (blockSize <= 0)
@@ -47,6 +55,7 @@ namespace K4os.Compression.LZ4.Encoders
 			return decoded;
 		}
 
+		/// <inheritdoc />
 		public int Inject(byte* source, int length)
 		{
 			if (length <= 0)
@@ -76,6 +85,7 @@ namespace K4os.Compression.LZ4.Encoders
 			return length;
 		}
 
+		/// <inheritdoc />
 		public void Drain(byte* target, int offset, int length)
 		{
 			offset = _outputIndex + offset; // NOTE: negative value
@@ -113,6 +123,7 @@ namespace K4os.Compression.LZ4.Encoders
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
 			LZ4_xx.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
 
+		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();

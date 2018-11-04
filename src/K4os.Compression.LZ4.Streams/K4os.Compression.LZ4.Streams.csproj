@@ -15,10 +15,8 @@
     <PackageProjectUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</RepositoryUrl>
     <PackageIconUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4/blob/master/doc/icon.png?raw=true</PackageIconUrl>
-    <!--
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>../../K4os.snk</AssemblyOriginatorKeyFile>
-    -->
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DocumentationFile>bin\Release\K4os.Compression.LZ4.Streams.xml</DocumentationFile>

@@ -4,6 +4,9 @@ using K4os.Compression.LZ4.Engine;
 
 namespace K4os.Compression.LZ4
 {
+	/// <summary>
+	/// Static class exposing LZ4 block compression methods.
+	/// </summary>
 	public class LZ4Codec
 	{
 		/// <summary>Maximum size after compression.</summary>

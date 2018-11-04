@@ -77,9 +77,9 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			var encoded = encoder.Encode(target, offset, length, allowCopy);
 			offset += Math.Abs(encoded);
-			return 
-				encoded == 0 ? EncoderAction.None : 
-				encoded < 0 ? EncoderAction.Copied : 
+			return
+				encoded == 0 ? EncoderAction.None :
+				encoded < 0 ? EncoderAction.Copied :
 				EncoderAction.Encoded;
 		}
 
@@ -96,12 +96,24 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			var encoded = encoder.Encode(target, length, allowCopy);
 			target += Math.Abs(encoded);
-			return 
-				encoded == 0 ? EncoderAction.None : 
-				encoded < 0 ? EncoderAction.Copied : 
+			return
+				encoded == 0 ? EncoderAction.None :
+				encoded < 0 ? EncoderAction.Copied :
 				EncoderAction.Encoded;
 		}
 
+		/// <summary>Tops encoder and encodes content.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="source">Source buffer (used to top up from).</param>
+		/// <param name="sourceLength">Source buffer length.</param>
+		/// <param name="target">Target buffer (used to encode into)</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <param name="forceEncode">Forces encoding even if encoder is not full.</param>
+		/// <param name="allowCopy">Allows to copy bytes if compression was not possible.</param>
+		/// <param name="loaded">Number of bytes loaded (topped up)</param>
+		/// <param name="encoded">Number if bytes encoded or copied.
+		/// Value is 0 if no encoding was done.</param>
+		/// <returns>Action performed.</returns>
 		public static unsafe EncoderAction TopupAndEncode(
 			this ILZ4Encoder encoder,
 			byte* source, int sourceLength,
@@ -119,18 +131,32 @@ namespace K4os.Compression.LZ4.Encoders
 				target, targetLength, forceEncode, allowCopy, loaded, out encoded);
 		}
 
+		/// <summary>Tops encoder and encodes content.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="source">Source buffer (used to top up from).</param>
+		/// <param name="sourceOffset">Offset within source buffer.</param>
+		/// <param name="sourceLength">Source buffer length.</param>
+		/// <param name="target">Target buffer (used to encode into)</param>
+		/// <param name="targetOffset">Offset within target buffer.</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <param name="forceEncode">Forces encoding even if encoder is not full.</param>
+		/// <param name="allowCopy">Allows to copy bytes if compression was not possible.</param>
+		/// <param name="loaded">Number of bytes loaded (topped up)</param>
+		/// <param name="encoded">Number if bytes encoded or copied.
+		/// Value is 0 if no encoding was done.</param>
+		/// <returns>Action performed.</returns>
 		public static unsafe EncoderAction TopupAndEncode(
 			this ILZ4Encoder encoder,
-			byte[] source, int sourceIndex, int sourceLength,
-			byte[] target, int targetIndex, int targetLength,
+			byte[] source, int sourceOffset, int sourceLength,
+			byte[] target, int targetOffset, int targetLength,
 			bool forceEncode, bool allowCopy,
 			out int loaded, out int encoded)
 		{
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
 				return encoder.TopupAndEncode(
-					sourceP + sourceIndex, sourceLength,
-					targetP + targetIndex, targetLength,
+					sourceP + sourceOffset, sourceLength,
+					targetP + targetOffset, targetLength,
 					forceEncode, allowCopy,
 					out loaded, out encoded);
 		}
@@ -161,6 +187,14 @@ namespace K4os.Compression.LZ4.Encoders
 			}
 		}
 
+		/// <summary>Encoded remaining bytes in encoder.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <param name="allowCopy">Allows to copy bytes if compression was not possible.</param>
+		/// <param name="encoded">Number if bytes encoded or copied.
+		/// Value is 0 if no encoding was done.</param>
+		/// <returns>Action performed.</returns>
 		public static unsafe EncoderAction FlushAndEncode(
 			this ILZ4Encoder encoder,
 			byte* target, int targetLength,
@@ -168,26 +202,50 @@ namespace K4os.Compression.LZ4.Encoders
 			out int encoded) =>
 			encoder.FlushAndEncode(target, targetLength, true, allowCopy, 0, out encoded);
 
+		/// <summary>Encoded remaining bytes in encoder.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="targetOffset">Offset within target buffer.</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <param name="allowCopy">Allows to copy bytes if compression was not possible.</param>
+		/// <param name="encoded">Number if bytes encoded or copied.
+		/// Value is 0 if no encoding was done.</param>
+		/// <returns>Action performed.</returns>
 		public static unsafe EncoderAction FlushAndEncode(
 			this ILZ4Encoder encoder,
-			byte[] target, int targetIndex, int targetLength,
+			byte[] target, int targetOffset, int targetLength,
 			bool allowCopy,
 			out int encoded)
 		{
 			fixed (byte* targetP = target)
 				return encoder.FlushAndEncode(
-					targetP + targetIndex, targetLength, true, allowCopy, 0, out encoded);
+					targetP + targetOffset, targetLength, true, allowCopy, 0, out encoded);
 		}
 
+		/// <summary>Drains decoder by reading all bytes which are ready.</summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="targetOffset">Offset within target buffer.</param>
+		/// <param name="offset">Offset in decoder relatively to decoder's head.
+		/// Please note, it should be negative value.</param>
+		/// <param name="length">Number of bytes.</param>
 		public static unsafe void Drain(
 			this ILZ4Decoder decoder,
-			byte[] target, int targetIndex,
+			byte[] target, int targetOffset,
 			int offset, int length)
 		{
 			fixed (byte* targetP = target)
-				decoder.Drain(targetP + targetIndex, offset, length);
+				decoder.Drain(targetP + targetOffset, offset, length);
 		}
 
+		/// <summary>Decodes data and immediately drains it into target buffer.</summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="source">Source buffer (with compressed data, to be decoded).</param>
+		/// <param name="sourceLength">Source buffer length.</param>
+		/// <param name="target">Target buffer (to drained into).</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <param name="decoded">Number of bytes actually decoded.</param>
+		/// <returns><c>true</c> decoder was drained, <c>false</c> otherwise.</returns>
 		public static unsafe bool DecodeAndDrain(
 			this ILZ4Decoder decoder,
 			byte* source, int sourceLength,
@@ -208,18 +266,28 @@ namespace K4os.Compression.LZ4.Encoders
 			return true;
 		}
 
+		/// <summary>Decodes data and immediately drains it into target buffer.</summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="source">Source buffer (with compressed data, to be decoded).</param>
+		/// <param name="sourceOffset">Offset within source buffer.</param>
+		/// <param name="sourceLength">Source buffer length.</param>
+		/// <param name="target">Target buffer (to drained into).</param>
+		/// <param name="targetOffset">Offset within target buffer.</param>
+		/// <param name="targetLength">Target buffer length.</param>
+		/// <param name="decoded">Number of bytes actually decoded.</param>
+		/// <returns><c>true</c> decoder was drained, <c>false</c> otherwise.</returns>
 		public static unsafe bool DecodeAndDrain(
 			this ILZ4Decoder decoder,
-			byte[] source, int sourceIndex, int sourceLength,
-			byte[] target, int targetIndex, int targetLength,
+			byte[] source, int sourceOffset, int sourceLength,
+			byte[] target, int targetOffset, int targetLength,
 			out int decoded)
 		{
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
 				return decoder.DecodeAndDrain(
-					sourceP + sourceIndex,
+					sourceP + sourceOffset,
 					sourceLength,
-					targetP + targetIndex,
+					targetP + targetOffset,
 					targetLength,
 					out decoded);
 		}

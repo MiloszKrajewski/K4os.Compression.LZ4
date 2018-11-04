@@ -5,6 +5,9 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Streams
 {
+	/// <summary>
+	/// Utility class with factory methods to create LZ4 compression and decompression streams.
+	/// </summary>
 	public static class LZ4Stream
 	{
 		/// <summary>Created compression stream on top of inner stream.</summary>
@@ -16,7 +19,7 @@ namespace K4os.Compression.LZ4.Streams
 			Stream stream, LZ4EncoderSettings settings = null, bool leaveOpen = false)
 		{
 			settings = settings ?? LZ4EncoderSettings.Default;
-			var frameInfo = new LZ4FrameInfo(
+			var frameInfo = new LZ4Descriptor(
 				settings.ContentLength,
 				settings.ContentChecksum,
 				settings.ChainBlocks,

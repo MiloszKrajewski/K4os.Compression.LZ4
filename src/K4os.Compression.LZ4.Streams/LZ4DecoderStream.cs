@@ -9,6 +9,9 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
 {
+	/// <summary>
+	/// LZ4 Decompression stream handling.
+	/// </summary>
 	public class LZ4DecoderStream: Stream, IDisposable
 	{
 		private readonly bool _interactive = true;
@@ -18,18 +21,23 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly byte[] _buffer16 = new byte[16];
 		private int _index16;
 
-		private readonly Func<ILZ4FrameInfo, ILZ4Decoder> _decoderFactory;
+		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
 
-		private ILZ4FrameInfo _frameInfo;
+		private ILZ4Descriptor _frameInfo;
 		private ILZ4Decoder _decoder;
 		private int _decoded;
 		private byte[] _buffer;
 
 		private long _position;
 
+		/// <summary>Creates new instance <see cref="LZ4DecoderStream"/>.</summary>
+		/// <param name="inner">Inner stream.</param>
+		/// <param name="decoderFactory">A function which will create appropriate decoder depending
+		/// on frame descriptor.</param>
+		/// <param name="leaveOpen">If <c>true</c> inner stream will not be closed after disposing.</param>
 		public LZ4DecoderStream(
 			Stream inner,
-			Func<ILZ4FrameInfo, ILZ4Decoder> decoderFactory,
+			Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
 			bool leaveOpen = false)
 		{
 			_inner = inner;
@@ -38,12 +46,15 @@ namespace K4os.Compression.LZ4.Streams
 			_position = 0;
 		}
 
+		/// <inheritdoc />
 		public override void Flush() =>
 			_inner.Flush();
 
+		/// <inheritdoc />
 		public override Task FlushAsync(CancellationToken cancellationToken) =>
 			_inner.FlushAsync(cancellationToken);
 
+		/// <inheritdoc />
 		public override int Read(byte[] buffer, int offset, int count)
 		{
 			EnsureFrame();
@@ -61,6 +72,7 @@ namespace K4os.Compression.LZ4.Streams
 			return read;
 		}
 
+		/// <inheritdoc />
 		public override int ReadByte() =>
 			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
 
@@ -114,7 +126,7 @@ namespace K4os.Compression.LZ4.Streams
 					"Predefined dictionaries feature is not implemented"); // Write32(dictionaryId);
 
 			// ReSharper disable once ExpressionIsAlwaysNull
-			_frameInfo = new LZ4FrameInfo(
+			_frameInfo = new LZ4Descriptor(
 				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
 				blockSize);
 			_decoder = _decoderFactory(_frameInfo);
@@ -226,10 +238,7 @@ namespace K4os.Compression.LZ4.Streams
 			return read > 0;
 		}
 
-		private void Read0()
-		{
-			_index16 = 0;
-		}
+		private void Read0() { _index16 = 0; }
 
 		// ReSharper disable once UnusedMethodReturnValue.Local
 		private ulong Read64()
@@ -264,12 +273,14 @@ namespace K4os.Compression.LZ4.Streams
 			return _buffer16[_index16 - 1];
 		}
 
+		/// <inheritdoc />
 		public new void Dispose()
 		{
 			Dispose(true);
 			base.Dispose();
 		}
 
+		/// <inheritdoc />
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -281,10 +292,19 @@ namespace K4os.Compression.LZ4.Streams
 				_inner.Dispose();
 		}
 
+		/// <inheritdoc />
 		public override bool CanRead => _inner.CanRead;
+
+		/// <inheritdoc />
 		public override bool CanSeek => false;
+
+		/// <inheritdoc />
 		public override bool CanWrite => false;
 
+		/// <summary>
+		/// Length of stream. Please note, this will only work if original LZ4 stream has
+		/// <c>ContentLength</c> field set in descriptor. Otherwise returned value will be <c>-1</c>.
+		/// </summary>
 		public override long Length
 		{
 			get
@@ -294,38 +314,50 @@ namespace K4os.Compression.LZ4.Streams
 			}
 		}
 
+		/// <summary>
+		/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
+		/// not have <c>Seek</c> capability.
+		/// </summary>
 		public override long Position
 		{
 			get => _position;
 			set => throw InvalidOperation("SetPosition");
 		}
 
+		/// <inheritdoc />
 		public override bool CanTimeout => _inner.CanTimeout;
 
+		/// <inheritdoc />
 		public override int WriteTimeout
 		{
 			get => _inner.WriteTimeout;
 			set => _inner.WriteTimeout = value;
 		}
 
+		/// <inheritdoc />
 		public override int ReadTimeout
 		{
 			get => _inner.ReadTimeout;
 			set => _inner.ReadTimeout = value;
 		}
 
+		/// <inheritdoc />
 		public override long Seek(long offset, SeekOrigin origin) =>
 			throw InvalidOperation("Seek");
 
+		/// <inheritdoc />
 		public override void SetLength(long value) =>
 			throw InvalidOperation("SetLength");
 
+		/// <inheritdoc />
 		public override void Write(byte[] buffer, int offset, int count) =>
 			throw InvalidOperation("Write");
 
+		/// <inheritdoc />
 		public override void WriteByte(byte value) =>
 			throw InvalidOperation("WriteByte");
 
+		/// <inheritdoc />
 		public override Task WriteAsync(
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("WriteAsync");

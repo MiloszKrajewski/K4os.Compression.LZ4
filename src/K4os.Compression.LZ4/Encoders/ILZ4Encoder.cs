@@ -2,6 +2,9 @@
 
 namespace K4os.Compression.LZ4.Encoders
 {
+	/// <summary>
+	/// Interface of LZ4 encoder used by LZ4 streams.
+	/// </summary>
 	public interface ILZ4Encoder: IDisposable
 	{
 		/// <summary>Block size.</summary>
@@ -21,8 +24,8 @@ namespace K4os.Compression.LZ4.Encoders
 
 		/// <summary>
 		/// Encodes bytes in internal buffer (see: <see cref="BytesReady"/>, <see cref="Topup"/>).
-		/// If <see cref="allowCopy"/> is <c>true</c> then if encoded buffer is bigger than source
-		/// buffer source bytes are copied instead. In such case returned length is negative.
+		/// If <paramref name="allowCopy"/> is <c>true</c> then if encoded buffer is bigger than
+		/// source buffer source bytes are copied instead. In such case returned length is negative.
 		/// </summary>
 		/// <param name="target">Target buffer.</param>
 		/// <param name="length">Target buffer length.</param>

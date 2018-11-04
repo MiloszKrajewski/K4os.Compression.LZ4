@@ -3,6 +3,11 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
+	/// <summary>
+	/// LZ4 decoder used with independent blocks mode. Plase note, that it will fail
+	/// if input data has been compressed with chained blocks
+	/// (<see cref="LZ4FastChainEncoder"/> and <see cref="LZ4HighChainEncoder"/>)
+	/// </summary>
 	public unsafe class LZ4BlockDecoder: UnmanagedResources, ILZ4Decoder
 	{
 		private readonly int _blockSize;
@@ -10,10 +15,14 @@ namespace K4os.Compression.LZ4.Encoders
 		private int _outputIndex;
 		private readonly byte* _outputBuffer;
 
+		/// <inheritdoc />
 		public int BlockSize => _blockSize;
 
+		/// <inheritdoc />
 		public int BytesReady => _outputIndex;
 
+		/// <summary>Creates new instance of block decoder.</summary>
+		/// <param name="blockSize">Block size. Must be equal or greater to one used for compression.</param>
 		public LZ4BlockDecoder(int blockSize)
 		{
 			blockSize = Mem.RoundUp(Math.Max(blockSize, Mem.K1), Mem.K1);
@@ -23,6 +32,7 @@ namespace K4os.Compression.LZ4.Encoders
 			_outputBuffer = (byte*) Mem.Alloc(_outputLength + 8);
 		}
 
+		/// <inheritdoc />
 		public int Decode(byte* source, int length, int blockSize = 0)
 		{
 			ThrowIfDisposed();
@@ -41,6 +51,7 @@ namespace K4os.Compression.LZ4.Encoders
 			return _outputIndex;
 		}
 
+		/// <inheritdoc />
 		public int Inject(byte* source, int length)
 		{
 			ThrowIfDisposed();
@@ -56,6 +67,7 @@ namespace K4os.Compression.LZ4.Encoders
 			return length;
 		}
 
+		/// <inheritdoc />
 		public void Drain(byte* target, int offset, int length)
 		{
 			ThrowIfDisposed();
@@ -67,6 +79,7 @@ namespace K4os.Compression.LZ4.Encoders
 			Mem.Move(target, _outputBuffer + offset, length);
 		}
 
+		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();

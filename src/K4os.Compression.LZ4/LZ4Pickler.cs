@@ -6,6 +6,9 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4
 {
+	/// <summary>
+	/// Pickling support with LZ4 compression.
+	/// </summary>
 	public static class LZ4Pickler
 	{
 		private const byte VersionMask = 0x07;

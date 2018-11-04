@@ -14,5 +14,5 @@ nuget xunit.runner.visualstudio
 
 clitool dotnet-xunit
 
-# Implicitly imported but we want to control version
+# implicitly imported but we want to control version
 nuget System.Runtime.CompilerServices.Unsafe 4.5.1
