@@ -7,46 +7,12 @@ nuget System.Memory
 
 nuget lz4net
 nuget SharpZipLib
-
 nuget BenchmarkDotNet
 
-nuget Microsoft.NET.Test.Sdk
 nuget xunit
 nuget xunit.runner.visualstudio
 
 clitool dotnet-xunit
 
 # Implicitly imported but we want to control version
-nuget System.ValueTuple 4.5.0
-nuget NETStandard.Library 2.0.3
-
-# nuget Microsoft.CodeAnalysis.Analyzers 2.6.1 # 2.6.2
-# nuget Microsoft.NETCore.Platforms 2.0.1 # 2.1.1
-# nuget Microsoft.NETCore.Targets 2.0 # 2.1.0
-# nuget NETStandard.Library 2.0.1 # 2.0.3
-# nuget System.Buffers 4.4 # 4.5.0
-# nuget System.Console 4.3 # 4.3.1
-# nuget System.Diagnostics.DiagnosticSource 4.4.1 # 4.5.1
-# nuget System.Net.Http 4.3.3 # 4.3.4
-# nuget System.Reflection.TypeExtensions 4.4 # 4.5.1
-# nuget System.Runtime.CompilerServices.Unsafe 4.5.1 # 4.5.2
-# nuget System.Security.Cryptography.Cng 4.4 # 4.5.0
-# nuget System.Security.Cryptography.OpenSsl 4.4 # 4.5.0
-# nuget System.Security.Principal.Windows 4.5 # 4.5.1
-# nuget System.Text.Encoding.CodePages 4.4 # 4.5.0
-# nuget System.ValueTuple 4.4 # 4.5.0
-
-# nuget runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.native.System 4.3 # 4.3.1
-# nuget runtime.native.System.IO.Compression 4.3.1 # 4.3.2
-# nuget runtime.native.System.Net.Http 4.3 # 4.3.1
-# nuget runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
-# nuget runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl 4.3.2 # 4.3.3
+nuget System.Runtime.CompilerServices.Unsafe 4.5.1
