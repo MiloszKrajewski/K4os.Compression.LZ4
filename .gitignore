@@ -19,6 +19,6 @@ Release/
 *.suo
 *.snk
 
-.secrets.config
+.secrets.cfg
 
 BenchmarkDotNet.Artifacts/
