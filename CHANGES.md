@@ -1,3 +1,6 @@
+## 1.1.1 (2018/11/06)
+* Position and Length for LZ4EncoderStream
+
 ## 1.1.0 (2018/11/04)
 * Signed assemblies
 * Independent block encoder and decoder (performance)

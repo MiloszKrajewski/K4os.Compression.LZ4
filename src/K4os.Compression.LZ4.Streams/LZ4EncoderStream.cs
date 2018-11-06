@@ -25,6 +25,7 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly bool _leaveOpen;
 
 		private byte[] _buffer;
+		private long _position;
 
 		/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 		/// <param name="inner">Inner stream.</param>
@@ -82,7 +83,9 @@ namespace K4os.Compression.LZ4.Streams
 					out var loaded,
 					out var encoded);
 				WriteBlock(encoded, action);
-
+				
+				_position += loaded;
+				
 				offset += loaded;
 				count -= loaded;
 			}
@@ -91,8 +94,8 @@ namespace K4os.Compression.LZ4.Streams
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private void WriteFrame()
 		{
-			Write32(0x184D2204);
-			Flush16();
+			Stash32(0x184D2204);
+			FlushStash();
 
 			const int versionCode = 0x01;
 			var blockChaining = _descriptor.Chaining;
@@ -113,7 +116,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			var BD = MaxBlockSizeCode(blockSize) << 4;
 
-			Write16((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
+			Stash16((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
 				throw NotImplemented(
@@ -125,8 +128,8 @@ namespace K4os.Compression.LZ4.Streams
 
 			var HC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
 
-			Write8(HC);
-			Flush16();
+			Stash8(HC);
+			FlushStash();
 
 			_encoder = CreateEncoder();
 			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
@@ -152,8 +155,8 @@ namespace K4os.Compression.LZ4.Streams
 					_buffer, 0, _buffer.Length, true, out var encoded);
 				WriteBlock(encoded, action);
 
-				Write32(0);
-				Flush16();
+				Stash32(0);
+				FlushStash();
 
 				if (_descriptor.ContentChecksum)
 					throw NotImplemented("ContentChecksum");
@@ -193,8 +196,8 @@ namespace K4os.Compression.LZ4.Streams
 			if (length <= 0)
 				return;
 
-			Write32((uint) length | (compressed ? 0 : 0x80000000));
-			Flush16();
+			Stash32((uint) length | (compressed ? 0 : 0x80000000));
+			FlushStash();
 
 			_inner.Write(_buffer, 0, length);
 
@@ -221,16 +224,16 @@ namespace K4os.Compression.LZ4.Streams
 				_inner.Dispose();
 		}
 
-		private void Write8(byte value) { _buffer16[_index16++] = value; }
+		private void Stash8(byte value) { _buffer16[_index16++] = value; }
 
-		private void Write16(ushort value)
+		private void Stash16(ushort value)
 		{
 			_buffer16[_index16 + 0] = (byte) value;
 			_buffer16[_index16 + 1] = (byte) (value >> 8);
 			_index16 += 2;
 		}
 
-		private void Write32(uint value)
+		private void Stash32(uint value)
 		{
 			_buffer16[_index16 + 0] = (byte) value;
 			_buffer16[_index16 + 1] = (byte) (value >> 8);
@@ -254,7 +257,7 @@ namespace K4os.Compression.LZ4.Streams
 		}
 		*/
 
-		private void Flush16()
+		private void FlushStash()
 		{
 			if (_index16 > 0)
 				_inner.Write(_buffer16, 0, _index16);
@@ -270,14 +273,14 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		public override bool CanWrite => _inner.CanWrite;
 
-		/// <summary>Length of the stream. Not implemented, so always returns <c>-1</c>.</summary>
-		public override long Length => -1;
+		/// <summary>Length of the stream and number of bytes written so far.</summary>
+		public override long Length => _position;
 
-		/// <summary>Position in the stream. Not implemented, so always returns <c>-1</c> and
-		/// throws exception if you try to set it.</summary>
+		/// <summary>Read-only position in the stream. Trying to set it will throw
+		/// <see cref="InvalidOperationException"/>.</summary>
 		public override long Position
 		{
-			get => -1;
+			get => _position;
 			set => throw InvalidOperation("Position");
 		}
 

@@ -1,8 +1,13 @@
 using System;
 using System.IO;
+
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
+using K4os.Compression.LZ4.Test;
+
 using Xunit;
+
+using Tools = K4os.Compression.LZ4.Streams.Test.Internal.Tools;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
@@ -78,6 +83,34 @@ namespace K4os.Compression.LZ4.Streams.Test
 				{
 					throw new Exception(
 						$"Failed to process: {filename} @ {options}/{chunkSize}", e);
+				}
+			}
+		}
+
+		[Fact]
+		public void LengthAndPositionAreAlwaysSayingHowManyBytesHaveBeenWritten()
+		{
+			var written = 0;
+			var random = new Random(0);
+			var buffer = new byte[0x10000];
+			Lorem.Fill(buffer, 0, buffer.Length);
+
+			using (var output = new MemoryStream())
+			using (var encoder = LZ4Stream.Encode(output))
+			{
+				while (written < 1024 * 1024 * 10)
+				{
+					void WriteAndAssert(int length)
+					{
+						encoder.Write(buffer, 0, length);
+						written += length;
+						Assert.Equal(encoder.Position, written);
+						Assert.Equal(encoder.Length, written);
+					}
+
+					WriteAndAssert(0);
+					WriteAndAssert(random.Next(0, buffer.Length));
+					WriteAndAssert(0);
 				}
 			}
 		}

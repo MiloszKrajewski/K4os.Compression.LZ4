@@ -85,15 +85,15 @@ namespace K4os.Compression.LZ4.Streams
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private void ReadFrame()
 		{
-			Read0();
+			FlushPeek();
 
-			var magic = TryRead32();
+			var magic = TryPeek32();
 			if (magic != 0x184D2204)
 				throw MagicNumberExpected();
 
-			Read0();
+			FlushPeek();
 
-			var FLG_BD = Read16();
+			var FLG_BD = Peek16();
 
 			var FLG = FLG_BD & 0xFF;
 			var BD = (FLG_BD >> 8) & 0xFF;
@@ -110,11 +110,11 @@ namespace K4os.Compression.LZ4.Streams
 			var hasDictionary = (FLG & 0x01) != 0;
 			var blockSizeCode = (BD >> 4) & 0x07;
 
-			var contentLength = hasContentSize ? (long?) Read64() : null;
-			var dictionaryId = hasDictionary ? (uint?) Read32() : null;
+			var contentLength = hasContentSize ? (long?) Peek64() : null;
+			var dictionaryId = hasDictionary ? (uint?) Peek32() : null;
 
 			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
-			var expectedHC = Read8();
+			var expectedHC = Peek8();
 
 			if (actualHC != expectedHC)
 				throw InvalidHeaderChecksum();
@@ -167,13 +167,13 @@ namespace K4os.Compression.LZ4.Streams
 
 		private unsafe int ReadBlock()
 		{
-			Read0();
+			FlushPeek();
 
-			var blockLength = (int) Read32();
+			var blockLength = (int) Peek32();
 			if (blockLength == 0)
 			{
 				if (_frameInfo.ContentChecksum)
-					Read32();
+					Peek32();
 				CloseFrame();
 				return 0;
 			}
@@ -181,10 +181,10 @@ namespace K4os.Compression.LZ4.Streams
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
 
-			ReadN(_buffer, 0, blockLength);
+			PeekN(_buffer, 0, blockLength);
 
 			if (_frameInfo.BlockChecksum)
-				Read32();
+				Peek32();
 
 			fixed (byte* bufferP = _buffer)
 				return uncompressed
@@ -208,7 +208,7 @@ namespace K4os.Compression.LZ4.Streams
 			return _interactive;
 		}
 
-		private int ReadN(byte[] buffer, int offset, int count, bool optional = false)
+		private int PeekN(byte[] buffer, int offset, int count, bool optional = false)
 		{
 			var index = 0;
 			while (count > 0)
@@ -229,47 +229,47 @@ namespace K4os.Compression.LZ4.Streams
 			return index;
 		}
 
-		private bool ReadN(int count, bool optional = false)
+		private bool PeekN(int count, bool optional = false)
 		{
 			if (count == 0) return true;
 
-			var read = ReadN(_buffer16, _index16, count, optional);
+			var read = PeekN(_buffer16, _index16, count, optional);
 			_index16 += read;
 			return read > 0;
 		}
 
-		private void Read0() { _index16 = 0; }
+		private void FlushPeek() { _index16 = 0; }
 
 		// ReSharper disable once UnusedMethodReturnValue.Local
-		private ulong Read64()
+		private ulong Peek64()
 		{
-			ReadN(sizeof(ulong));
+			PeekN(sizeof(ulong));
 			return BitConverter.ToUInt64(_buffer16, _index16 - sizeof(ulong));
 		}
 
-		private uint? TryRead32()
+		private uint? TryPeek32()
 		{
-			if (!ReadN(sizeof(uint), true))
+			if (!PeekN(sizeof(uint), true))
 				return null;
 
 			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
 		}
 
-		private uint Read32()
+		private uint Peek32()
 		{
-			ReadN(sizeof(uint));
+			PeekN(sizeof(uint));
 			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
 		}
 
-		private ushort Read16()
+		private ushort Peek16()
 		{
-			ReadN(sizeof(ushort));
+			PeekN(sizeof(ushort));
 			return BitConverter.ToUInt16(_buffer16, _index16 - sizeof(ushort));
 		}
 
-		private byte Read8()
+		private byte Peek8()
 		{
-			ReadN(sizeof(byte));
+			PeekN(sizeof(byte));
 			return _buffer16[_index16 - 1];
 		}
 
