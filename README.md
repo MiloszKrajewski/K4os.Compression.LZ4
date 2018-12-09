@@ -2,8 +2,8 @@
 
 | Name | Nuget | Description |
 |:-|:-:|:-|
-| K4os.Compression.LZ4         | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4) | Block compression |
-| K4os.Compression.LZ4.Streams | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.Streams.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4.Streams) | Stream compression |
+| `K4os.Compression.LZ4`         | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4) | Block compression |
+| `K4os.Compression.LZ4.Streams` | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.Streams.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4.Streams) | Stream compression |
 
 # LZ4
 
