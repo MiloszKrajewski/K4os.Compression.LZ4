@@ -203,7 +203,7 @@ class LZ4EncoderSettings
 
 Default options are good enough so you don't change anything. Refer to [original documentation](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) for more detailed information.
 
-Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` ae not currently supported and trying to use values other than defaults will throw exceptions.
+Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` are not currently supported and trying to use values other than defaults will throw exceptions.
 
 ### Stream compression
 
