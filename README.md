@@ -2,8 +2,9 @@
 
 | Name | Nuget | Description |
 |:-|:-:|:-|
-| `K4os.Compression.LZ4`         | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4) | Block compression only |
-| `K4os.Compression.LZ4.Streams` | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.Streams.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4.Streams) | Stream compression |
+| `K4os.Compression.LZ4`         | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4)                 | Block compression only |
+| `K4os.Compression.LZ4.Streams` | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.Streams.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4.Streams) | Stream compression     |
+| `K4os.Compression.LZ4.Legacy`  | [![NuGet Stats](https://img.shields.io/nuget/v/K4os.Compression.LZ4.Legacy.svg)](https://www.nuget.org/packages/K4os.Compression.LZ4.Legacy)   | Legacy compatibility   |
 
 # LZ4
 
@@ -272,3 +273,37 @@ using (var target = File.Create(filename))
 ```
 
 Please note that stream decompression is (at least I hope it is) fully compatible with original specification. Well, it does not handle predefined dictionaries but `lz4.exe` does not either. All the other features which are not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does not cause decompression to fail.
+
+### Legacy (lz4net) compatibility
+
+There is a separate package for those who used lz4net before and still need to access files generated with it:
+
+```csharp
+static class LZ4Legacy
+{
+    static LZ4Stream Encode(
+        Stream innerStream,
+        bool highCompression = false,
+        int blockSize = 1024 * 1024,
+        bool leaveOpen = false);
+
+    static LZ4Stream Decode(
+        Stream innerStream, 
+        bool leaveOpen = false);
+}
+```
+
+This provide access to streams written by `lz4net`. Please note, that interface is not compatible, but the file format is.
+
+Example:
+
+```csharp
+using (var source = LZ4Legacy.Decode(File.OpenRead(filename + ".old")))
+using (var target = LZ4Stream.Encode(File.Create(filename + ".new")))
+{
+    source.CopyTo(target);
+}
+```
+
+Code above will read old (lz4net) format and write to new format 
+([lz4_Frame_format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md)).

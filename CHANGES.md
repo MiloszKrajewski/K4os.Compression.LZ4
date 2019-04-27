@@ -1,3 +1,6 @@
+## 1.1.2 (2019/04/28)
+* Added lz4net compatibility (K4os.Compression.LZ4.Legacy)
+
 ## 1.1.1 (2018/11/06)
 * Position and Length for LZ4EncoderStream
 

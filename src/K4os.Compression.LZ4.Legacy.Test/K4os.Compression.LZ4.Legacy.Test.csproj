@@ -5,7 +5,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\K4os.Compression.LZ4.Legacy\K4os.Compression.LZ4.Legacy.csproj"/>
+    <ProjectReference Include="..\K4os.Compression.LZ4.Legacy\K4os.Compression.LZ4.Legacy.csproj" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets"/>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
