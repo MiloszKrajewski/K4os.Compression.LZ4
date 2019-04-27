@@ -2,15 +2,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard1.6;netstandard2.0;net46</TargetFrameworks>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <PackageId>K4os.Compression.LZ4.Streams</PackageId>
-    <PackageTags>compression lz4 stream</PackageTags>
+    <PackageId>K4os.Compression.LZ4.Legacy</PackageId>
+    <PackageTags>compression lz4 lz4net</PackageTags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DocumentationFile>bin\Release\K4os.Compression.LZ4.Streams.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\K4os.Compression.LZ4.Legacy.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />

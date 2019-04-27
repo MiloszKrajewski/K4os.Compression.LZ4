@@ -4,4 +4,16 @@
     <AssemblyVersion>1.1.1</AssemblyVersion>
     <FileVersion>1.1.1</FileVersion>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>K4os.Compression.LZ4</Product>
+    <Authors>Milosz Krajewski</Authors>
+    <Description>Port of LZ4 compression algorithm for .NET</Description>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/MiloszKrajewski/K4os.Compression.LZ4/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</RepositoryUrl>
+    <PackageIconUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4/blob/master/doc/icon.png?raw=true</PackageIconUrl>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>../../K4os.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
 </Project>
