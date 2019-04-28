@@ -36,5 +36,36 @@ namespace K4os.Compression.LZ4.Legacy
 				leaveOpen ? LZ4StreamFlags.IsolateInnerStream : LZ4StreamFlags.None;
 			return new LZ4Stream(innerStream, LZ4StreamMode.Decompress, compressionFlags);
 		}
+
+		/// <summary>Compresses and wraps given input byte buffer.</summary>
+		/// <param name="inputBuffer">The input buffer.</param>
+		/// <param name="inputOffset">The input offset.</param>
+		/// <param name="inputLength">Length of the input.</param>
+		/// <returns>Compressed buffer.</returns>
+		/// <exception cref="System.ArgumentException">inputBuffer size of inputLength is invalid</exception>
+		public static byte[] Wrap(
+			byte[] inputBuffer, int inputOffset = 0, int inputLength = int.MaxValue) =>
+			LZ4Wrapper.Wrap(inputBuffer, inputOffset, inputLength);
+
+		/// <summary>Compresses (with high compression algorithm) and wraps given input byte buffer.</summary>
+		/// <param name="inputBuffer">The input buffer.</param>
+		/// <param name="inputOffset">The input offset.</param>
+		/// <param name="inputLength">Length of the input.</param>
+		/// <returns>Compressed buffer.</returns>
+		/// <exception cref="System.ArgumentException">inputBuffer size of inputLength is invalid</exception>
+		// ReSharper disable once InconsistentNaming
+		public static byte[] WrapHC(
+			byte[] inputBuffer, int inputOffset = 0, int inputLength = int.MaxValue) =>
+			LZ4Wrapper.WrapHC(inputBuffer, inputOffset, inputLength);
+
+		/// <summary>Unwraps the specified compressed buffer.</summary>
+		/// <param name="inputBuffer">The input buffer.</param>
+		/// <param name="inputOffset">The input offset.</param>
+		/// <returns>Uncompressed buffer.</returns>
+		/// <exception cref="System.ArgumentException">
+		///     inputBuffer size is invalid or inputBuffer size is invalid or has been corrupted
+		/// </exception>
+		public static byte[] Unwrap(byte[] inputBuffer, int inputOffset = 0) =>
+			LZ4Wrapper.Unwrap(inputBuffer, inputOffset);
 	}
 }

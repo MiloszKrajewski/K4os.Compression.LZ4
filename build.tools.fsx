@@ -166,7 +166,7 @@ module Proj =
         | true, _ -> () 
         | _, Some sn -> snk |> sprintf "-k %s" |> StrongNamingHelper.StrongName (fun p -> { p with ToolPath = sn })
         | _ -> failwith "SN.exe could not be found"
-
+        
     let pack version project =
         DotNetCli.Pack (fun p ->
             { p with
@@ -196,6 +196,8 @@ module Proj =
             XmlPokeInnerText fn "/Project/PropertyGroup/AssemblyVersion" fileVersion
             XmlPokeInnerText fn "/Project/PropertyGroup/FileVersion" fileVersion
         ))
+    let updateVersions () =
+        updateVersion productVersion assemblyVersion "Common.targets"
     let fixPackReferences folder =
         let fileMissing filename = File.Exists(filename) |> not
         !! (folder @@ "**/paket.references")
@@ -217,7 +219,6 @@ module Proj =
             )
         )
     let packMany projects =
-        updateVersion productVersion assemblyVersion "Common.targets"
         let projectFiles = projects |> Seq.map (fun p -> sprintf "src/%s/%s.*proj" p p) |> Seq.collect (!!) |> Seq.toArray
         let folders = projectFiles |> Seq.map directory |> Seq.distinct |> Seq.toArray
         folders |> Seq.iter (fun folder ->

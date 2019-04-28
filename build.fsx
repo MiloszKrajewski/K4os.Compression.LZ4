@@ -21,6 +21,7 @@ let publish apiKey = packages |> Seq.iter (Proj.publishNugetOrg apiKey)
 Target "Clean" (fun _ -> clean ())
 
 Target "Restore" (fun _ -> 
+    Proj.updateVersions ()
     restore ()
     Proj.snkGen "K4os.snk"
 )
