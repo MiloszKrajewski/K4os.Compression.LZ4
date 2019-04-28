@@ -2,6 +2,7 @@
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Engine;
 using K4os.Compression.LZ4.Internal;
+using TestHelpers;
 using Xunit;
 using Xunit.Abstractions;
 

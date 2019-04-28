@@ -2,6 +2,7 @@
 using System.IO;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Legacy.Test.Internal;
+using TestHelpers;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Legacy.Test
@@ -47,7 +48,7 @@ namespace K4os.Compression.LZ4.Legacy.Test
 			{
 				TestedLZ4.Encode(original, encoded, high, block, Mem.K64);
 				
-				using (var source = LZ4Legacy.Decode(new FakeNetworkStream(File.OpenRead(encoded))))
+				using (var source = LZ4Legacy.Decode(Tools.Slow(File.OpenRead(encoded))))
 				using (var target = File.Create(decoded))
 				{
 					var buffer = new byte[Mem.K64];

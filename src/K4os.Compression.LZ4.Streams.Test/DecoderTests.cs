@@ -3,6 +3,7 @@ using System.IO;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
+using TestHelpers;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -71,10 +72,8 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 			{
 				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
-				var origStream = File.OpenRead(encoded);
 				// We need this to work even if the stream gives us only a single byte at a time
-				var slowStream = new FakeNetworkStream(origStream);
-				using (var input = LZ4Stream.Decode(slowStream, Mem.M1))
+				using (var input = LZ4Stream.Decode(Tools.Slow(File.OpenRead(encoded)), Mem.M1))
 				{
 					var buffer = new byte[0x80000];
 					Assert.Equal(5000, input.Read(buffer, 0, 5000));

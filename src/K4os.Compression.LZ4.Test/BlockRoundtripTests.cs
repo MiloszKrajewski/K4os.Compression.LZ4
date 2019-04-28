@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using TestHelpers;
 using Xunit;
 using _LZ4 = LZ4.LZ4Codec;
 

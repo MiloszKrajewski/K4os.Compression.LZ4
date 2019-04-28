@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using TestHelpers;
 
 namespace K4os.Compression.LZ4.Streams.Test.Internal
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace K4os.Compression.LZ4.Test
+namespace TestHelpers
 {
 	public static class Lorem
 	{

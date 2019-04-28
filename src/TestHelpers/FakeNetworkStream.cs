@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace K4os.Compression.LZ4.Streams.Test.Internal
+namespace TestHelpers
 {
 	/// <summary>
 	/// Fake the behavior of a network stream where <see cref="Stream.Read(byte[], int, int)"/> will often

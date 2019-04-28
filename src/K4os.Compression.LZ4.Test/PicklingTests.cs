@@ -1,5 +1,6 @@
 using System;
 using K4os.Compression.LZ4.Internal;
+using TestHelpers;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Test

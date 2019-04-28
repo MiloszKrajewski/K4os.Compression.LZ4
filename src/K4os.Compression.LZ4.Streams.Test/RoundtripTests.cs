@@ -2,6 +2,7 @@
 using System.IO;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
+using TestHelpers;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -28,7 +29,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("-9 -B4 -BD", 1337)]
 		public void WholeCorpus(string options, int chunkSize)
 		{
-			var settings = Tools.ParseSettings(options);
+			var settings = Settings.ParseSettings(options);
 			foreach (var filename in Tools.CorpusNames)
 			{
 				try
@@ -49,7 +50,7 @@ namespace K4os.Compression.LZ4.Streams.Test
         [InlineData("x-ray", "-12 -B7")]
         public void SelectiveRoundtrip(string filename, string options)
 		{
-			var settings = Tools.ParseSettings(options);
+			var settings = Settings.ParseSettings(options);
 			TestRoundtrip($".corpus/{filename}", 1337, settings);
 		}
 

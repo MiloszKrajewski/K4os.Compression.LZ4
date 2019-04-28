@@ -1,5 +1,5 @@
 using System.IO;
-using K4os.Compression.LZ4.Streams.Test.Internal;
+using TestHelpers;
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test

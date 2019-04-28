@@ -3,6 +3,7 @@ using BenchmarkDotNet.Attributes;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams;
 using K4os.Compression.LZ4.Streams.Test.Internal;
+using TestHelpers;
 
 namespace K4os.Compression.LZ4.Benchmarks
 {

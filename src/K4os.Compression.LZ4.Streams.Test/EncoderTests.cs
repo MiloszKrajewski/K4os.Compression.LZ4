@@ -1,13 +1,9 @@
 using System;
 using System.IO;
-
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
-using K4os.Compression.LZ4.Test;
-
+using TestHelpers;
 using Xunit;
-
-using Tools = K4os.Compression.LZ4.Streams.Test.Internal.Tools;
 
 namespace K4os.Compression.LZ4.Streams.Test
 {
@@ -20,7 +16,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("x-ray", "-9 -BD -B7", 1337)]
 		public void OddChunkSize(string filename, string options, int chunkSize)
 		{
-			TestEncoder($".corpus/{filename}", chunkSize, Tools.ParseSettings(options));
+			TestEncoder($".corpus/{filename}", chunkSize, Settings.ParseSettings(options));
 		}
 
 		[Theory]
@@ -28,7 +24,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("x-ray", "-9 -BD -B4", Mem.M1)]
 		public void LargeChunkSize(string filename, string options, int chunkSize)
 		{
-			TestEncoder($".corpus/{filename}", chunkSize, Tools.ParseSettings(options));
+			TestEncoder($".corpus/{filename}", chunkSize, Settings.ParseSettings(options));
 		}
 
 		[Theory]
@@ -44,7 +40,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 			try
 			{
 				Tools.WriteRandom(filename, 10 * Mem.M1 + 1337);
-				TestEncoder(filename, chunkSize, Tools.ParseSettings(options));
+				TestEncoder(filename, chunkSize, Settings.ParseSettings(options));
 			}
 			finally
 			{
@@ -72,7 +68,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[InlineData("-9 -B4 -BD", 1337)]
 		public void WholeCorpus(string options, int chunkSize)
 		{
-			var settings = Tools.ParseSettings(options);
+			var settings = Settings.ParseSettings(options);
 			foreach (var filename in Tools.CorpusNames)
 			{
 				try
