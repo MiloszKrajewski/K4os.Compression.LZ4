@@ -1,5 +1,3 @@
-open Fake.SystemHelper
-open System
 #r "paket:
     nuget Fake.Core.Target
     nuget Fake.Core.ReleaseNotes
@@ -43,6 +41,8 @@ Target.create "Build" (fun _ -> build ())
 
 Target.create "Rebuild" ignore
 
+Target.create "Release" (fun _ -> release ())
+
 Target.create "Test" (fun _ -> test ())
 
 Target.create "Benchmark" (fun _ ->
@@ -71,31 +71,30 @@ let enusure7Zexe () =
         let zipFileUrl = "http://www.7-zip.org/a/7za920.zip"
         let zipFileName = "./.tools/7za920.zip"
         "./.tools" |> Directory.create
-        File.download zipFileName zipFileUrl
-        Zip.Unzip "./.tools/" zipFileName
-
+        zipFileUrl |> File.download zipFileName
+        zipFileName |> Zip.unzip "./.tools/"
 
 let ensureLZ4exe () =
     if not (File.exists "./.tools/lz4.exe") then
         let zipFileUrl = "https://github.com/lz4/lz4/releases/download/v1.8.1.2/lz4_v1_8_1_win64.zip"
         let zipFile = "./.tools/lz4-1.8.1-win64.zip"
-        CreateDir "./.tools"
-        File.download zipFile zipFileUrl
-        ZipHelper.Unzip "./.tools/lz4" zipFile
-        "./.tools/lz4/lz4.exe" |> CopyFile "./.tools/lz4.exe"
-        DeleteDir "./.tools/lz4"
+        "./.tools" |> Directory.create
+        zipFileUrl |> File.download zipFile
+        zipFile |> Zip.unzip "./.tools/lz4"
+        "./.tools/lz4/lz4.exe" |> File.copy "./.tools/lz4.exe"
+        "./.tools/lz4" |> Directory.delete
 
 let uncorpus fn =
     let dataFile = sprintf "./.corpus/%s" fn
     if not (File.exists dataFile) then
-        let uri = sprintf "https://github.com/MiloszKrajewski/SilesiaCorpus/blob/master/%s.zip?raw=true" fn
-        dataFile |> directory |> CreateDir
+        let corpusUrl = sprintf "https://github.com/MiloszKrajewski/SilesiaCorpus/blob/master/%s.zip?raw=true" fn
+        dataFile |> Path.dirnameOf |> Directory.create
         let zipFile = sprintf "%s.zip" dataFile
-        File.download zipFile uri
-        Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (directory zipFile) zipFile)
-        DeleteFile zipFile
+        corpusUrl |> File.download zipFile
+        Shell.run ".\\.tools\\7za.exe" (sprintf "-o%s x %s" (Path.dirnameOf zipFile) zipFile)
+        zipFile |> File.delete
 
-Target "Restore:Corpus" (fun _ ->
+Target.create "Restore:Corpus" (fun _ ->
     enusure7Zexe ()
     ensureLZ4exe ()
     uncorpus "dickens"
@@ -115,6 +114,7 @@ Target "Restore:Corpus" (fun _ ->
 open Fake.Core.TargetOperators
 
 "Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"
+"Refresh" ==> "Restore"
 "Clean" ==> "Rebuild"
 "Clean" ?=> "Restore"
 "Build" ?=> "Test"
