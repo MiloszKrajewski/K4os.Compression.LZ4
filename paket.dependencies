@@ -12,7 +12,5 @@ nuget BenchmarkDotNet
 nuget xunit
 nuget xunit.runner.visualstudio
 
-clitool dotnet-xunit
-
 # implicitly imported but we want to control version
 nuget System.Runtime.CompilerServices.Unsafe 4.5.1

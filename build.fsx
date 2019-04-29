@@ -1,48 +1,61 @@
-open Fake
+open Fake.SystemHelper
+open System
+#r "paket:
+    nuget Fake.Core.Target
+    nuget Fake.Core.ReleaseNotes
+    nuget Fake.IO.FileSystem
+    nuget Fake.IO.Zip
+    nuget Fake.DotNet.MSBuild
+    nuget Fake.DotNet.Cli
+    nuget Fake.DotNet.Testing.XUnit2
+//"
 
-#r ".fake/FakeLib.dll"
+#load "build.imports.fsx"
 #load "build.tools.fsx"
 #load "sanitize.fsx"
+
+open Fake.IO
+open Fake.IO.Globbing.Operators
+open Fake.Core
+
+open Tools
 
 let solutions = Proj.settings |> Config.keys "Build"
 let packages = Proj.settings |> Config.keys "Pack"
 
-//----
-
-let clean () = !! "**/bin/" ++ "**/obj/" |> DeleteDirs
-let restore () = solutions |> Seq.iter Proj.restore
-let build () = solutions |> Seq.iter Proj.build
-let test () = Proj.xtestAll ()
+let clean () = !! "**/bin/" ++ "**/obj/" |> Shell.deleteDirs
+let build () = solutions |> Proj.buildMany
+let restore () = solutions |> Proj.restoreMany
+let test () = Proj.testAll ()
 let release () = packages |> Proj.packMany
 let publish apiKey = packages |> Seq.iter (Proj.publishNugetOrg apiKey)
 
-//----
-
-Target "Clean" (fun _ -> clean ())
-
-Target "Restore" (fun _ -> 
-    Proj.updateVersions ()
-    restore ()
-    Proj.snkGen "K4os.snk"
+Target.create "Refresh" (fun _ ->
+    Proj.regenerateStrongName "K4os.snk"
+    Proj.updateCommonTargets "Common.targets"
 )
 
-Target "Build" (fun _ -> build ())
+Target.create "Clean" (fun _ -> clean ())
 
-Target "Rebuild" ignore
+Target.create "Restore" (fun _ -> restore ())
 
-Target "Release" (fun _ -> release ())
+Target.create "Build" (fun _ -> build ())
 
-Target "Test" (fun _ -> test ())
+Target.create "Rebuild" ignore
 
-Target "Benchmark" (fun _ ->
-    getBuildParamOrDefault "args" ""
+Target.create "Test" (fun _ -> test ())
+
+Target.create "Benchmark" (fun _ ->
+    Environment.environVarOrDefault "args" ""
     |> sprintf "run -p src/K4os.Compression.LZ4.Benchmarks -c Release -- %s"
     |> Shell.run "dotnet"
 )
 
-Target "Release:Nuget" (fun _ -> Proj.settings |> Config.valueOrFail "nuget" "accessKey" |> publish)
+Target.create "Release:Nuget" (fun _ ->
+    Proj.settings |> Config.valueOrFail "nuget" "accessKey" |> publish
+)
 
-Target "Sanitize" (fun _ ->
+Target.create "Sanitize" (fun _ ->
     let rules = Sanitizer.basicTypes
     let sanitize fn =
         printfn "Processing: %s" fn
@@ -53,13 +66,13 @@ Target "Sanitize" (fun _ ->
     sanitize "lz4frame.c"
 )
 
-let enusure7Zexe () = 
+let enusure7Zexe () =
     if not (File.exists "./.tools/7za.exe") then
         let zipFileUrl = "http://www.7-zip.org/a/7za920.zip"
         let zipFileName = "./.tools/7za920.zip"
-        CreateDir "./.tools"
+        "./.tools" |> Directory.create
         File.download zipFileName zipFileUrl
-        ZipHelper.Unzip "./.tools/" zipFileName
+        Zip.Unzip "./.tools/" zipFileName
 
 
 let ensureLZ4exe () =
@@ -99,10 +112,11 @@ Target "Restore:Corpus" (fun _ ->
     uncorpus "x-ray"
 )
 
+open Fake.Core.TargetOperators
+
 "Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"
 "Clean" ==> "Rebuild"
 "Clean" ?=> "Restore"
 "Build" ?=> "Test"
 
-
-RunTargetOrDefault "Build"
+Target.runOrDefault "Build"
