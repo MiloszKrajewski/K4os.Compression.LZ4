@@ -1,3 +1,6 @@
+## 1.1.4 (2019/04/29)
+* Moved build process to FAKE 5 (no functionality added)
+
 ## 1.1.3 (2019/04/28)
 * Added lz4net compatible pickler
 
