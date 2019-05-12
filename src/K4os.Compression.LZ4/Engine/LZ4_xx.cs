@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
 
+// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 
 namespace K4os.Compression.LZ4.Engine
@@ -109,14 +110,14 @@ namespace K4os.Compression.LZ4.Engine
 		protected static uint LZ4_hash4(uint sequence, tableType_t tableType)
 		{
 			var hashLog = tableType == tableType_t.byU16 ? LZ4_HASHLOG + 1 : LZ4_HASHLOG;
-			return (sequence * 2654435761u) >> (MINMATCH * 8 - hashLog);
+			return unchecked ((sequence * 2654435761u) >> (MINMATCH * 8 - hashLog));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_hash5(ulong sequence, tableType_t tableType)
 		{
 			var hashLog = tableType == tableType_t.byU16 ? LZ4_HASHLOG + 1 : LZ4_HASHLOG;
-			return (uint) (((sequence << 24) * 889523592379ul) >> (64 - hashLog));
+			return unchecked ((uint) (((sequence << 24) * 889523592379ul) >> (64 - hashLog)));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

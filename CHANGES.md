@@ -1,3 +1,6 @@
+## 1.1.5 (2019/05/12)
+* Added explicit "unchecked" around hash calculation
+
 ## 1.1.4 (2019/04/29)
 * Moved build process to FAKE 5 (no functionality added)
 
