@@ -17,7 +17,7 @@
 * Signed assemblies
 * Independent block encoder and decoder (performance)
 * Better XML doc
-* Breaking changes to pubternals 
+* Breaking changes to pubternals
 
 ## 1.0.3 (2018/10/12)
 * added auto-download of nuget (Windows only)

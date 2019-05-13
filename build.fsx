@@ -1,11 +1,12 @@
 #r "paket:
-    nuget Fake.Core.Target
-    nuget Fake.Core.ReleaseNotes
-    nuget Fake.IO.FileSystem
-    nuget Fake.IO.Zip
-    nuget Fake.DotNet.MSBuild
-    nuget Fake.DotNet.Cli
-    nuget Fake.DotNet.Testing.XUnit2
+nuget Fake.Core.Target
+nuget Fake.Core.ReleaseNotes
+nuget Fake.IO.FileSystem
+nuget Fake.IO.Zip
+nuget Fake.Api.GitHub
+nuget Fake.DotNet.MSBuild
+nuget Fake.DotNet.Cli
+nuget Fake.DotNet.Testing.XUnit2
 //"
 
 #load "build.imports.fsx"
@@ -14,7 +15,9 @@
 
 open Fake.IO
 open Fake.IO.Globbing.Operators
+open Fake.IO.FileSystemOperators
 open Fake.Core
+open Fake.Api
 
 open Tools
 
@@ -43,7 +46,8 @@ Target.create "Rebuild" ignore
 
 Target.create "Release" (fun _ -> release ())
 
-Target.create "Test" (fun _ -> test ())
+Target.create "Test" ignore
+// Target.create "Test" (fun _ -> test ())
 
 Target.create "Benchmark" (fun _ ->
     Environment.environVarOrDefault "args" ""
@@ -53,6 +57,21 @@ Target.create "Benchmark" (fun _ ->
 
 Target.create "Release:Nuget" (fun _ ->
     Proj.settings |> Config.valueOrFail "nuget" "accessKey" |> publish
+)
+
+Target.create "Release:GitHub" (fun _ ->
+    let user = Proj.settings |> Config.valueOrFail "github" "user"
+    let token = Proj.settings |> Config.valueOrFail "github" "token"
+    let repository = Proj.settings |> Config.valueOrFail "github" "repository"
+    let files = !! (Proj.outputFolder @@ (sprintf "*.%s.nupkg" Proj.productVersion))
+    let notes = Proj.releaseNotes.Notes
+    let prerelease = Proj.releaseNotes.SemVer.PreRelease.IsSome
+
+    GitHub.createClientWithToken token
+    |> GitHub.draftNewRelease user repository Proj.productVersion prerelease notes
+    |> GitHub.uploadFiles files
+    |> GitHub.publishDraft
+    |> Async.RunSynchronously
 )
 
 Target.create "Sanitize" (fun _ ->
@@ -113,7 +132,7 @@ Target.create "Restore:Corpus" (fun _ ->
 
 open Fake.Core.TargetOperators
 
-"Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:Nuget"
+"Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:GitHub" ==> "Release:Nuget"
 "Refresh" ==> "Restore"
 "Clean" ==> "Rebuild"
 "Clean" ?=> "Restore"

@@ -152,6 +152,7 @@ module Proj =
         DateTime.Now.Subtract(baseline).TotalSeconds |> int |> sprintf "%8x"
     let productVersion = releaseNotes.NugetVersion |> Regex.replace "-wip$" (timestamp |> sprintf "-wip%s")
     let assemblyVersion = releaseNotes.AssemblyVersion
+    let isPreRelease = releaseNotes.SemVer.PreRelease.IsSome
     let settings =
         ["."]
         |> Seq.collect (fun dn -> ["settings"; ".secrets"] |> Seq.map (fun fn -> dn @@ fn))
