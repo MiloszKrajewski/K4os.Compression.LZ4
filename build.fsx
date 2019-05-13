@@ -46,8 +46,8 @@ Target.create "Rebuild" ignore
 
 Target.create "Release" (fun _ -> release ())
 
-Target.create "Test" ignore
-// Target.create "Test" (fun _ -> test ())
+// Target.create "Test" ignore
+Target.create "Test" (fun _ -> test ())
 
 Target.create "Benchmark" (fun _ ->
     Environment.environVarOrDefault "args" ""
@@ -62,7 +62,7 @@ Target.create "Release:Nuget" (fun _ ->
 Target.create "Release:GitHub" (fun _ ->
     let user = Proj.settings |> Config.valueOrFail "github" "user"
     let token = Proj.settings |> Config.valueOrFail "github" "token"
-    let repository = Proj.settings |> Config.valueOrFail "github" "repository"
+    let repository = Proj.settings |> Config.keys "Repository" |> Seq.exactlyOne
     let files = !! (Proj.outputFolder @@ (sprintf "*.%s.nupkg" Proj.productVersion))
     let notes = Proj.releaseNotes.Notes
     let prerelease = Proj.releaseNotes.SemVer.PreRelease.IsSome
@@ -132,7 +132,8 @@ Target.create "Restore:Corpus" (fun _ ->
 
 open Fake.Core.TargetOperators
 
-"Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release" ==> "Release:GitHub" ==> "Release:Nuget"
+"Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release"
+"Release" ==> "Release:GitHub" ==> "Release:Nuget"
 "Refresh" ==> "Restore"
 "Clean" ==> "Rebuild"
 "Clean" ?=> "Restore"

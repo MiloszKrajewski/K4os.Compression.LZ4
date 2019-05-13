@@ -1,3 +1,6 @@
+## 1.1.7 (2019/05/13)
+* issues 18 & 22: returning 0 bytes on EoF many times (not just once)
+
 ## 1.1.5 (2019/05/12)
 * Added explicit "unchecked" around hash calculation
 
