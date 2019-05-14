@@ -63,15 +63,9 @@ Target.create "Release:GitHub" (fun _ ->
     let user = Proj.settings |> Config.valueOrFail "github" "user"
     let token = Proj.settings |> Config.valueOrFail "github" "token"
     let repository = Proj.settings |> Config.keys "Repository" |> Seq.exactlyOne
-    let files = !! (Proj.outputFolder @@ (sprintf "*.%s.nupkg" Proj.productVersion))
-    let notes = Proj.releaseNotes.Notes
-    let prerelease = Proj.releaseNotes.SemVer.PreRelease.IsSome
 
-    GitHub.createClientWithToken token
-    |> GitHub.draftNewRelease user repository Proj.productVersion prerelease notes
-    |> GitHub.uploadFiles files
-    |> GitHub.publishDraft
-    |> Async.RunSynchronously
+    !! (Proj.outputFolder @@ (sprintf "*.%s.nupkg" Proj.productVersion))
+    |> Proj.publishGitHub repository user token
 )
 
 Target.create "Sanitize" (fun _ ->
