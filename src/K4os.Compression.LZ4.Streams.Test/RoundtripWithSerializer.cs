@@ -52,12 +52,9 @@ namespace K4os.Compression.LZ4.Streams.Test
 			using (var ms = new MemoryStream())
 			{
 				using (var compressionStream = LZ4Stream.Encode(ms))
-				// using (var compressionStream = Gzip(ms))
+				using (var writer = XmlDictionaryWriter.CreateBinaryWriter(compressionStream))
 				{
-					using (var writer = XmlDictionaryWriter.CreateBinaryWriter(compressionStream))
-					{
-						serializer.WriteObject(writer, obj);
-					}
+					serializer.WriteObject(writer, obj);
 				}
 
 				bytes = ms.ToArray();
@@ -65,7 +62,6 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 			using (var ms = new MemoryStream(bytes))
 			using (var decompressionStream = LZ4Stream.Decode(ms))
-			// using (var decompressionStream = UnGzip(ms))
 			using (var reader = XmlDictionaryReader.CreateBinaryReader(
 				decompressionStream, XmlDictionaryReaderQuotas.Max))
 			{

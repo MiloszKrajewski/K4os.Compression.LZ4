@@ -15,7 +15,10 @@ namespace K4os.Compression.LZ4.Streams
 	public class LZ4EncoderStream: Stream, IDisposable
 	{
 		private readonly Stream _inner;
-		private readonly byte[] _buffer16 = new byte[16];
+		
+		// ReSharper disable once InconsistentNaming
+		private const int _length16 = 16;
+		private readonly byte[] _buffer16 = new byte[_length16 + 8];
 		private int _index16;
 
 		private ILZ4Encoder _encoder;
@@ -64,8 +67,8 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		public override void WriteByte(byte value)
 		{
-			_buffer16[_index16] = value;
-			Write(_buffer16, _index16, 1);
+			_buffer16[_length16] = value;
+			Write(_buffer16, _length16, 1);
 		}
 
 		/// <inheritdoc />

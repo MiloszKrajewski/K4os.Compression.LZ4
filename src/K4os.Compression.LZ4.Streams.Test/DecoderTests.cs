@@ -1,9 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
+
 using TestHelpers;
+
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -144,8 +149,8 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				ReferenceLZ4.Encode(options, original, encoded);
 				using (var decoder = new LZ4DecoderStream(
-					File.OpenRead(encoded), 
-					fi => new LZ4BlockDecoder(fi.BlockSize))) 
+					File.OpenRead(encoded),
+					fi => new LZ4BlockDecoder(fi.BlockSize)))
 				using (var writer = File.OpenWrite(decoded))
 				{
 					decoder.CopyTo(writer);
@@ -160,9 +165,9 @@ namespace K4os.Compression.LZ4.Streams.Test
 			}
 		}
 
-#if DEBUG
+		#if DEBUG
 		[Theory(Skip = "Too long")]
-#else
+		#else
 		[Theory]
 		#endif
 		[InlineData("-1 -BD -B4 -BX", Mem.K8)]
@@ -188,6 +193,40 @@ namespace K4os.Compression.LZ4.Streams.Test
 				{
 					throw new Exception($"Failed to process: {filename} @ {options}", e);
 				}
+			}
+		}
+
+		[Theory]
+		[InlineData("reymont", "-1 -BD -B4 -BX")]
+		[InlineData("reymont", "-9 -B7")]
+		public void ReadingFileByteByByteYieldsSameResults(string filename, string options)
+		{
+			var original = Tools.FindFile($".corpus/{filename}");
+			var encoded = Path.GetTempFileName();
+
+			try
+			{
+				ReferenceLZ4.Encode(options, original, encoded);
+
+				var decodedBytes = new List<byte>();
+				using (var decoder = LZ4Stream.Decode(File.OpenRead(encoded)))
+				{
+					while (true)
+					{
+						var nextByte = decoder.ReadByte();
+						if (nextByte < 0)
+							break;
+						decodedBytes.Add((byte) nextByte);
+					}
+				}
+
+				Tools.SameBytes(
+					File.ReadAllBytes(original), 
+					decodedBytes.ToArray());
+			}
+			finally
+			{
+				File.Delete(encoded);
 			}
 		}
 

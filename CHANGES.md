@@ -1,5 +1,5 @@
-## 1.1.8 (2019/05/14)
-* rerelease to fix bad commit id on 1.1.7
+## 1.1.9 (2019/05/14)
+* issue 22 returns: fix for ReadByte/WriteByte bug
 
 ## 1.1.7 (2019/05/13)
 * issues 18 & 22: returning 0 bytes on EoF many times (not just once)

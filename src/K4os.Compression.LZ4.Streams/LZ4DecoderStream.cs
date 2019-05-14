@@ -18,7 +18,10 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly bool _leaveOpen;
 
 		private readonly Stream _inner;
-		private readonly byte[] _buffer16 = new byte[16];
+		
+		// ReSharper disable once InconsistentNaming
+		private const int _length16 = 16; // we intend to use only 16 bytes
+		private readonly byte[] _buffer16 = new byte[_length16 + 8];  
 		private int _index16;
 
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
@@ -75,7 +78,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		/// <inheritdoc />
 		public override int ReadByte() =>
-			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
+			Read(_buffer16, _length16, 1) > 0 ? _buffer16[_length16] : -1;
 
 		private bool EnsureFrame() => _decoder != null || ReadFrame();
 
