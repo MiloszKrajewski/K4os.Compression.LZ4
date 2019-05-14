@@ -47,7 +47,11 @@ Target.create "Rebuild" ignore
 Target.create "Release" (fun _ -> release ())
 
 // Target.create "Test" ignore
-Target.create "Test" (fun _ -> test ())
+Target.create "Test" (fun p ->
+    if p.Context.Arguments |> List.contains "notest"
+    then Log.warn "Ignoring tests"
+    else test ()
+)
 
 Target.create "Benchmark" (fun _ ->
     Environment.environVarOrDefault "args" ""
@@ -133,4 +137,4 @@ open Fake.Core.TargetOperators
 "Clean" ?=> "Restore"
 "Build" ?=> "Test"
 
-Target.runOrDefault "Build"
+Target.runOrDefaultWithArguments "Build"
