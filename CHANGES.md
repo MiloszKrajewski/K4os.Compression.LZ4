@@ -1,3 +1,6 @@
+## 1.1.10 (2019/06/11)
+* Added explicit "unchecked" around De Bruijn calculation
+
 ## 1.1.9 (2019/05/14)
 * issue 22 returns: fix for ReadByte/WriteByte bug
 
