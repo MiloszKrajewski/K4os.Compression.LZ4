@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using K4os.Compression.LZ4.Internal;
 
 namespace TestHelpers
 {
@@ -34,7 +35,7 @@ namespace TestHelpers
 				while (outputLength > 0)
 				{
 					var chunk = Math.Min(outputLength, Bytes.Length);
-					Buffer.MemoryCopy(bytesP, output, outputLength, chunk);
+					Mem.Copy(output, bytesP, chunk);
 					outputLength -= chunk;
 					output += chunk;
 				}

@@ -43,6 +43,14 @@ namespace K4os.Compression.LZ4.Internal
 		/// <summary>4 MiB</summary>
 		public const int M4 = 4 * M1;
 
+		/// <summary>Empty byte array.</summary>
+		#if NET45
+		public static readonly byte[] Empty = new byte[0];
+		#else
+		public static readonly byte[] Empty = Array.Empty<byte>();
+		#endif
+
+
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
 		/// <param name="value">A value.</param>
 		/// <param name="step">A step.</param>
@@ -63,8 +71,12 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
+			#if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
-			// LoopCopy(target, source, length);
+			#else
+			if (length <= 0) return;
+			Unsafe.CopyBlock(target, source, (uint) length);
+			#endif
 		}
 
 		/// <summary>
@@ -77,7 +89,12 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
+			#if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
+			#else
+			if (length <= 0) return;
+			Unsafe.CopyBlock(target, source, (uint) length);
+			#endif
 		}
 
 		/// <summary>
@@ -174,8 +191,9 @@ namespace K4os.Compression.LZ4.Internal
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
-		/// This is proper implementation of memcpy (with all weir behaviour for overlapping blocks).
-		/// It is slower than "Copy" but may be required if "Copy" causes problems.
+		/// This is proper implementation of memcpy (with all then weird behaviour for
+		/// overlapping blocks). It is slower than "Copy" but may be required if "Copy"
+		/// causes problems.
 		/// </summary>
 		/// <param name="target">The target block address.</param>
 		/// <param name="source">The source block address.</param>
@@ -210,6 +228,77 @@ namespace K4os.Compression.LZ4.Internal
 			if (length > 0)
 			{
 				*target = *source;
+			}
+		}
+
+		/// <summary>
+		/// Copies memory block backwards from <paramref name="source"/> to <paramref name="target"/>.
+		/// This is needed to implement memmove It is slower than "Move" but is needed for .NET 4.5,
+		/// which does not implement Buffer.MemoryCopy.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="source">The source block address.</param>
+		/// <param name="length">Length in bytes.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void LoopCopyBack(byte* target, byte* source, int length)
+		{
+			if (length <= 0) return;
+
+			target += length;
+			source += length;
+
+			while (length >= sizeof(ulong))
+			{
+				target -= sizeof(ulong);
+				source -= sizeof(ulong);
+				length -= sizeof(ulong);
+				*(ulong*) target = *(ulong*) source;
+			}
+
+			if (length >= sizeof(uint))
+			{
+				target -= sizeof(uint);
+				source -= sizeof(uint);
+				length -= sizeof(uint);
+				*(uint*) target = *(uint*) source;
+			}
+
+			if (length >= sizeof(ushort))
+			{
+				target -= sizeof(ushort);
+				source -= sizeof(ushort);
+				length -= sizeof(ushort);
+				*(ushort*) target = *(ushort*) source;
+			}
+
+			if (length > 0)
+			{
+				target--;
+				source--;
+				*target = *source;
+			}
+		}
+
+		/// <summary>
+		/// Moves memory block for <paramref name="source"/> to <paramref name="target"/>.
+		/// It handles overlapping block properly.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="source">The source block address.</param>
+		/// <param name="length">Length in bytes.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void LoopMove(byte* target, byte* source, int length)
+		{
+			if (length <= 0 || source == target)
+				return;
+
+			if (source >= target || source + length <= target)
+			{
+				LoopCopy(target, source, length);
+			}
+			else
+			{
+				LoopCopyBack(target, source, length);
 			}
 		}
 

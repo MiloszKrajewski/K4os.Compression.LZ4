@@ -1,3 +1,6 @@
+## 1.1.11 (2019/07/03)
+* Added (experimental!) support for .NET 4.5
+0
 ## 1.1.10 (2019/06/11)
 * Added explicit "unchecked" around De Bruijn calculation
 

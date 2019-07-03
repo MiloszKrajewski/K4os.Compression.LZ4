@@ -56,12 +56,12 @@ namespace K4os.Compression.LZ4.Streams
 		public override Task FlushAsync(CancellationToken cancellationToken) =>
 			_inner.FlushAsync(cancellationToken);
 
-		#if NET46 || NETSTANDARD2_0
-		/// <inheritdoc />
-		public override void Close() { CloseFrame(); }
-		#else
+		#if NETSTANDARD1_6
 		/// <summary>Closes stream.</summary>
 		public void Close() { CloseFrame(); }
+		#else
+		/// <inheritdoc />
+		public override void Close() { CloseFrame(); }
 		#endif
 
 		/// <inheritdoc />

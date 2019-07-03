@@ -1,8 +1,8 @@
 <Project>
   <PropertyGroup>
-    <Version>1.1.10</Version>
-    <AssemblyVersion>1.1.10</AssemblyVersion>
-    <FileVersion>1.1.10</FileVersion>
+    <Version>1.1.11</Version>
+    <AssemblyVersion>1.1.11</AssemblyVersion>
+    <FileVersion>1.1.11</FileVersion>
   </PropertyGroup>
   <PropertyGroup>
     <Product>K4os.Compression.LZ4</Product>
