@@ -1,12 +1,12 @@
 #r "paket:
-nuget Fake.Core.Target
-nuget Fake.Core.ReleaseNotes
-nuget Fake.IO.FileSystem
-nuget Fake.IO.Zip
-nuget Fake.Api.GitHub
-nuget Fake.DotNet.MSBuild
-nuget Fake.DotNet.Cli
-nuget Fake.DotNet.Testing.XUnit2
+	nuget Fake.Core.Target
+	nuget Fake.Core.ReleaseNotes
+	nuget Fake.IO.FileSystem
+	nuget Fake.IO.Zip
+	nuget Fake.Api.GitHub
+	nuget Fake.DotNet.MSBuild
+	nuget Fake.DotNet.Cli
+	nuget Fake.DotNet.Testing.XUnit2
 //"
 
 #load "build.imports.fsx"
@@ -46,7 +46,6 @@ Target.create "Rebuild" ignore
 
 Target.create "Release" (fun _ -> release ())
 
-// Target.create "Test" ignore
 Target.create "Test" (fun p ->
     if p.Context.Arguments |> List.contains "notest"
     then Log.warn "Ignoring tests"
@@ -130,11 +129,10 @@ Target.create "Restore:Corpus" (fun _ ->
 
 open Fake.Core.TargetOperators
 
-"Restore:Corpus" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release"
+"Restore:Corpus" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release"
 "Release" ==> "Release:GitHub" ==> "Release:Nuget"
-"Refresh" ==> "Restore"
-"Clean" ==> "Rebuild"
 "Clean" ?=> "Restore"
+"Clean" ==> "Rebuild"
 "Build" ?=> "Test"
 
 Target.runOrDefaultWithArguments "Build"

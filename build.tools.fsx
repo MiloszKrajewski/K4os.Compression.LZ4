@@ -199,7 +199,7 @@ module Proj =
                 NoBuild = true
                 NoRestore = true
                 Configuration = DotNet.Release
-                Common = { p.Common with Verbosity = Some DotNet.Verbosity.Normal }
+                Common = { p.Common with Verbosity = Some DotNet.Normal }
             })
     let testMany projects =
         projects |> Seq.iter test
