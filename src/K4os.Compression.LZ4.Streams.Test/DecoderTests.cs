@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
-
 using TestHelpers;
-
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -216,17 +213,35 @@ namespace K4os.Compression.LZ4.Streams.Test
 						var nextByte = decoder.ReadByte();
 						if (nextByte < 0)
 							break;
+
 						decodedBytes.Add((byte) nextByte);
 					}
 				}
 
 				Tools.SameBytes(
-					File.ReadAllBytes(original), 
+					File.ReadAllBytes(original),
 					decodedBytes.ToArray());
 			}
 			finally
 			{
 				File.Delete(encoded);
+			}
+		}
+		
+		[Fact]
+		public void Issue27_DataPreparedWithPython()
+		{
+			var raw = new byte[] {
+				4, 34, 77, 24, 104, 64, 
+				5, 0, 0, 0, 0, 0, 0, 0, 
+				97, 5, 0, 0, 128, 104, 101, 
+				108, 108, 111, 0, 0, 0, 0
+			};
+			using (var input = LZ4Stream.Decode(new MemoryStream(raw)))
+			using (var reader = new StreamReader(input))
+			{
+				var text = reader.ReadLine();
+				Assert.Equal("hello", text);
 			}
 		}
 
