@@ -62,8 +62,8 @@ Target.create "Sanitize" (fun _ ->
         Sanitizer.sanitize (sprintf "./orig/lib/%s" fn) (sprintf "./src/sanitized/%s" fn) rules
     sanitize "lz4.c"
     sanitize "lz4hc.c"
-    sanitize "lz4opt.h"
-    sanitize "lz4frame.c"
+    sanitize "lz4.h"
+    sanitize "lz4hc.h"
 )
 
 let enusure7Zexe () =
