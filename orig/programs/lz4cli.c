@@ -67,6 +67,7 @@ static int g_lz4c_legacy_commands = 0;
 /*-************************************
 *  Macros
 ***************************************/
+#define DISPLAYOUT(...)        fprintf(stdout, __VA_ARGS__)
 #define DISPLAY(...)           fprintf(stderr, __VA_ARGS__)
 #define DISPLAYLEVEL(l, ...)   if (displayLevel>=l) { DISPLAY(__VA_ARGS__); }
 static unsigned displayLevel = 2;   /* 0 : no display ; 1: errors only ; 2 : downgradable normal ; 3 : non-downgradable normal; 4 : + information */
@@ -141,10 +142,11 @@ static int usage_advanced(const char* exeName)
     DISPLAY( " -BX    : enable block checksum (default:disabled) \n");
     DISPLAY( "--no-frame-crc : disable stream checksum (default:enabled) \n");
     DISPLAY( "--content-size : compressed frame includes original size (default:not present)\n");
-    DISPLAY( "--list  : lists information about .lz4 files. Useful if compressed with --content-size flag.\n");
+    DISPLAY( "--list FILE : lists information about .lz4 files (useful for files compressed with --content-size flag)\n");
     DISPLAY( "--[no-]sparse  : sparse mode (default:enabled on file, disabled on stdout)\n");
     DISPLAY( "--favor-decSpeed: compressed files decompress faster, but are less compressed \n");
     DISPLAY( "--fast[=#]: switch to ultra fast compression level (default: %i)\n", 1);
+    DISPLAY( "--best  : same as -%d\n", LZ4HC_CLEVEL_MAX);
     DISPLAY( "Benchmark arguments : \n");
     DISPLAY( " -b#    : benchmark file(s), using # compression level (default : 1) \n");
     DISPLAY( " -e#    : test all compression levels from -bX to # (default : 1)\n");
@@ -390,7 +392,7 @@ int main(int argc, const char** argv)
                 if (!strcmp(argument,  "--favor-decSpeed")) { LZ4IO_favorDecSpeed(prefs, 1); continue; }
                 if (!strcmp(argument,  "--verbose")) { displayLevel++; continue; }
                 if (!strcmp(argument,  "--quiet")) { if (displayLevel) displayLevel--; continue; }
-                if (!strcmp(argument,  "--version")) { DISPLAY(WELCOME_MESSAGE); return 0; }
+                if (!strcmp(argument,  "--version")) { DISPLAYOUT(WELCOME_MESSAGE); return 0; }
                 if (!strcmp(argument,  "--help")) { usage_advanced(exeName); goto _cleanup; }
                 if (!strcmp(argument,  "--keep")) { LZ4IO_setRemoveSrcFile(prefs, 0); continue; }   /* keep source file (default) */
                 if (!strcmp(argument,  "--rm")) { LZ4IO_setRemoveSrcFile(prefs, 1); continue; }
@@ -413,6 +415,9 @@ int main(int argc, const char** argv)
                         }
                         continue;
                     }
+
+                /* For gzip(1) compatibility */
+                if (!strcmp(argument,  "--best")) { cLevel=LZ4HC_CLEVEL_MAX; continue; }
             }
 
             while (argument[1]!=0) {
@@ -437,7 +442,7 @@ int main(int argc, const char** argv)
                 switch(argument[0])
                 {
                     /* Display help */
-                case 'V': DISPLAY(WELCOME_MESSAGE); goto _cleanup;   /* Version */
+                case 'V': DISPLAYOUT(WELCOME_MESSAGE); goto _cleanup;   /* Version */
                 case 'h': usage_advanced(exeName); goto _cleanup;
                 case 'H': usage_longhelp(exeName); goto _cleanup;
 
@@ -620,10 +625,18 @@ int main(int argc, const char** argv)
 #endif
     }
 
+    if (dictionary_filename) {
+        if (!strcmp(dictionary_filename, stdinmark) && IS_CONSOLE(stdin)) {
+            DISPLAYLEVEL(1, "refusing to read from a console\n");
+            exit(1);
+        }
+        LZ4IO_setDictionaryFilename(prefs, dictionary_filename);
+    }
+
     /* benchmark and test modes */
     if (mode == om_bench) {
         BMK_setNotificationLevel(displayLevel);
-        operationResult = BMK_benchFiles(inFileNames, ifnIdx, cLevel, cLevelLast);
+        operationResult = BMK_benchFiles(inFileNames, ifnIdx, cLevel, cLevelLast, dictionary_filename);
         goto _cleanup;
     }
 
@@ -633,14 +646,6 @@ int main(int argc, const char** argv)
         mode = om_decompress;   /* defer to decompress */
     }
 
-    if (dictionary_filename) {
-        if (!strcmp(dictionary_filename, stdinmark) && IS_CONSOLE(stdin)) {
-            DISPLAYLEVEL(1, "refusing to read from a console\n");
-            exit(1);
-        }
-        LZ4IO_setDictionaryFilename(prefs, dictionary_filename);
-    }
-
     /* compress or decompress */
     if (!input_filename) input_filename = stdinmark;
     /* Check if input is defined as console; trigger an error in this case */
@@ -648,13 +653,23 @@ int main(int argc, const char** argv)
         DISPLAYLEVEL(1, "refusing to read from a console\n");
         exit(1);
     }
-    /* if input==stdin and no output defined, stdout becomes default output */
-    if (!strcmp(input_filename, stdinmark) && !output_filename)
-        output_filename = stdoutmark;
+    if (!strcmp(input_filename, stdinmark)) {
+        /* if input==stdin and no output defined, stdout becomes default output */
+        if (!output_filename) output_filename = stdoutmark;
+    }
+    else{
+#ifdef UTIL_HAS_CREATEFILELIST
+        if (!recursive && !UTIL_isRegFile(input_filename)) {
+#else
+        if (!UTIL_isRegFile(input_filename)) {
+#endif
+            DISPLAYLEVEL(1, "%s: is not a regular file \n", input_filename);
+            exit(1);
+        }
+    }
 
     /* No output filename ==> try to select one automatically (when possible) */
     while ((!output_filename) && (multiple_inputs==0)) {
-
         if (!IS_CONSOLE(stdout)) {
             /* Default to stdout whenever stdout is not the console.
              * Note : this policy may change in the future, therefore don't rely on it !
@@ -693,7 +708,19 @@ int main(int argc, const char** argv)
         break;
     }
 
-    if (multiple_inputs==0 && mode != om_list) assert(output_filename);
+    if (mode == om_list){
+        /* Exit if trying to read from stdin as this isn't supported in this mode */
+        if(!strcmp(input_filename, stdinmark)){
+            DISPLAYLEVEL(1, "refusing to read from standard input in --list mode\n");
+            exit(1);
+        }
+        if(!multiple_inputs){
+            inFileNames[ifnIdx++] = input_filename;
+        }
+    }
+    else{
+        if (multiple_inputs==0) assert(output_filename);
+    }
     /* when multiple_inputs==1, output_filename may simply be useless,
      * however, output_filename must be !NULL for next strcmp() tests */
     if (!output_filename) output_filename = "*\\dummy^!//";
@@ -723,11 +750,7 @@ int main(int argc, const char** argv)
             operationResult = DEFAULT_DECOMPRESSOR(prefs, input_filename, output_filename);
         }
     } else if (mode == om_list){
-        if(!multiple_inputs){
-            inFileNames[ifnIdx++] = input_filename;
-        }
         operationResult = LZ4IO_displayCompressedFilesInfo(inFileNames, ifnIdx);
-        inFileNames=NULL;
     } else {   /* compression is default action */
         if (legacy_format) {
             DISPLAYLEVEL(3, "! Generating LZ4 Legacy format (deprecated) ! \n");
