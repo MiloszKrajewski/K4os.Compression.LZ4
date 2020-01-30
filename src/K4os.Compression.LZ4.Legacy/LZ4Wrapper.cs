@@ -3,7 +3,7 @@ using System;
 namespace K4os.Compression.LZ4.Legacy
 {
 	/// <summary>
-	/// Legacy picker for LZ4. Do not use unless you have dependency on some old data.
+	/// Legacy pickler for LZ4. Do not use unless you have dependency on some old data.
 	/// </summary>
 	public class LZ4Wrapper
 	{
