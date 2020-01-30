@@ -18,7 +18,10 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly bool _leaveOpen;
 
 		private readonly Stream _inner;
-		private readonly byte[] _buffer16 = new byte[16];
+		
+		// ReSharper disable once InconsistentNaming
+		private const int _length16 = 16; // we intend to use only 16 bytes
+		private readonly byte[] _buffer16 = new byte[_length16 + 8];  
 		private int _index16;
 
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
@@ -57,7 +60,8 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		public override int Read(byte[] buffer, int offset, int count)
 		{
-			EnsureFrame();
+			if (!EnsureFrame())
+				return 0;
 
 			var read = 0;
 			while (count > 0)
@@ -74,20 +78,20 @@ namespace K4os.Compression.LZ4.Streams
 
 		/// <inheritdoc />
 		public override int ReadByte() =>
-			Read(_buffer16, _index16, 1) > 0 ? _buffer16[_index16] : -1;
+			Read(_buffer16, _length16, 1) > 0 ? _buffer16[_length16] : -1;
 
-		private void EnsureFrame()
-		{
-			if (_decoder == null)
-				ReadFrame();
-		}
+		private bool EnsureFrame() => _decoder != null || ReadFrame();
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
-		private void ReadFrame()
+		private bool ReadFrame()
 		{
 			FlushPeek();
 
 			var magic = TryPeek32();
+			
+			if (!magic.HasValue)
+				return false;
+
 			if (magic != 0x184D2204)
 				throw MagicNumberExpected();
 
@@ -131,6 +135,8 @@ namespace K4os.Compression.LZ4.Streams
 				blockSize);
 			_decoder = _decoderFactory(_frameInfo);
 			_buffer = new byte[blockSize];
+
+			return true;
 		}
 
 		private void CloseFrame()
@@ -379,7 +385,7 @@ namespace K4os.Compression.LZ4.Streams
 			new InvalidOperationException(
 				$"Operation {operation} is not allowed for {GetType().Name}");
 
-		private EndOfStreamException EndOfStream() =>
+		private static EndOfStreamException EndOfStream() =>
 			new EndOfStreamException("Unexpected end of stream. Data might be corrupted.");
 	}
 }

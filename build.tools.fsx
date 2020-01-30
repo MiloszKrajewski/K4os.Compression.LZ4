@@ -15,6 +15,7 @@ open Fake.IO
 open Fake.IO.Globbing.Operators
 open Fake.IO.FileSystemOperators
 open Fake.DotNet
+open Fake.Api
 
 [<AutoOpen>]
 module Fx =
@@ -152,6 +153,7 @@ module Proj =
         DateTime.Now.Subtract(baseline).TotalSeconds |> int |> sprintf "%8x"
     let productVersion = releaseNotes.NugetVersion |> Regex.replace "-wip$" (timestamp |> sprintf "-wip%s")
     let assemblyVersion = releaseNotes.AssemblyVersion
+    let isPreRelease = releaseNotes.SemVer.PreRelease.IsSome
     let settings =
         ["."]
         |> Seq.collect (fun dn -> ["settings"; ".secrets"] |> Seq.map (fun fn -> dn @@ fn))
@@ -197,7 +199,7 @@ module Proj =
                 NoBuild = true
                 NoRestore = true
                 Configuration = DotNet.Release
-                Common = { p.Common with Verbosity = Some DotNet.Verbosity.Normal }
+                Common = { p.Common with Verbosity = Some DotNet.Normal }
             })
     let testMany projects =
         projects |> Seq.iter test
@@ -238,6 +240,16 @@ module Proj =
         let nupkg = project + "." + version + ".nupkg"
         let args = sprintf "nuget push -s https://www.nuget.org/api/v2/package %s -k %s" nupkg accessKey
         Shell.runAt outputFolder "dotnet" args
+
+    let publishGitHub repository user token files =
+        let notes = releaseNotes.Notes
+        let prerelease = releaseNotes.SemVer.PreRelease.IsSome
+
+        GitHub.createClientWithToken token
+        |> GitHub.draftNewRelease user repository productVersion prerelease notes
+        |> GitHub.uploadFiles files
+        |> GitHub.publishDraft
+        |> Async.RunSynchronously
 
     let fixPackReferences folder =
         let fileMissing filename = File.Exists(filename) |> not

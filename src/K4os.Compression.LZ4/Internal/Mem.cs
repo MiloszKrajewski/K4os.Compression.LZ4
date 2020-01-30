@@ -43,6 +43,14 @@ namespace K4os.Compression.LZ4.Internal
 		/// <summary>4 MiB</summary>
 		public const int M4 = 4 * M1;
 
+		/// <summary>Empty byte array.</summary>
+		#if NET45
+		public static readonly byte[] Empty = new byte[0];
+		#else
+		public static readonly byte[] Empty = Array.Empty<byte>();
+		#endif
+
+
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
 		/// <param name="value">A value.</param>
 		/// <param name="step">A step.</param>
@@ -55,7 +63,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// Even though it is called "copy" it actually behaves like "move" which
 		/// might be potential problem, although it shouldn't as I cannot think about
 		/// any situation when "copy" invalid behaviour (forward copy of overlapping blocks)
-		/// can be a desired. 
+		/// can be a desired.
 		/// </summary>
 		/// <param name="target">The target block address.</param>
 		/// <param name="source">The source block address.</param>
@@ -63,13 +71,17 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
+			#if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
-			// LoopCopy(target, source, length);
+			#else
+			if (length <= 0) return;
+			Unsafe.CopyBlock(target, source, (uint) length);
+			#endif
 		}
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
-		/// It handle "move" semantic properly handling overlapping blocks properly. 
+		/// It handle "move" semantic properly handling overlapping blocks properly.
 		/// </summary>
 		/// <param name="target">The target block address.</param>
 		/// <param name="source">The source block address.</param>
@@ -77,7 +89,12 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
+			#if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
+			#else
+			if (length <= 0) return;
+			Unsafe.CopyBlock(target, source, (uint) length);
+			#endif
 		}
 
 		/// <summary>Allocated block of memory. It is NOT initialized with zeroes.</summary>

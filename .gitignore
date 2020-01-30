@@ -4,6 +4,7 @@
 .paket/
 .output/
 .idea/
+.ionide/
 .tools/
 .corpus/
 paket-files/

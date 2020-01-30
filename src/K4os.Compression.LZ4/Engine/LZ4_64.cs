@@ -54,7 +54,7 @@ namespace K4os.Compression.LZ4.Engine
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(ulong val) =>
-			DeBruijnBytePos[(ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58];
+			DeBruijnBytePos[unchecked ((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static tableType_t LZ4_tableType(int inputSize) =>

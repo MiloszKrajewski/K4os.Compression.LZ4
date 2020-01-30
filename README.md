@@ -146,7 +146,7 @@ var decoded = LZ4Codec.Decode(
 
 ## Pickler
 
-Sometime all you need is too quickly compress a small chunk of data, let's say serialized message to send it over the network. You can use `LZ4Pickler` in such case. It does encode original length within a message and handles incompressible data (by copying).
+Sometimes all you need is to quickly compress a small chunk of data, let's say serialized message to send it over the network. You can use `LZ4Pickler` in such case. It does encode original length within a message and handles incompressible data (by copying).
 
 ```csharp
 static class LZ4Pickler

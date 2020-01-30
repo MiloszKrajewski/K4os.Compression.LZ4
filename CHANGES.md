@@ -1,3 +1,18 @@
+## 1.1.11 (2019/07/03)
+* Added (experimental!) support for .NET 4.5
+0
+## 1.1.10 (2019/06/11)
+* Added explicit "unchecked" around De Bruijn calculation
+
+## 1.1.9 (2019/05/14)
+* issue 22 returns: fix for ReadByte/WriteByte bug
+
+## 1.1.7 (2019/05/13)
+* issues 18 & 22: returning 0 bytes on EoF many times (not just once)
+
+## 1.1.5 (2019/05/12)
+* Added explicit "unchecked" around hash calculation
+
 ## 1.1.4 (2019/04/29)
 * Moved build process to FAKE 5 (no functionality added)
 
@@ -14,7 +29,7 @@
 * Signed assemblies
 * Independent block encoder and decoder (performance)
 * Better XML doc
-* Breaking changes to pubternals 
+* Breaking changes to pubternals
 
 ## 1.0.3 (2018/10/12)
 * added auto-download of nuget (Windows only)

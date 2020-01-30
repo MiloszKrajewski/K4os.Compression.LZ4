@@ -45,7 +45,7 @@ namespace K4os.Compression.LZ4
 		{
 			var sourceLength = source.Length;
 			if (sourceLength <= 0)
-				return Array.Empty<byte>();
+				return Mem.Empty;
 
 			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
 				return Pickle(sourceP, sourceLength, level);
@@ -60,7 +60,7 @@ namespace K4os.Compression.LZ4
 			byte* source, int sourceLength, LZ4Level level = LZ4Level.L00_FAST)
 		{
 			if (sourceLength <= 0)
-				return Array.Empty<byte>();
+				return Mem.Empty;
 
 			var targetLength = sourceLength - 1;
 			var target = (byte*) Mem.Alloc(sourceLength);
@@ -96,7 +96,7 @@ namespace K4os.Compression.LZ4
 			source.Validate(sourceOffset, sourceLength);
 
 			if (sourceLength <= 0)
-				return Array.Empty<byte>();
+				return Mem.Empty;
 
 			fixed (byte* sourceP = source)
 				return Unpickle(sourceP + sourceOffset, sourceLength);
@@ -109,7 +109,7 @@ namespace K4os.Compression.LZ4
 		{
 			var sourceLength = source.Length;
 			if (sourceLength <= 0)
-				return Array.Empty<byte>();
+				return Mem.Empty;
 
 			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
 				return Unpickle(sourceP, source.Length);
@@ -122,7 +122,7 @@ namespace K4os.Compression.LZ4
 		public static unsafe byte[] Unpickle(byte* source, int sourceLength)
 		{
 			if (sourceLength <= 0)
-				return Array.Empty<byte>();
+				return Mem.Empty;
 
 			var flags = *source;
 			var version = flags & VersionMask; // 3 bits
@@ -184,7 +184,7 @@ namespace K4os.Compression.LZ4
 			{
 				if (diff == 0)
 				{
-					Buffer.MemoryCopy(source, targetP, targetLength, targetLength);
+					Mem.Copy(targetP, source, targetLength);
 				}
 				else
 				{

@@ -1,8 +1,12 @@
 using System;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
+
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
+
 using TestHelpers;
+
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -108,6 +112,42 @@ namespace K4os.Compression.LZ4.Streams.Test
 					WriteAndAssert(random.Next(0, buffer.Length));
 					WriteAndAssert(0);
 				}
+			}
+		}
+
+		[Theory]
+		[InlineData("reymont")]
+		[InlineData("mozilla")]
+		public void WritingFileByteByByteYieldsSameResults(string filename)
+		{
+			var original = Tools.FindFile($".corpus/{filename}");
+			var encoded = Path.GetTempFileName();
+			var decoded = Path.GetTempFileName();
+			
+			try
+			{
+				using (var reader = File.OpenRead(original))
+				using (var encoder = LZ4Stream.Encode(File.OpenWrite(encoded)))
+				{
+					var buffer = new byte[0x10000];
+					while (true)
+					{
+						var read = reader.Read(buffer, 0, buffer.Length);
+						if (read == 0)
+							break;
+						
+						for (var i = 0; i < read; i++)
+							encoder.WriteByte(buffer[i]);
+					}
+				}
+				
+				ReferenceLZ4.Decode(encoded, decoded);
+				Tools.SameFiles(original, decoded);
+			}
+			finally
+			{
+				File.Delete(encoded);
+				File.Delete(decoded);
 			}
 		}
 
