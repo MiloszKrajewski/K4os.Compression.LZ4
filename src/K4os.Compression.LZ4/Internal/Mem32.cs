@@ -24,22 +24,62 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="source">The source block address.</param>
 		/// <param name="limit">The limit (in target block).</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void WildCopy(byte* target, byte* source, void* limit)
+		public static void WildCopy8(byte* target, byte* source, void* limit)
 		{
 			do
 			{
 				var temp = *(uint*) source;
 				*(uint*) (target + sizeof(uint)) = *(uint*) (source + sizeof(uint));
 				*(uint*) target = temp;
+				
 				target += sizeof(ulong);
 				source += sizeof(ulong);
+			}
+			while (target < limit);
+		}
+		
+		/// <summary>
+		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>
+		/// up to (around) <paramref name="limit"/>.
+		/// It does not handle overlapping blocks and may copy up to 32 bytes more than expected.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="source">The source block address.</param>
+		/// <param name="limit">The limit (in target block).</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void WildCopy32(byte* target, byte* source, void* limit)
+		{
+			const int step = sizeof(ulong) * 4;
+			do
+			{
+				// ReSharper disable once JoinDeclarationAndInitializer
+				uint temp;
+
+				temp = *(uint*) source;
+				*(uint*) (target + sizeof(uint)) = *(uint*) (source + sizeof(uint));
+				*(uint*) target = temp;
+				
+				temp = *(uint*) (source + 8);
+				*(uint*) (target + 8 + sizeof(uint)) = *(uint*) (source + 8 + sizeof(uint));
+				*(uint*) (target + 8) = temp;
+				
+				temp = *(uint*) (source + 16);
+				*(uint*) (target + 16 + sizeof(uint)) = *(uint*) (source + 16 + sizeof(uint));
+				*(uint*) (target + 16) = temp;
+
+				temp = *(uint*) (source + 24);
+				*(uint*) (target + 24 + sizeof(uint)) = *(uint*) (source + 24 + sizeof(uint));
+				*(uint*) (target + 24) = temp;
+				
+				source += step;
+				target += step;
 			}
 			while (target < limit);
 		}
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
-		/// This is proper implementation of memcpy (with all weir behaviour for overlapping blocks).
+		/// This is proper implementation of memcpy (with all weird behaviour for overlapping blocks).
 		/// It is slower than "Copy" but may be required if "Copy" causes problems.
 		/// </summary>
 		/// <param name="target">The target block address.</param>

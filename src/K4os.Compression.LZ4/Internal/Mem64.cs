@@ -15,13 +15,25 @@ namespace K4os.Compression.LZ4.Internal
 			return result;
 		}
 
+		/// <summary>Reads exactly 8 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>8 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong Peek64(void* p) => *(ulong*) p;
+
+		/// <summary>Writes exactly 8 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Poke64(void* p, ulong v) => *(ulong*) p = v;
+
 		/// <summary>Copies exactly 8 bytes from source to target.</summary>
 		/// <param name="target">Target address.</param>
 		/// <param name="source">Source address.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy8(byte* target, byte* source)
 		{
-			*((ulong*) (target + 0)) = *((ulong*) (source + 0));
+			*(ulong*) (target + 0) = *(ulong*) (source + 0);
 		}
 
 		/// <summary>Copies exactly 16 bytes from source to target.</summary>
@@ -30,8 +42,8 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy16(byte* target, byte* source)
 		{
-			*((ulong*) (target + 0)) = *((ulong*) (source + 0));
-			*((ulong*) (target + 8)) = *((ulong*) (source + 8));
+			*(ulong*) (target + 0) = *(ulong*) (source + 0);
+			*(ulong*) (target + 8) = *(ulong*) (source + 8);
 		}
 
 		/// <summary>Copies exactly 18 bytes from source to target.</summary>
@@ -40,9 +52,9 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy18(byte* target, byte* source)
 		{
-			*((ulong*) (target + 0)) = *((ulong*) (source + 0));
-			*((ulong*) (target + 8)) = *((ulong*) (source + 8));
-			*((ushort*) (target + 16)) = *((ushort*) (source + 16));
+			*(ulong*) (target + 0) = *((ulong*) (source + 0));
+			*(ulong*) (target + 8) = *((ulong*) (source + 8));
+			*(ushort*) (target + 16) = *((ushort*) (source + 16));
 		}
 
 		/// <summary>
@@ -54,7 +66,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="source">The source block address.</param>
 		/// <param name="limit">The limit (in target block).</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void WildCopy(byte* target, byte* source, void* limit)
+		public static void WildCopy8(byte* target, byte* source, void* limit)
 		{
 			do
 			{
@@ -64,6 +76,51 @@ namespace K4os.Compression.LZ4.Internal
 			}
 			while (target < limit);
 		}
+
+		/// <summary>
+		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>
+		/// up to (around) <paramref name="limit"/>.
+		/// It does not handle overlapping blocks and may copy up to 32 bytes more than expected.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="source">The source block address.</param>
+		/// <param name="limit">The limit (in target block).</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void WildCopy32(byte* target, byte* source, void* limit)
+		{
+			const int step = sizeof(ulong) * 4;
+			do
+			{
+				*(ulong*) (target + 0) = *(ulong*) (source + 0);
+				*(ulong*) (target + 8) = *(ulong*) (source + 8);
+				*(ulong*) (target + 16) = *(ulong*) (source + 16);
+				*(ulong*) (target + 24) = *(ulong*) (source + 24);
+				source += step;
+				target += step;
+			}
+			while (target < limit);
+		}
+		
+		public static void WildCopy8(byte* dstPtr, byte* srcPtr, byte* dstEnd, uint offset)
+		{
+			if (offset < 8) {
+				dstPtr[0] = srcPtr[0];
+				dstPtr[1] = srcPtr[1];
+				dstPtr[2] = srcPtr[2];
+				dstPtr[3] = srcPtr[3];
+				srcPtr += inc32table[offset];
+				memcpy(dstPtr+4, srcPtr, 4);
+				srcPtr -= dec64table[offset];
+				dstPtr += 8;
+			} else {
+				memcpy(dstPtr, srcPtr, 8);
+				dstPtr += 8;
+				srcPtr += 8;
+			}
+
+			LZ4_wildCopy8(dstPtr, srcPtr, dstEnd);
+		}
+
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.

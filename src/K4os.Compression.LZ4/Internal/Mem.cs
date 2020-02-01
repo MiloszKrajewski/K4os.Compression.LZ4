@@ -129,12 +129,6 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static uint Peek32(void* p) => *(uint*) p;
 
-		/// <summary>Reads exactly 8 bytes from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>8 bytes at given address.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Peek64(void* p) => *(ulong*) p;
-
 		/// <summary>Writes exactly 1 byte to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
@@ -152,11 +146,5 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Poke32(void* p, uint v) => *(uint*) p = v;
-
-		/// <summary>Writes exactly 8 bytes to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke64(void* p, ulong v) => *(ulong*) p = v;
 	}
 }
