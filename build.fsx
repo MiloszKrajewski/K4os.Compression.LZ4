@@ -44,9 +44,9 @@ Target.create "Preprocess" (fun _ ->
     let preprocess path source target =
         let defines = [ "BIT32" ]
         [
-            "//---------------------------------------------------------"
+            "//---------------------------------------------------------\n//"
             "// This file has been generated. All changes will be lost."
-            "//---------------------------------------------------------"
+            "//\n//---------------------------------------------------------"
             for d in defines do sprintf "#define %s" d
             ""
             path @@ source |> File.loadText
