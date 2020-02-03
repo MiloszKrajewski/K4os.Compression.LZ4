@@ -1,3 +1,5 @@
+// ReSharper disable ClassNeverInstantiated.Global
+
 using System.Runtime.CompilerServices;
 
 namespace K4os.Compression.LZ4.Internal
@@ -14,19 +16,23 @@ namespace K4os.Compression.LZ4.Internal
 			Zero((byte*) result, size);
 			return result;
 		}
+		
+		#if !BIT32
 
 		/// <summary>Reads exactly 8 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Peek64(void* p) => *(ulong*) p;
-
+		
 		/// <summary>Writes exactly 8 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Poke64(void* p, ulong v) => *(ulong*) p = v;
-
+		
+		#endif
+		
 		/// <summary>Copies exactly 8 bytes from source to target.</summary>
 		/// <param name="target">Target address.</param>
 		/// <param name="source">Source address.</param>
