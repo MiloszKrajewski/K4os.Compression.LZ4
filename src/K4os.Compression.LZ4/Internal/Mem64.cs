@@ -101,27 +101,6 @@ namespace K4os.Compression.LZ4.Internal
 			while (target < limit);
 		}
 		
-		public static void WildCopy8(byte* dstPtr, byte* srcPtr, byte* dstEnd, uint offset)
-		{
-			if (offset < 8) {
-				dstPtr[0] = srcPtr[0];
-				dstPtr[1] = srcPtr[1];
-				dstPtr[2] = srcPtr[2];
-				dstPtr[3] = srcPtr[3];
-				srcPtr += inc32table[offset];
-				memcpy(dstPtr+4, srcPtr, 4);
-				srcPtr -= dec64table[offset];
-				dstPtr += 8;
-			} else {
-				memcpy(dstPtr, srcPtr, 8);
-				dstPtr += 8;
-				srcPtr += 8;
-			}
-
-			LZ4_wildCopy8(dstPtr, srcPtr, dstEnd);
-		}
-
-
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
 		/// This is proper implementation of memcpy (with all weird behaviour for overlapping blocks).

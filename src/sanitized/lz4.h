@@ -562,19 +562,19 @@ LZ4LIB_STATIC_API void LZ4_attach_dictionary(LZ4_stream_t* workingStream, LZ4_st
 
 typedef struct LZ4_stream_t_internal LZ4_stream_t_internal;
 struct LZ4_stream_t_internal {
-    uint32_t hashTable[LZ4_HASH_SIZE_U32];
-    uint32_t currentOffset;
-    uint16_t dirty;
-    uint16_t tableType;
-    uint8_t* dictionary;
+    uint hashTable[LZ4_HASH_SIZE_U32];
+    uint currentOffset;
+    ushort dirty;
+    ushort tableType;
+    byte* dictionary;
     LZ4_stream_t_internal* dictCtx;
-    uint32_t dictSize;
+    uint dictSize;
 };
 
 typedef struct {
-    uint8_t* externalDict;
+    byte* externalDict;
     size_t extDictSize;
-    uint8_t* prefixEnd;
+    byte* prefixEnd;
     size_t prefixSize;
 } LZ4_streamDecode_t_internal;
 

@@ -242,11 +242,11 @@ static int LZ4_minLength = (MFLIMIT+1);
 **************************************/
 #if defined(__cplusplus) || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 */)
 # include <stdint.h>
-  typedef  uint8_t byte;
-  typedef uint16_t ushort;
-  typedef uint32_t uint;
+  typedef  byte byte;
+  typedef ushort ushort;
+  typedef uint uint;
   typedef  int32_t S32;
-  typedef uint64_t ulong;
+  typedef ulong ulong;
   typedef uintptr_t uptrval;
 #else
 # include <limits.h>

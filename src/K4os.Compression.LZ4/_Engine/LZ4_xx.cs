@@ -1,23 +1,19 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using K4os.Compression.LZ4.Internal;
-
+using Mem = K4os.Compression.LZ4.Internal.Mem64;
 // ReSharper disable IdentifierTypo
+// ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4.Engine
+namespace K4os.Compression.LZ4._Engine
 {
-	internal unsafe class LZ4_xx
+	internal unsafe class _LZ4_xx
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
-		protected const int LZ4_DISTANCE_MAX = 65535;
-		protected const int LZ4_DISTANCE_ABSOLUTE_MAX = 65535;
 
 		protected const int LZ4_HASHLOG = LZ4_MEMORY_USAGE - 2;
 		protected const int LZ4_HASHTABLESIZE = 1 << LZ4_MEMORY_USAGE;
@@ -29,19 +25,14 @@ namespace K4os.Compression.LZ4.Engine
 		internal static int LZ4_compressBound(int isize) =>
 			isize > LZ4_MAX_INPUT_SIZE ? 0 : isize + isize / 255 + 16;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int LZ4_decoderRingBufferSize(int isize) =>
-			65536 + 14 + isize;
-
 		[StructLayout(LayoutKind.Sequential)]
 		internal struct LZ4_stream_t
 		{
 			public fixed uint hashTable[LZ4_HASH_SIZE_U32];
 			public uint currentOffset;
-			public bool dirty;
-			public tableType_t tableType;
+			public uint initCheck;
 			public byte* dictionary;
-			public LZ4_stream_t* dictCtx;
+			// public byte* bufferStart; /* obsolete, used for slideInputBuffer */
 			public uint dictSize;
 		};
 
@@ -58,20 +49,15 @@ namespace K4os.Compression.LZ4.Engine
 
 		protected const int WILDCOPYLENGTH = 8;
 		protected const int LASTLITERALS = 5;
-		protected const int MFLIMIT = 12; // WILDCOPYLENGTH + MINMATCH;
-
-		protected const int MATCH_SAFEGUARD_DISTANCE = 2 * WILDCOPYLENGTH - MINMATCH;
-		protected const int FASTLOOP_SAFE_DISTANCE = 64;
-
+		protected const int MFLIMIT = WILDCOPYLENGTH + MINMATCH;
 		protected const int LZ4_minLength = MFLIMIT + 1;
 
 		protected const int KB = 1 << 10;
 		protected const int MB = 1 << 20;
 		protected const uint GB = 1u << 30;
 
-		//???
-		// protected const int MAXD_LOG = 16;
-		// protected const int MAX_DISTANCE = (1 << MAXD_LOG) - 1;
+		protected const int MAXD_LOG = 16;
+		protected const int MAX_DISTANCE = (1 << MAXD_LOG) - 1;
 
 		protected const int ML_BITS = 4;
 		protected const uint ML_MASK = (1U << ML_BITS) - 1;
@@ -83,22 +69,29 @@ namespace K4os.Compression.LZ4.Engine
 
 		public enum limitedOutput_directive
 		{
-			notLimited = 0, limitedOutput = 1, fillOutput = 2
+			noLimit = 0,
+			limitedOutput = 1,
+			limitedDestSize = 2,
 		}
 
 		public enum tableType_t
 		{
-			clearedTable = 0, byPtr, byU32, byU16
+			byPtr = 0,
+			byU32 = 1,
+			byU16 = 2
 		}
 
 		public enum dict_directive
 		{
-			noDict = 0, withPrefix64k, usingExtDict, usingDictCtx
+			noDict = 0,
+			withPrefix64k,
+			usingExtDict
 		}
 
 		public enum dictIssue_directive
 		{
-			noDictIssue = 0, dictSmall
+			noDictIssue = 0,
+			dictSmall
 		}
 
 		public enum endCondition_directive
@@ -117,53 +110,14 @@ namespace K4os.Compression.LZ4.Engine
 		protected static uint LZ4_hash4(uint sequence, tableType_t tableType)
 		{
 			var hashLog = tableType == tableType_t.byU16 ? LZ4_HASHLOG + 1 : LZ4_HASHLOG;
-			return unchecked((sequence * 2654435761u) >> (MINMATCH * 8 - hashLog));
+			return unchecked ((sequence * 2654435761u) >> (MINMATCH * 8 - hashLog));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_hash5(ulong sequence, tableType_t tableType)
 		{
 			var hashLog = tableType == tableType_t.byU16 ? LZ4_HASHLOG + 1 : LZ4_HASHLOG;
-			return unchecked((uint) (((sequence << 24) * 889523592379ul) >> (64 - hashLog)));
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_clearHash(uint h, void* tableBase, tableType_t tableType)
-		{
-			switch (tableType)
-			{
-				case tableType_t.byPtr:
-					((byte**) tableBase)[h] = null;
-					return;
-				case tableType_t.byU32:
-					((uint*) tableBase)[h] = 0;
-					return;
-				case tableType_t.byU16:
-					((ushort*) tableBase)[h] = 0;
-					return;
-				default:
-					Debug.Assert(false);
-					return;
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_putIndexOnHash(
-			uint idx, uint h, void* tableBase, tableType_t tableType)
-		{
-			switch (tableType)
-			{
-				case tableType_t.byU32:
-					((uint*) tableBase)[h] = idx;
-					return;
-				case tableType_t.byU16:
-					Debug.Assert(idx < 65536);
-					((ushort*) tableBase)[h] = (ushort) idx;
-					return;
-				default:
-					Debug.Assert(false);
-					return;
-			}
+			return unchecked ((uint) (((sequence << 24) * 889523592379ul) >> (64 - hashLog)));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -178,30 +132,9 @@ namespace K4os.Compression.LZ4.Engine
 				case tableType_t.byU32:
 					((uint*) tableBase)[h] = (uint) (p - srcBase);
 					return;
-				case tableType_t.byU16:
+				default:
 					((ushort*) tableBase)[h] = (ushort) (p - srcBase);
 					return;
-				default:
-					Debug.Assert(false);
-					return;
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static uint LZ4_getIndexOnHash(uint h, void* tableBase, tableType_t tableType)
-		{
-			Debug.Assert(LZ4_MEMORY_USAGE > 2);
-			switch (tableType)
-			{
-				case tableType_t.byU32:
-					Debug.Assert(h < (1U << (LZ4_MEMORY_USAGE - 2)));
-					return ((uint*) tableBase)[h];
-				case tableType_t.byU16:
-					Debug.Assert(h < (1U << (LZ4_MEMORY_USAGE - 1)));
-					return ((ushort*) tableBase)[h];
-				default:
-					Debug.Assert(false);
-					return 0;
 			}
 		}
 
@@ -219,7 +152,6 @@ namespace K4os.Compression.LZ4.Engine
 
 		private static readonly uint[] inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
 		private static readonly int[] dec64table = { 0, 0, 0, -1, -4, 1, 2, 3 };
-
 
 		public static int LZ4_decompress_generic(
 			byte* src,
@@ -287,8 +219,7 @@ namespace K4os.Compression.LZ4.Engine
 						length += (int) s;
 					}
 					while (
-						(endOnInput != endCondition_directive.endOnInputSize
-							|| ip < iend - RUN_MASK)
+						(endOnInput != endCondition_directive.endOnInputSize || ip < iend - RUN_MASK)
 						&& s == 255);
 
 					if (safeDecode && op + length < op) goto _output_error;
@@ -298,18 +229,15 @@ namespace K4os.Compression.LZ4.Engine
 				var cpy = op + length;
 				if (endOnInput == endCondition_directive.endOnInputSize
 					&& (
-						cpy > (partialDecoding == earlyEnd_directive.partial ? oexit
-							: oend - MFLIMIT)
+						cpy > (partialDecoding == earlyEnd_directive.partial ? oexit : oend - MFLIMIT)
 						|| ip + length > iend - (2 + 1 + LASTLITERALS)
 					)
-					|| endOnInput != endCondition_directive.endOnInputSize
-					&& cpy > oend - WILDCOPYLENGTH)
+					|| endOnInput != endCondition_directive.endOnInputSize && cpy > oend - WILDCOPYLENGTH)
 				{
 					if (partialDecoding == earlyEnd_directive.partial)
 					{
 						if (cpy > oend) goto _output_error;
-						if (endOnInput == endCondition_directive.endOnInputSize
-							&& ip + length > iend)
+						if (endOnInput == endCondition_directive.endOnInputSize && ip + length > iend)
 							goto _output_error;
 					}
 					else
@@ -327,7 +255,7 @@ namespace K4os.Compression.LZ4.Engine
 					break;
 				}
 
-				Mem.WildCopy(op, ip, cpy);
+				Mem.WildCopy8(op, ip, cpy);
 				ip += length;
 				op = cpy;
 
@@ -346,8 +274,7 @@ namespace K4os.Compression.LZ4.Engine
 					do
 					{
 						s = *ip++;
-						if ((endOnInput == endCondition_directive.endOnInputSize)
-							&& (ip > iend - LASTLITERALS))
+						if ((endOnInput == endCondition_directive.endOnInputSize) && (ip > iend - LASTLITERALS))
 							goto _output_error;
 
 						length += (int) s;
@@ -418,7 +345,7 @@ namespace K4os.Compression.LZ4.Engine
 
 					if (op < oCopyLimit)
 					{
-						Mem.WildCopy(op, match, oCopyLimit);
+						Mem.WildCopy8(op, match, oCopyLimit);
 						match += oCopyLimit - op;
 						op = oCopyLimit;
 					}
@@ -429,7 +356,7 @@ namespace K4os.Compression.LZ4.Engine
 				{
 					Mem.Copy8(op, match);
 					if (length > 16)
-						Mem.WildCopy(op + 8, match + 8, cpy);
+						Mem.WildCopy8(op + 8, match + 8, cpy);
 				}
 
 				op = cpy; /* correction */
@@ -462,8 +389,7 @@ namespace K4os.Compression.LZ4.Engine
 				0);
 
 		public static int LZ4_decompress_safe_partial(
-			byte* source, byte* dest, int compressedSize, int targetOutputSize,
-			int maxDecompressedSize) =>
+			byte* source, byte* dest, int compressedSize, int targetOutputSize, int maxDecompressedSize) =>
 			LZ4_decompress_generic(
 				source,
 				dest,
@@ -591,8 +517,7 @@ namespace K4os.Compression.LZ4.Engine
 		}
 
 		public static int LZ4_decompress_usingDict_generic(
-			byte* source, byte* dest, int compressedSize, int maxOutputSize, int safe,
-			byte* dictStart,
+			byte* source, byte* dest, int compressedSize, int maxOutputSize, int safe, byte* dictStart,
 			int dictSize)
 		{
 			if (dictSize == 0)

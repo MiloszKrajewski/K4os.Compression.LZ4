@@ -204,14 +204,14 @@ LZ4LIB_API int LZ4_saveDictHC (LZ4_streamHC_t* streamHCPtr, byte* safeBuffer, in
 typedef struct LZ4HC_CCtx_internal LZ4HC_CCtx_internal;
 struct LZ4HC_CCtx_internal
 {
-    uint32_t   hashTable[LZ4HC_HASHTABLESIZE];
-    uint16_t   chainTable[LZ4HC_MAXD];
-    uint8_t* end;         /* next block here to continue on current prefix */
-    uint8_t* base;        /* All index relative to this position */
-    uint8_t* dictBase;    /* alternate base for extDict */
-    uint32_t   dictLimit;       /* below that point, need extDict */
-    uint32_t   lowLimit;        /* below that point, no more dict */
-    uint32_t   nextToUpdate;    /* index from which to continue dictionary update */
+    uint   hashTable[LZ4HC_HASHTABLESIZE];
+    ushort   chainTable[LZ4HC_MAXD];
+    byte* end;         /* next block here to continue on current prefix */
+    byte* base;        /* All index relative to this position */
+    byte* dictBase;    /* alternate base for extDict */
+    uint   dictLimit;       /* below that point, need extDict */
+    uint   lowLimit;        /* below that point, no more dict */
+    uint   nextToUpdate;    /* index from which to continue dictionary update */
     short      compressionLevel;
     int8_t     favorDecSpeed;   /* favor decompression speed if this flag set,
                                    otherwise, favor compression ratio */

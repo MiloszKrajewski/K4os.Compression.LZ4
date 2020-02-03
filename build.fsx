@@ -42,14 +42,17 @@ Target.create "Restore" (fun _ -> restore ())
 
 Target.create "Preprocess" (fun _ ->
     let preprocess path source target =
-        [|
-            yield! [
-                "// This file has been generated. All changes will be lost."
-                "#define BIT32"
-                ""
-            ]
-            yield! path @@ source |> File.loadLines
-        |] |> File.saveLines (path @@ target)
+        let defines = [ "BIT32" ]
+        [
+            "//---------------------------------------------------------"
+            "// This file has been generated. All changes will be lost."
+            "//---------------------------------------------------------"
+            for d in defines do sprintf "#define %s" d
+            ""
+            path @@ source |> File.loadText
+        ]
+        |> Seq.toArray
+        |> File.saveLines (path @@ target)
     let root = "./src/K4os.Compression.LZ4/Engine"
     preprocess root "LZ4_64.cs" "LZ4_32.cs"
     preprocess root "LZ4_64_HC.cs" "LZ4_32_HC.cs"
@@ -144,6 +147,7 @@ Target.create "Restore:Corpus" (fun _ ->
 
 open Fake.Core.TargetOperators
 
+"Preprocess" ==> "Build"
 "Restore:Corpus" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release"
 "Release" ==> "Release:GitHub" ==> "Release:Nuget"
 "Clean" ?=> "Restore"

@@ -105,7 +105,7 @@ namespace K4os.Compression.LZ4.Internal
 			Marshal.AllocHGlobal(size).ToPointer();
 
 		/// <summary>
-		/// Free memory allocated previously with <see cref="Alloc"/> or <see cref="AllocZero"/>
+		/// Free memory allocated previously with <see cref="Alloc"/>.
 		/// </summary>
 		/// <param name="ptr"></param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
