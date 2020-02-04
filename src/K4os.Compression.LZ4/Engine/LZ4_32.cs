@@ -12,19 +12,19 @@ using System.Runtime.CompilerServices;
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
-#if BIT32
-using Mem = K4os.Compression.LZ4.Internal.Mem32;
-using ptrT = System.Int32;
-using sizeT = System.Int32;
-#else
-using Mem = K4os.Compression.LZ4.Internal.Mem64;
-using ptrT = System.Int64;
-using sizeT = System.Int32;
-#endif
-
 namespace K4os.Compression.LZ4.Engine
 {
-#if BIT32
+	#if BIT32
+	using Mem = K4os.Compression.LZ4.Internal.Mem32;
+	using ptrT = System.Int32;
+	using sizeT = System.Int32;
+	#else
+	using Mem = K4os.Compression.LZ4.Internal.Mem64;
+	using ptrT = System.Int64;
+	using sizeT = System.Int32;
+	#endif
+
+	#if BIT32
 	internal unsafe class LZ4_32: LZ4_xx
 	{
 		protected const int ARCH_SIZE = 4;

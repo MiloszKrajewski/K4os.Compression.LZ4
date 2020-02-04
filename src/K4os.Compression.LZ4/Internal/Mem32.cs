@@ -1,3 +1,10 @@
+//---------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//---------------------------------------------------------
+#define BIT32
+
 // ReSharper disable ClassNeverInstantiated.Global
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -38,36 +45,6 @@ namespace K4os.Compression.LZ4.Internal
 			*((uint*) p + 1) = (uint) (v >> 32);
 			#endif
 		}
-		
-		#if !BIT32
-
-		/// <summary>Reads 8 bytes from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>8 bytes at given address.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong PeekW(void* p) => Peek8(p);
-
-		/// <summary>Writes 8 bytes to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PokeW(void* p, ulong v) => Poke4(p, v);
-		
-		#else
-
-		/// <summary>Reads 4 bytes from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>4 bytes at given address.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint PeekW(void* p) => Peek4(p);
-
-		/// <summary>Writes 4 or 8 bytes to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PokeW(void* p, uint v) => Poke4(p, v);
-
-		#endif
 
 		/// <summary>Fill block of memory with zeroes.</summary>
 		/// <param name="target">Address.</param>
@@ -217,3 +194,4 @@ namespace K4os.Compression.LZ4.Internal
 		}
 	}
 }
+

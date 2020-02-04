@@ -339,7 +339,7 @@ LZ4LIB_API int                 LZ4_freeStreamDecode (LZ4_streamDecode_t* LZ4_str
 /*! LZ4_setStreamDecode() :
  *  An LZ4_streamDecode_t context can be allocated once and re-used multiple times.
  *  Use this function to start decompression of a new stream of blocks.
- *  A dictionary can optionally be set. Use NULL or size 0 for a reset order.
+ *  A dictionary can optionally be set. Use null or size 0 for a reset order.
  *  Dictionary is presumed stable : it must remain accessible and unmodified during next decompression.
  * @return : 1 if OK, 0 if error
  */
@@ -461,7 +461,7 @@ LZ4LIB_STATIC_API int LZ4_compress_fast_extState_fastReset (void* state, byte* s
  *  Currently, only streams which have been prepared by LZ4_loadDict() should
  *  be expected to work.
  *
- *  Alternatively, the provided dictionaryStream may be NULL,
+ *  Alternatively, the provided dictionaryStream may be null,
  *  in which case any existing dictionary stream is unset.
  *
  *  If a dictionary is provided, it replaces any pre-existing stream history.
@@ -626,7 +626,7 @@ union LZ4_stream_u {
  *  and will @return a pointer of proper type upon initialization.
  *
  *  Note : initialization fails if size and alignment conditions are not respected.
- *         In which case, the function will @return NULL.
+ *         In which case, the function will @return null.
  *  Note2: An LZ4_stream_t structure guarantees correct alignment and size.
  *  Note3: Before v1.9.0, use LZ4_resetStream() instead
  */

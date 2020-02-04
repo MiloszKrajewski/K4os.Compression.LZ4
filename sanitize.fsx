@@ -20,21 +20,25 @@ module Sanitizer =
         | c -> repeat replacer c
 
     let basicTypes =
+        replaceText @"NULL" "null" >>
         replaceText @"char" "byte" >>
         replaceText @"BYTE" "byte" >>
         replaceText @"U8" "byte" >>
         replaceText @"U16" "ushort" >>
         replaceText @"U32" "uint" >>
+        replaceText @"S32" "int" >>
         replaceText @"U64" "ulong" >>
         replaceText @"uint8_t" "byte" >>
         replaceText @"uint16_t" "ushort" >>
         replaceText @"uint32_t" "uint" >>
         replaceText @"uint64_t" "ulong" >>
-        replaceText @"size_t" "sizeT" >>
+        replaceText @"uptrval" "ptr_t" >>
         replaceText @"base" "@base" >>
-        replaceText @"LZ4_writeLE16" "Mem.Poke16" >>
-        replaceText @"LZ4_read32" "Mem.Peek32" >>
-        replaceText @"LZ4_write32" "Mem.Poke32" >>
+        replaceText @"LZ4_writeLE16" "Mem.Poke2" >>
+        replaceText @"LZ4_read16" "Mem.Peek2" >>
+        replaceText @"LZ4_read32" "Mem.Peek4" >>
+        replaceText @"LZ4_write32" "Mem.Poke4" >>
+        replaceText @"LZ4_read_ARCH" "Mem.PeekW" >>
         replaceText @"LZ4_wildCopy8" "Mem.WildCopy8" >>
         replaceText @"assert" "Debug.Assert" >>
         replaceExpr @"const\s+(?<type>\w+)\s*\*\s+const" (fun g -> g "type" |> sprintf "%s*") >>

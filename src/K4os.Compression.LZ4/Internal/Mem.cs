@@ -115,36 +115,57 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="p">Address.</param>
 		/// <returns>Byte at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static byte Peek8(void* p) => *(byte*) p;
+		public static byte Peek1(void* p) => *(byte*) p;
 
 		/// <summary>Reads exactly 2 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>2 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ushort Peek16(void* p) => *(ushort*) p;
+		public static ushort Peek2(void* p) => *(ushort*) p;
 
 		/// <summary>Reads exactly 4 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>4 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint Peek32(void* p) => *(uint*) p;
+		public static uint Peek4(void* p) => *(uint*) p;
 
 		/// <summary>Writes exactly 1 byte to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke8(void* p, byte v) => *(byte*) p = v;
+		public static void Poke1(void* p, byte v) => *(byte*) p = v;
 
 		/// <summary>Writes exactly 2 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke16(void* p, ushort v) => *(ushort*) p = v;
+		public static void Poke2(void* p, ushort v) => *(ushort*) p = v;
 
 		/// <summary>Writes exactly 4 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke32(void* p, uint v) => *(uint*) p = v;
+		public static void Poke4(void* p, uint v) => *(uint*) p = v;
+		
+		/// <summary>Copies exactly 1 byte from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy1(byte* target, byte* source) => 
+			*target = *source;
+
+		/// <summary>Copies exactly 2 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy2(byte* target, byte* source) => 
+			*(ushort*)target = *(ushort*)source;
+
+		/// <summary>Copies exactly 4 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy4(byte* target, byte* source) => 
+			*(uint*)target = *(uint*)source;
 	}
 }

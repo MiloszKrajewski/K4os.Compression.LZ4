@@ -44,18 +44,21 @@ Target.create "Preprocess" (fun _ ->
     let preprocess path source target =
         let defines = [ "BIT32" ]
         [
-            "//---------------------------------------------------------\n//"
+            "//---------------------------------------------------------\r\n//"
             "// This file has been generated. All changes will be lost."
-            "//\n//---------------------------------------------------------"
+            "//\r\n//---------------------------------------------------------"
             for d in defines do sprintf "#define %s" d
             ""
             path @@ source |> File.loadText
         ]
         |> Seq.toArray
         |> File.saveLines (path @@ target)
-    let root = "./src/K4os.Compression.LZ4/Engine"
-    preprocess root "LZ4_64.cs" "LZ4_32.cs"
-    preprocess root "LZ4_64_HC.cs" "LZ4_32_HC.cs"
+    let root = "./src/K4os.Compression.LZ4"
+    let engine = root @@ "Engine"
+    let memory = root @@ "Internal"
+    preprocess engine "LZ4_64.cs" "LZ4_32.cs"
+    preprocess engine "LZ4_64_HC.cs" "LZ4_32_HC.cs"
+    preprocess memory "Mem64.cs" "Mem32.cs"
 )
 
 Target.create "Build" (fun _ -> build ())

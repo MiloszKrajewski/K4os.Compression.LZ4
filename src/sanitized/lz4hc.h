@@ -207,8 +207,8 @@ struct LZ4HC_CCtx_internal
     uint   hashTable[LZ4HC_HASHTABLESIZE];
     ushort   chainTable[LZ4HC_MAXD];
     byte* end;         /* next block here to continue on current prefix */
-    byte* base;        /* All index relative to this position */
-    byte* dictBase;    /* alternate base for extDict */
+    byte* @base;        /* All index relative to this position */
+    byte* dictBase;    /* alternate @base for extDict */
     uint   dictLimit;       /* below that point, need extDict */
     uint   lowLimit;        /* below that point, no more dict */
     uint   nextToUpdate;    /* index from which to continue dictionary update */
@@ -227,8 +227,8 @@ struct LZ4HC_CCtx_internal
     unsigned int   hashTable[LZ4HC_HASHTABLESIZE];
     unsigned short chainTable[LZ4HC_MAXD];
     unsigned byte* end;        /* next block here to continue on current prefix */
-    unsigned byte* base;       /* All index relative to this position */
-    unsigned byte* dictBase;   /* alternate base for extDict */
+    unsigned byte* @base;       /* All index relative to this position */
+    unsigned byte* dictBase;   /* alternate @base for extDict */
     unsigned int   dictLimit;        /* below that point, need extDict */
     unsigned int   lowLimit;         /* below that point, no more dict */
     unsigned int   nextToUpdate;     /* index from which to continue dictionary update */
@@ -414,7 +414,7 @@ LZ4LIB_STATIC_API int LZ4_compress_HC_extStateHC_fastReset (
  *  Currently, only streams which have been prepared by LZ4_loadDictHC() should
  *  be expected to work.
  *
- *  Alternatively, the provided dictionary stream pointer may be NULL, in which
+ *  Alternatively, the provided dictionary stream pointer may be null, in which
  *  case any existing dictionary stream is unset.
  *
  *  A dictionary should only be attached to a stream without any history (i.e.,
