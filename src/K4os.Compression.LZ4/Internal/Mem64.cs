@@ -51,7 +51,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PokeW(void* p, ulong v) => Poke4(p, v);
+		public static void PokeW(void* p, ulong v) => Poke8(p, v);
 		
 		#else
 
