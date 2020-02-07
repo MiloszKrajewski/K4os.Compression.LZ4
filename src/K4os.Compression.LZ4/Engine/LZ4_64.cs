@@ -12,15 +12,15 @@ using System.Runtime.CompilerServices;
 namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
-	using Mem = K4os.Compression.LZ4.Internal.Mem32;
-	using ptr_t = System.Int32;
-	using size_t = System.Int32;
+	using Mem = Internal.Mem32;
+	using ptr_t = Int32;
+	using size_t = Int32;
 	
 	internal unsafe class LZ4_32: LZ4_xx
 	#else
-	using Mem = K4os.Compression.LZ4.Internal.Mem64;
-	using ptr_t = System.Int64;
-	using size_t = System.Int32;
+	using Mem = Internal.Mem64;
+	using ptr_t = Int64;
+	using size_t = Int32;
 
 	internal unsafe class LZ4_64: LZ4_xx
 	#endif
@@ -166,7 +166,7 @@ namespace K4os.Compression.LZ4.Engine
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		int LZ4_compress_generic(
+		public static int LZ4_compress_generic(
 			LZ4_stream_t* cctx,
 			byte* source,
 			byte* dest,

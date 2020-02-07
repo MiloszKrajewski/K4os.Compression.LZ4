@@ -45,6 +45,36 @@ namespace K4os.Compression.LZ4.Internal
 			*((uint*) p + 1) = (uint) (v >> 32);
 			#endif
 		}
+		
+		#if !BIT32
+
+		/// <summary>Reads 8 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>8 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong PeekW(void* p) => Peek8(p);
+
+		/// <summary>Writes 8 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void PokeW(void* p, ulong v) => Poke8(p, v);
+		
+		#else
+
+		/// <summary>Reads 4 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>4 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static uint PeekW(void* p) => Peek4(p);
+
+		/// <summary>Writes 4 or 8 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void PokeW(void* p, uint v) => Poke4(p, v);
+
+		#endif
 
 		/// <summary>Fill block of memory with zeroes.</summary>
 		/// <param name="target">Address.</param>
@@ -52,35 +82,7 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Zero(byte* target, int length)
 		{
-			#if !BIT32
-			
-			while (length >= sizeof(ulong))
-			{
-				Poke8(target, 0);
-				target += sizeof(ulong);
-				length -= sizeof(ulong);
-			}
-
-			#endif
-
-			while (length >= sizeof(uint))
-			{
-				Poke4(target, 0);
-				target += sizeof(uint);
-				length -= sizeof(uint);
-			}
-
-			if (length >= sizeof(ushort))
-			{
-				Poke2(target, 0);
-				target += sizeof(ushort);
-				length -= sizeof(ushort);
-			}
-
-			if (length > 0)
-			{
-				Poke1(target, 0);
-			}
+			Fill(target, 0, length);
 		}
 
 		/// <summary>Fills memory block with repeating pattern of a single byte.</summary>
@@ -103,7 +105,7 @@ namespace K4os.Compression.LZ4.Internal
 				target += sizeof(ulong);
 				length -= sizeof(ulong);
 			}
-
+			
 			#endif
 
 			while (length >= sizeof(uint))

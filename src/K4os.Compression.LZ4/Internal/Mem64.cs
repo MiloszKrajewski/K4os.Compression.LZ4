@@ -75,35 +75,7 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Zero(byte* target, int length)
 		{
-			#if !BIT32
-			
-			while (length >= sizeof(ulong))
-			{
-				Poke8(target, 0);
-				target += sizeof(ulong);
-				length -= sizeof(ulong);
-			}
-
-			#endif
-
-			while (length >= sizeof(uint))
-			{
-				Poke4(target, 0);
-				target += sizeof(uint);
-				length -= sizeof(uint);
-			}
-
-			if (length >= sizeof(ushort))
-			{
-				Poke2(target, 0);
-				target += sizeof(ushort);
-				length -= sizeof(ushort);
-			}
-
-			if (length > 0)
-			{
-				Poke1(target, 0);
-			}
+			Fill(target, 0, length);
 		}
 
 		/// <summary>Fills memory block with repeating pattern of a single byte.</summary>
@@ -116,9 +88,10 @@ namespace K4os.Compression.LZ4.Internal
 			var value8 = (ulong) value;
 			value8 |= value8 << 8;
 			value8 |= value8 << 16;
-			value8 |= value8 << 32;
 
 			#if !BIT32
+			
+			value8 |= value8 << 32;
 			
 			while (length >= sizeof(ulong))
 			{
@@ -126,7 +99,7 @@ namespace K4os.Compression.LZ4.Internal
 				target += sizeof(ulong);
 				length -= sizeof(ulong);
 			}
-
+			
 			#endif
 
 			while (length >= sizeof(uint))
