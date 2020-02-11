@@ -9,7 +9,7 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe class LZ4_xx
+	internal unsafe class LLTools
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]

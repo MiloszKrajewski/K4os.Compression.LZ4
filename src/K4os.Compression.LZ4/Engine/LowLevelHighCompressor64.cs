@@ -1,11 +1,4 @@
-//---------------------------------------------------------
-//
-// This file has been generated. All changes will be lost.
-//
-//---------------------------------------------------------
-#define BIT32
-
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
@@ -24,7 +17,7 @@ namespace K4os.Compression.LZ4.Engine
 #else
 	using size_t = UInt64;
 
-	internal unsafe class LZ4_64_HC: LZ4_64
+	internal unsafe class LowLevelHighCompressor64: LLFast64
 	{
 #endif
 		private const int LZ4HC_CLEVEL_MIN = 3;
@@ -1274,4 +1267,3 @@ namespace K4os.Compression.LZ4.Engine
 		}
 	}
 }
-

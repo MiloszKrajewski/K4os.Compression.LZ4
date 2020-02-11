@@ -115,7 +115,7 @@ namespace K4os.Compression.LZ4.Test
 			sourceLength = Mem.RoundUp(sourceLength, blockLength);
 			var targetLength = 2 * sourceLength;
 
-			var context = (LZ4_xx.LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4_xx.LZ4_stream_t));
+			var context = (LZ4ToolsAny.LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4ToolsAny.LZ4_stream_t));
 			var source = (byte*) Mem.Alloc(sourceLength);
 			var target = (byte*) Mem.Alloc(targetLength);
 
@@ -128,7 +128,7 @@ namespace K4os.Compression.LZ4.Test
 
 				while (sourceP < sourceLength && targetP < targetLength)
 				{
-					targetP += LZ4_64.LZ4_compress_fast_continue(
+					targetP += LowLevelFastCompressor64.LZ4_compress_fast_continue(
 						context,
 						source + sourceP,
 						target + targetP,

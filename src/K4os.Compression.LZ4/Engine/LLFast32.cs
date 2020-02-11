@@ -1,14 +1,19 @@
-﻿// ReSharper disable IdentifierTypo
+//---------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//---------------------------------------------------------
+#define BIT32
+
+// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+// ReSharper disable BuiltInTypeReferenceStyle
 
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-
-// ReSharper disable ConditionIsAlwaysTrueOrFalse
-
-// ReSharper disable BuiltInTypeReferenceStyle
 
 namespace K4os.Compression.LZ4.Engine
 {
@@ -16,222 +21,19 @@ namespace K4os.Compression.LZ4.Engine
 	using Mem = Internal.Mem32;
 	using ptr_t = Int32;
 	using size_t = Int32;
-	
-	internal unsafe class LZ4_32: LZ4_xx
 	#else
 	using Mem = Internal.Mem64;
 	using ptr_t = Int64;
 	using size_t = Int32;
+	#endif
 
-	internal unsafe class LZ4_64: LZ4_xx
+	#if BIT32
+	internal unsafe class LLFast32: LLTools32
+	#else
+	internal unsafe class LLFast64: LLTools64
 	#endif
 	{
-		#if BIT32
-		protected const bool BIT32 = true;
-		protected const int ARCH_SIZE = 4;
-		protected const int HASH_UNIT = 4;
-
-		private static readonly uint[] DeBruijnBytePos = {
-			0, 0, 3, 0, 3, 1, 3, 0,
-			3, 2, 2, 1, 3, 2, 0, 1,
-			3, 3, 1, 2, 2, 2, 2, 0,
-			3, 1, 2, 0, 1, 0, 1, 1
-		};
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static uint LZ4_NbCommonBytes(uint val) =>
-			DeBruijnBytePos[
-				unchecked((uint) ((int) val & -(int) val) * 0x077CB531U >> 27)];
-
-		#else
-
-		protected const bool BIT32 = false;
-		protected const int ARCH_SIZE = 8;
-		protected const int HASH_UNIT = 8;
-
-		private static readonly uint[] DeBruijnBytePos = {
-			0, 0, 0, 0, 0, 1, 1, 2,
-			0, 3, 1, 3, 1, 4, 2, 7,
-			0, 2, 3, 6, 1, 5, 3, 5,
-			1, 3, 4, 4, 2, 5, 6, 7,
-			7, 0, 1, 2, 3, 3, 4, 6,
-			2, 6, 5, 5, 3, 4, 5, 6,
-			7, 1, 2, 4, 6, 4, 4, 5,
-			7, 2, 6, 5, 7, 6, 7, 7
-		};
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static uint LZ4_NbCommonBytes(ulong val) =>
-			DeBruijnBytePos[
-				unchecked((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
-
-		#endif
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
-		{
-			const int STEPSIZE = ARCH_SIZE;
-
-			var pStart = pIn;
-
-			if (pIn < pInLimit - (STEPSIZE - 1))
-			{
-				var diff = Mem.PeekW(pMatch) ^ Mem.PeekW(pIn);
-				if (diff != 0)
-					return LZ4_NbCommonBytes(diff);
-
-				pIn += STEPSIZE;
-				pMatch += STEPSIZE;
-			}
-
-			while (pIn < pInLimit - (STEPSIZE - 1))
-			{
-				var diff = Mem.PeekW(pMatch) ^ Mem.PeekW(pIn);
-				if (diff != 0)
-					return (uint) (pIn + LZ4_NbCommonBytes(diff) - pStart);
-
-				pIn += STEPSIZE;
-				pMatch += STEPSIZE;
-			}
-
-			#if !BIT32
-
-			if (pIn < pInLimit - 3 && Mem.Peek4(pMatch) == Mem.Peek4(pIn))
-			{
-				pIn += 4;
-				pMatch += 4;
-			}
-
-			#endif
-
-			if (pIn < pInLimit - 1 && Mem.Peek2(pMatch) == Mem.Peek2(pIn))
-			{
-				pIn += 2;
-				pMatch += 2;
-			}
-
-			if (pIn < pInLimit && *pMatch == *pIn)
-				pIn++;
-
-			return (uint) (pIn - pStart);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint LZ4_hashPosition(void* p, tableType_t tableType)
-		{
-			#if !BIT32
-			if (tableType != tableType_t.byU16)
-				return LZ4_hash5(Mem.PeekW(p), tableType);
-			#endif
-			return LZ4_hash4(Mem.Peek4(p), tableType);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void LZ4_putPosition(
-			byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
-			LZ4_putPositionOnHash(p, LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static byte* LZ4_getPosition(
-			byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
-			LZ4_getPositionOnHash(LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static LZ4_stream_t* LZ4_createStream()
-		{
-			LZ4_stream_t* lz4s = (LZ4_stream_t*) Mem.Alloc(sizeof(LZ4_stream_t));
-			LZ4_initStream(lz4s);
-			return lz4s;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static LZ4_stream_t* LZ4_initStream(LZ4_stream_t* buffer)
-		{
-			Mem.Zero((byte*) buffer, sizeof(LZ4_stream_t));
-			return buffer;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static int LZ4_freeStream(LZ4_stream_t* LZ4_stream)
-		{
-			if (LZ4_stream == null) return 0;
-
-			Mem.Free(LZ4_stream);
-			return 0;
-		}
-		
-		#region dictionary
-		
-		protected static void LZ4_renormDictT(LZ4_stream_t* LZ4_dict, int nextSize)
-		{
-			Debug.Assert(nextSize >= 0);
-			if (LZ4_dict->currentOffset + (uint)nextSize > 0x80000000) {   
-				/* potential ptrdiff_t overflow (32-bits mode) */
-				/* rescale hash table */
-				uint delta = LZ4_dict->currentOffset - 64 * KB;
-				byte* dictEnd = LZ4_dict->dictionary + LZ4_dict->dictSize;
-				int i;
-				for (i=0; i<LZ4_HASH_SIZE_U32; i++) {
-					if (LZ4_dict->hashTable[i] < delta) LZ4_dict->hashTable[i]=0;
-					else LZ4_dict->hashTable[i] -= delta;
-				}
-				LZ4_dict->currentOffset = 64 * KB;
-				if (LZ4_dict->dictSize > 64 * KB) LZ4_dict->dictSize = 64 * KB;
-				LZ4_dict->dictionary = dictEnd - LZ4_dict->dictSize;
-			}
-		}
-		
-		public int LZ4_loadDict (LZ4_stream_t* LZ4_dict, byte* dictionary, int dictSize)
-		{
-			//#define HASH_UNIT sizeof(reg_t)
-			const int HASH_UNIT = ARCH_SIZE; 
-			LZ4_stream_t* dict = LZ4_dict;
-			tableType_t tableType = tableType_t.byU32;
-			byte* p = (byte*)dictionary;
-			byte* dictEnd = p + dictSize;
-			byte* @base;
-
-			LZ4_initStream(LZ4_dict);
-
-			dict->currentOffset += 64 * KB;
-
-			if (dictSize < (int)HASH_UNIT) {
-				return 0;
-			}
-
-			if ((dictEnd - p) > 64 * KB) p = dictEnd - 64 * KB;
-			@base = dictEnd - dict->currentOffset;
-			dict->dictionary = p;
-			dict->dictSize = (uint)(dictEnd - p);
-			dict->tableType = tableType;
-
-			while (p <= dictEnd-HASH_UNIT) {
-				LZ4_putPosition(p, dict->hashTable, tableType, @base);
-				p+=3;
-			}
-
-			return (int)dict->dictSize;
-		}
-		
-		public int LZ4_saveDict (LZ4_stream_t* LZ4_dict, byte* safeBuffer, int dictSize)
-		{
-			LZ4_stream_t* dict = LZ4_dict;
-			byte* previousDictEnd = dict->dictionary + dict->dictSize;
-
-			if ((uint)dictSize > 64 * KB) { dictSize = 64 * KB; } /* useless to define a dictionary > 64 KB */
-			if ((uint)dictSize > dict->dictSize) { dictSize = (int)dict->dictSize; }
-
-			Mem.Move(safeBuffer, previousDictEnd - dictSize, dictSize);
-
-			dict->dictionary = (byte*)safeBuffer;
-			dict->dictSize = (uint)dictSize;
-
-			return dictSize;
-		}
-		
-		#endregion
-
-		#region compress (generic)
+		#region LZ4_compress_generic
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static int LZ4_compress_generic(
@@ -720,7 +522,7 @@ namespace K4os.Compression.LZ4.Engine
 			LZ4_stream_t* state, byte* source, byte* dest, int inputSize, int maxOutputSize,
 			int acceleration)
 		{
-			LZ4_stream_t* ctx = LZ4_initStream(state);
+			var ctx = LZ4_initStream(state);
 			Debug.Assert(ctx != null);
 			if (acceleration < 1) acceleration = ACCELERATION_DEFAULT;
 			if (maxOutputSize >= LZ4_compressBound(inputSize))
@@ -735,9 +537,7 @@ namespace K4os.Compression.LZ4.Engine
 				}
 				else
 				{
-					tableType_t tableType =
-						((sizeof(void*) == 4) && ((ptr_t) source > LZ4_DISTANCE_MAX))
-							? tableType_t.byPtr : tableType_t.byU32;
+					var tableType = BIT32 && (ptr_t) source > LZ4_DISTANCE_MAX ? tableType_t.byPtr : tableType_t.byU32;
 					return LZ4_compress_generic(
 						ctx, source, dest,
 						inputSize, null, 0, limitedOutput_directive.notLimited,
@@ -757,9 +557,7 @@ namespace K4os.Compression.LZ4.Engine
 				}
 				else
 				{
-					tableType_t tableType =
-						((sizeof(void*) == 4) && ((ptr_t) source > LZ4_DISTANCE_MAX))
-							? tableType_t.byPtr : tableType_t.byU32;
+					var tableType = BIT32 && (ptr_t) source > LZ4_DISTANCE_MAX ? tableType_t.byPtr : tableType_t.byU32;
 					return LZ4_compress_generic(
 						ctx, source, dest,
 						inputSize, null, maxOutputSize, limitedOutput_directive.limitedOutput,
@@ -787,27 +585,24 @@ namespace K4os.Compression.LZ4.Engine
 			int inputSize, int maxOutputSize,
 			int acceleration)
 		{
-			tableType_t tableType = tableType_t.byU32;
-			LZ4_stream_t* streamPtr = LZ4_stream;
-			byte* dictEnd = streamPtr->dictionary + streamPtr->dictSize;
+			const tableType_t tableType = tableType_t.byU32;
+			var streamPtr = LZ4_stream;
+			var dictEnd = streamPtr->dictionary + streamPtr->dictSize;
 
-			if (streamPtr->dirty) { return 0; } /* Uninitialized structure detected */
+			if (streamPtr->dirty) return 0;
 
-			LZ4_renormDictT(streamPtr, inputSize); /* avoid index overflow */
+			LZ4_renormDictT(streamPtr, inputSize);
 			if (acceleration < 1) acceleration = ACCELERATION_DEFAULT;
 
-			/* invalidate tiny dictionaries */
-			if ((streamPtr->dictSize - 1 < 4 - 1) /* intentional underflow */
-				&& (dictEnd != (byte*) source))
+			if (streamPtr->dictSize - 1 < 4 - 1 && dictEnd != source)
 			{
 				streamPtr->dictSize = 0;
-				streamPtr->dictionary = (byte*) source;
-				dictEnd = (byte*) source;
+				streamPtr->dictionary = source;
+				dictEnd = source;
 			}
 
-			/* Check overlapping input/dictionary space */
 			{
-				byte* sourceEnd = (byte*) source + inputSize;
+				var sourceEnd = source + inputSize;
 				if ((sourceEnd > streamPtr->dictionary) && (sourceEnd < dictEnd))
 				{
 					streamPtr->dictSize = (uint) (dictEnd - sourceEnd);
@@ -817,33 +612,31 @@ namespace K4os.Compression.LZ4.Engine
 				}
 			}
 
-			/* prefix mode : source data follows dictionary */
-			if (dictEnd == (byte*) source)
+			if (dictEnd == source)
 			{
-				if ((streamPtr->dictSize < 64 * KB)
-					&& (streamPtr->dictSize < streamPtr->currentOffset))
+				if (streamPtr->dictSize < 64 * KB && streamPtr->dictSize < streamPtr->currentOffset)
+				{
 					return LZ4_compress_generic(
 						streamPtr, source, dest, inputSize, null, maxOutputSize,
 						limitedOutput_directive.limitedOutput, tableType,
-						dict_directive.withPrefix64k, dictIssue_directive.dictSmall, acceleration);
+						dict_directive.withPrefix64k, dictIssue_directive.dictSmall, 
+						acceleration);
+				}
 				else
+				{
 					return LZ4_compress_generic(
 						streamPtr, source, dest, inputSize, null, maxOutputSize,
 						limitedOutput_directive.limitedOutput, tableType,
 						dict_directive.withPrefix64k, dictIssue_directive.noDictIssue,
 						acceleration);
+				}
 			}
 
-			/* external dictionary mode */
 			{
 				int result;
 				if (streamPtr->dictCtx != null)
 				{
 					if (inputSize > 4 * KB) {
-						/* For compressing large blobs, it is faster to pay the setup
-						 * cost to copy the dictionary's tables into the active context,
-						 * so that the compression loop is only looking into one table.
-						 */
 						Mem.Copy((byte*)streamPtr, (byte*)streamPtr->dictCtx, sizeof(LZ4_stream_t));
 						result = LZ4_compress_generic(
 							streamPtr, source, dest, inputSize, null, maxOutputSize, limitedOutput_directive.limitedOutput,
@@ -867,10 +660,11 @@ namespace K4os.Compression.LZ4.Engine
 					}
 				}
 
-				streamPtr->dictionary = (byte*) source;
+				streamPtr->dictionary = source;
 				streamPtr->dictSize = (uint) inputSize;
 				return result;
 			}
 		}
 	}
 }
+

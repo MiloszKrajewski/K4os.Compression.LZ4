@@ -13,7 +13,7 @@ namespace K4os.Compression.LZ4
 		/// <param name="length">Length of input buffer.</param>
 		/// <returns>Maximum length after compression.</returns>
 		public static int MaximumOutputSize(int length) =>
-			LZ4_xx.LZ4_compressBound(length);
+			LLTools.LZ4_compressBound(length);
 
 		/// <summary>Compresses data from one buffer into another.</summary>
 		/// <param name="source">Input buffer.</param>
@@ -32,8 +32,8 @@ namespace K4os.Compression.LZ4
 
 			var encoded =
 				level == LZ4Level.L00_FAST
-					? LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength)
-					: LZ4_64_HC.LZ4_compress_HC(
+					? LLFast64.LZ4_compress_default(source, target, sourceLength, targetLength)
+					: LowLevelHighCompressor64.LZ4_compress_HC(
 						source, target, sourceLength, targetLength, (int) level);
 			return encoded <= 0 ? -1 : encoded;
 		}
@@ -94,7 +94,7 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var decoded = LZ4_xx.LZ4_decompress_safe(source, target, sourceLength, targetLength);
+			var decoded = LLTools.LZ4_decompress_safe(source, target, sourceLength, targetLength);
 			return decoded <= 0 ? -1 : decoded;
 		}
 

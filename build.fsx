@@ -54,11 +54,11 @@ Target.create "Preprocess" (fun _ ->
         |> Seq.toArray
         |> File.saveLines (path @@ target)
     let root = "./src/K4os.Compression.LZ4"
-    let engine = root @@ "Engine"
     let memory = root @@ "Internal"
-    preprocess engine "LZ4_64.cs" "LZ4_32.cs"
-    preprocess engine "LZ4_64_HC.cs" "LZ4_32_HC.cs"
+    let engine = root @@ "Engine"
     preprocess memory "Mem64.cs" "Mem32.cs"
+    preprocess engine "LLTools64.cs" "LLTools32.cs"
+    preprocess engine "LLFast64.cs" "LLFast32.cs"
 )
 
 Target.create "Build" (fun _ -> build ())

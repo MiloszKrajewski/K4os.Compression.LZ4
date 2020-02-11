@@ -95,9 +95,10 @@ namespace K4os.Compression.LZ4.Internal
 			var value8 = (ulong) value;
 			value8 |= value8 << 8;
 			value8 |= value8 << 16;
-			value8 |= value8 << 32;
 
 			#if !BIT32
+			
+			value8 |= value8 << 32;
 			
 			while (length >= sizeof(ulong))
 			{
