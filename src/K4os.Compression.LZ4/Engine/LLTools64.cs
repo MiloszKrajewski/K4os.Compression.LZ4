@@ -131,21 +131,36 @@ namespace K4os.Compression.LZ4.Engine
 			byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
 			LZ4_getPositionOnHash(LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static LZ4_stream_t* LZ4_createStream() =>
-			LZ4_initStream((LZ4_stream_t*) Mem.Alloc(sizeof(LZ4_stream_t)));
+			(LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4_stream_t));
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static LZ4_stream_t* LZ4_initStream(LZ4_stream_t* buffer)
 		{
 			Mem.Zero((byte*) buffer, sizeof(LZ4_stream_t));
 			return buffer;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void LZ4_freeStream(LZ4_stream_t* LZ4_stream)
 		{
 			if (LZ4_stream != null) Mem.Free(LZ4_stream);
+		}
+		
+		
+		public static LZ4_streamDecode_t* LZ4_createStreamDecode() => 
+			(LZ4_streamDecode_t*) Mem.AllocZero(sizeof(LZ4_streamDecode_t));
+
+		public static void LZ4_freeStreamDecode (LZ4_streamDecode_t* LZ4_stream)
+		{
+			if (LZ4_stream != null) Mem.Free(LZ4_stream);
+		}
+
+		public static void LZ4_setStreamDecode (LZ4_streamDecode_t* LZ4_streamDecode, byte* dictionary, int dictSize)
+		{
+			var lz4sd = LZ4_streamDecode;
+			lz4sd->prefixSize = (uint) dictSize;
+			lz4sd->prefixEnd = dictionary + dictSize;
+			lz4sd->externalDict = null;
+			lz4sd->extDictSize  = 0;
 		}
 
 		#region dictionary
