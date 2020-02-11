@@ -7,17 +7,16 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using size_t = System.UInt32;
 
 namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
 	using ptr_t = Int32;
-	using size_t = Int32;
 	#else
 	using Mem = Internal.Mem64;
 	using ptr_t = Int64;
-	using size_t = Int32;
 	#endif
 
 	#if BIT32
@@ -494,7 +493,7 @@ namespace K4os.Compression.LZ4.Engine
 					*op++ = (byte) (lastRun << ML_BITS);
 				}
 
-				Mem.Copy(op, anchor, lastRun);
+				Mem.Copy(op, anchor, (int) lastRun);
 				ip = anchor + lastRun;
 				op += lastRun;
 			}

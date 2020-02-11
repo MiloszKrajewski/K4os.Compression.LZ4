@@ -59,6 +59,7 @@ Target.create "Preprocess" (fun _ ->
     preprocess memory "Mem64.cs" "Mem32.cs"
     preprocess engine "LLTools64.cs" "LLTools32.cs"
     preprocess engine "LLFast64.cs" "LLFast32.cs"
+    preprocess engine "LLDec64.cs" "LLDec32.cs"
 )
 
 Target.create "Build" (fun _ -> build ())

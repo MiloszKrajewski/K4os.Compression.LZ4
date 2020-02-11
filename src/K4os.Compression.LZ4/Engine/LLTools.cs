@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using K4os.Compression.LZ4.Internal;
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
@@ -110,6 +109,11 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			full = 0, partial = 1
 		}
+		
+		protected enum variable_length_error
+		{
+			loop_error = -2, initial_error = -1, ok = 0
+		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_hash4(uint sequence, tableType_t tableType)
@@ -215,7 +219,40 @@ namespace K4os.Compression.LZ4.Engine
 			}
 		}
 
-		private static readonly uint[] inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
-		private static readonly int[] dec64table = { 0, 0, 0, -1, -4, 1, 2, 3 };
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static uint LZ4_min(uint a, uint b) => a < b ? a : b;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static uint LZ4_readVLE(
+			byte** ip, byte* lencheck,
+			bool loop_check, bool initial_check,
+			variable_length_error* error)
+		{
+			uint length = 0;
+			uint s;
+			if (initial_check && ((*ip) >= lencheck))
+			{
+				*error = variable_length_error.initial_error;
+				return length;
+			}
+
+			do
+			{
+				s = **ip;
+				(*ip)++;
+				length += s;
+				if (loop_check && ((*ip) >= lencheck))
+				{
+					*error = variable_length_error.loop_error;
+					return length;
+				}
+			}
+			while (s == 255);
+
+			return length;
+		}
+
+		protected static readonly uint[] inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
+		protected static readonly int[] dec64table = { 0, 0, 0, -1, -4, 1, 2, 3 };
 	}
 }
