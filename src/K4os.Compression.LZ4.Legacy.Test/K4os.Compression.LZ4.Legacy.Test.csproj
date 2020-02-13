@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <IsPackable>false</IsPackable>
+    <Configurations>Debug;Release;Optimized</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4.Legacy\K4os.Compression.LZ4.Legacy.csproj" />

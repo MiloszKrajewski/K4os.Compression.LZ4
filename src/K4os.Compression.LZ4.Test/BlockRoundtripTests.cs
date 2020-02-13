@@ -12,15 +12,15 @@ namespace K4os.Compression.LZ4.Test
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = _LZ4.Encode(source, 0, source.Length);
-			var compressedNew = LZ4CodecHelper.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
+			// var compressedNew = LZ4CodecHelper.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 
-			Tools.SameBytes(
-				source,
-				_LZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
-
-			Tools.SameBytes(
-				source,
-				LZ4CodecHelper.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+			// Tools.SameBytes(
+			// 	source,
+			// 	_LZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+			//
+			// Tools.SameBytes(
+			// 	source,
+			// 	LZ4CodecHelper.Decode(compressedNew, 0, compressedNew.Length, source.Length));
 
 			Tools.SameBytes(
 				source,

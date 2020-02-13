@@ -4,13 +4,12 @@
     <TargetFrameworks>net45;net462</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release;Optimized</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Injected" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

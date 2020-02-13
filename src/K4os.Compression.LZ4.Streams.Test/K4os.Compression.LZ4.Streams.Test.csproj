@@ -4,6 +4,8 @@
     <TargetFramework>net462</TargetFramework>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release;Optimized</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4.Streams\K4os.Compression.LZ4.Streams.csproj" />

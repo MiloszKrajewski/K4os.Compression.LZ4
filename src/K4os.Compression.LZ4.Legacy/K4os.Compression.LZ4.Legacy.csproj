@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net46</TargetFrameworks>
     <LangVersion>latest</LangVersion>
+    <Configurations>Debug;Release;Optimized</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>K4os.Compression.LZ4.Legacy</PackageId>

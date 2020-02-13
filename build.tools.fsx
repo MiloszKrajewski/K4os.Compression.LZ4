@@ -187,17 +187,20 @@ module Proj =
     let build solution =
         solution |> findSln |> Seq.iter (DotNet.build (fun p ->
             { p with
-                NoRestore = true
+                // NoRestore = true
                 Configuration = DotNet.Release
             }))
     let buildMany solutions =
         solutions |> Seq.iter build
 
     let test project =
+        let configName = settings |> Config.value "Test" "Configuration"
+        let config = configName |> Option.map DotNet.Custom |> Option.def DotNet.Release
+        let rebuild = configName.IsSome
         project |> DotNet.test (fun p ->
             { p with
-                NoBuild = true
-                NoRestore = true
+                // NoBuild = not rebuild
+                // NoRestore = not rebuild
                 Configuration = DotNet.Release
                 Common = { p.Common with Verbosity = Some DotNet.Normal }
             })
@@ -219,8 +222,8 @@ module Proj =
     let pack version project =
         project |> DotNet.pack (fun p ->
             { p with
-                NoBuild = true
-                NoRestore = true
+                // NoBuild = true
+                // NoRestore = true
                 Configuration = DotNet.Release
                 OutputPath = outputFolder |> Path.getFullName |> Some
             })
@@ -229,8 +232,8 @@ module Proj =
     let publish targetFolder project =
         project |> DotNet.publish (fun p ->
             { p with
-                NoBuild = true
-                NoRestore = true
+                // NoBuild = true
+                // NoRestore = true
                 Configuration = DotNet.Release
                 OutputPath = targetFolder |> Path.getFullName |> Some
                 Common = { p.Common with CustomParams = Some "/p:BuildProjectReferences=false" }
