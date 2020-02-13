@@ -40,6 +40,8 @@ module Sanitizer =
         replaceText @"LZ4_write32" "Mem.Poke4" >>
         replaceText @"LZ4_read_ARCH" "Mem.PeekW" >>
         replaceText @"LZ4_wildCopy8" "Mem.WildCopy8" >>
+        replaceText @"memcpy" "Mem.Copy" >>
+        replaceText @"memmove" "Mem.Move" >>
         replaceText @"assert" "Debug.Assert" >>
         replaceExpr @"const\s+(?<type>\w+)\s*\*\s+const" (fun g -> g "type" |> sprintf "%s*") >>
         replaceExpr @"const\s+(?<type>\w+)\s*\*" (fun g -> g "type" |> sprintf "%s*") >>

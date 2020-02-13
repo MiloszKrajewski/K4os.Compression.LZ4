@@ -35,14 +35,14 @@
 	LZ4_decompress_generic
 + LZ4_decompress_safe_forceExtDict
 	LZ4_decompress_generic
-LZ4_decompress_safe_usingDict
++ LZ4_decompress_safe_usingDict
 	LZ4_decompress_safe
 	LZ4_decompress_safe_withPrefix64k
 	LZ4_decompress_safe_withSmallPrefix
 	LZ4_decompress_safe_forceExtDict
-LZ4_decompress_safe_partial
++ LZ4_decompress_safe_partial
 	LZ4_decompress_generic
-LZ4_decompress_safe_continue
++ LZ4_decompress_safe_continue
 	LZ4_decompress_safe
 	LZ4_decompress_safe_withPrefix64k
 	LZ4_decompress_safe_withSmallPrefix

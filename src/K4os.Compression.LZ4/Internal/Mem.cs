@@ -50,6 +50,12 @@ namespace K4os.Compression.LZ4.Internal
 		public static readonly byte[] Empty = Array.Empty<byte>();
 		#endif
 
+		/// <summary>Checks if process is ran in 32-bit mode.</summary>
+		public static bool Is32Bit
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => IntPtr.Size < 8;
+		}
 
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
 		/// <param name="value">A value.</param>
@@ -104,6 +110,29 @@ namespace K4os.Compression.LZ4.Internal
 		public static void* Alloc(int size) =>
 			Marshal.AllocHGlobal(size).ToPointer();
 
+		/// <summary>Fill block of memory with zeroes.</summary>
+		/// <param name="target">Address.</param>
+		/// <param name="length">Length.</param>
+		/// <returns>Original pointer.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static byte* Zero(byte* target, int length) => Fill(target, 0, length);
+
+		/// <summary>Fills memory block with repeating pattern of a single byte.</summary>
+		/// <param name="target">Address.</param>
+		/// <param name="value">A pattern.</param>
+		/// <param name="length">Length.</param>
+		/// <returns>Original pointer.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static byte* Fill(byte* target, byte value, int length) =>
+			Is32Bit ? Mem32.Fill(target, value, length) : Mem64.Fill(target, value, length);
+
+		/// <summary>Allocates block of memory and fills it with zeroes.</summary>
+		/// <param name="size">Size in bytes.</param>
+		/// <returns>Pointer to allocated block.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* AllocZero(int size) => 
+			Zero((byte*) Alloc(size), size);
+
 		/// <summary>
 		/// Free memory allocated previously with <see cref="Alloc"/>.
 		/// </summary>
@@ -146,26 +175,26 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Poke4(void* p, uint v) => *(uint*) p = v;
-		
+
 		/// <summary>Copies exactly 1 byte from source to target.</summary>
 		/// <param name="target">Target address.</param>
 		/// <param name="source">Source address.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy1(byte* target, byte* source) => 
+		public static void Copy1(byte* target, byte* source) =>
 			*target = *source;
 
 		/// <summary>Copies exactly 2 bytes from source to target.</summary>
 		/// <param name="target">Target address.</param>
 		/// <param name="source">Source address.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy2(byte* target, byte* source) => 
-			*(ushort*)target = *(ushort*)source;
+		public static void Copy2(byte* target, byte* source) =>
+			*(ushort*) target = *(ushort*) source;
 
 		/// <summary>Copies exactly 4 bytes from source to target.</summary>
 		/// <param name="target">Target address.</param>
 		/// <param name="source">Source address.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy4(byte* target, byte* source) => 
-			*(uint*)target = *(uint*)source;
+		public static void Copy4(byte* target, byte* source) =>
+			*(uint*) target = *(uint*) source;
 	}
 }

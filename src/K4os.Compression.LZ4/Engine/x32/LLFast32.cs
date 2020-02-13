@@ -1,4 +1,11 @@
-﻿// ReSharper disable IdentifierTypo
+//---------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//---------------------------------------------------------
+#define BIT32
+
+// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -9,7 +16,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using size_t = System.UInt32;
 
-namespace K4os.Compression.LZ4.Engine
+namespace K4os.Compression.LZ4.Engine_
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
@@ -659,3 +666,4 @@ namespace K4os.Compression.LZ4.Engine
 		}
 	}
 }
+

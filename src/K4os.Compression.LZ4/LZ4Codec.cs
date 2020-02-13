@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Engine;
+using K4os.Compression.LZ4.Engine_;
 
 namespace K4os.Compression.LZ4
 {
@@ -32,9 +33,10 @@ namespace K4os.Compression.LZ4
 
 			var encoded =
 				level == LZ4Level.L00_FAST
-					? LLFast64.LZ4_compress_default(source, target, sourceLength, targetLength)
-					: LowLevelHighCompressor64.LZ4_compress_HC(
-						source, target, sourceLength, targetLength, (int) level);
+					? LLFast.LZ4_compress_fast(source, target, sourceLength, targetLength, 1)
+					: -1;
+#warning implement
+			// : LowLevelHighCompressor64.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
 			return encoded <= 0 ? -1 : encoded;
 		}
 
@@ -94,7 +96,7 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var decoded = LLTools.LZ4_decompress_safe(source, target, sourceLength, targetLength);
+			var decoded = LLDec.LZ4_decompress_safe(source, target, sourceLength, targetLength);
 			return decoded <= 0 ? -1 : decoded;
 		}
 

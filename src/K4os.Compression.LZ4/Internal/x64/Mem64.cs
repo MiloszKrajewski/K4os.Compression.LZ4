@@ -69,22 +69,16 @@ namespace K4os.Compression.LZ4.Internal
 
 		#endif
 
-		/// <summary>Fill block of memory with zeroes.</summary>
-		/// <param name="target">Address.</param>
-		/// <param name="length">Length.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Zero(byte* target, int length)
-		{
-			Fill(target, 0, length);
-		}
-
 		/// <summary>Fills memory block with repeating pattern of a single byte.</summary>
 		/// <param name="target">Address.</param>
 		/// <param name="value">A pattern.</param>
 		/// <param name="length">Length.</param>
+		/// <returns>Original pointer.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Fill(byte* target, byte value, int length)
+		public new static byte* Fill(byte* target, byte value, int length)
 		{
+			var baseline = target;
+			
 			var value8 = (ulong) value;
 			value8 |= value8 << 8;
 			value8 |= value8 << 16;
@@ -119,18 +113,10 @@ namespace K4os.Compression.LZ4.Internal
 			if (length > 0)
 			{
 				Poke1(target, (byte) value8);
+				// target++;
 			}
-		}
 
-		/// <summary>Allocated block of memory and fills it with zeroes.</summary>
-		/// <param name="size">Size in bytes.</param>
-		/// <returns>Pointer to allocated block.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void* AllocZero(int size)
-		{
-			var result = Alloc(size);
-			Zero((byte*) result, size);
-			return result;
+			return baseline;
 		}
 
 		/// <summary>Copies exactly 8 bytes from source to target.</summary>

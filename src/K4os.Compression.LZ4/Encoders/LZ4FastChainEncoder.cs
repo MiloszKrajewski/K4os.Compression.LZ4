@@ -1,10 +1,11 @@
 ﻿using K4os.Compression.LZ4.Engine;
+using K4os.Compression.LZ4.Engine_;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
 	// fast encoder context
-	using LZ4Context = LLTools.LZ4_stream_t;
+	using LZ4Context = LLTypes.LZ4_stream_t;
 
 	/// <summary>
 	/// LZ4 encoder using dependent blocks with fast compression.
@@ -32,7 +33,7 @@ namespace K4os.Compression.LZ4.Encoders
 		/// <inheritdoc />
 		protected override int EncodeBlock(
 			byte* source, int sourceLength, byte* target, int targetLength) =>
-			LLFast64.LZ4_compress_fast_continue(
+			LLFast.LZ4_compress_fast_continue(
 				_context, source, target, sourceLength, targetLength, 1);
 
 		/// <inheritdoc />

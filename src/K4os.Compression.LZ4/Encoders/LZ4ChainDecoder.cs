@@ -1,11 +1,12 @@
 ﻿using System;
 using K4os.Compression.LZ4.Engine;
+using K4os.Compression.LZ4.Engine_;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
 {
 	// fast decoder context
-	using LZ4Context = LLTools.LZ4_streamDecode_t;
+	using LZ4Context = LLTypes.LZ4_streamDecode_t;
 
 	/// <summary>LZ4 decoder handling dependent blocks.</summary>
 	public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
@@ -25,7 +26,7 @@ namespace K4os.Compression.LZ4.Encoders
 			extraBlocks = Math.Max(extraBlocks, 0);
 
 			_blockSize = blockSize;
-			_outputLength = Mem.K64 + (1 + extraBlocks) * _blockSize + 8;
+			_outputLength = Mem.K64 + (1 + extraBlocks) * _blockSize + 32;
 			_outputIndex = 0;
 			_outputBuffer = (byte*) Mem.Alloc(_outputLength + 8);
 			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
@@ -121,7 +122,7 @@ namespace K4os.Compression.LZ4.Encoders
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
-			LLTools.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
+			LLDec.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
 
 		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()

@@ -1,3 +1,10 @@
+//---------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//---------------------------------------------------------
+#define BIT32
+
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -7,9 +14,11 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Engine;
+using K4os.Compression.LZ4.Engine_;
 using size_t = System.UInt32;
 
-namespace K4os.Compression.LZ4.Engine
+namespace K4os.Compression.LZ4.Engine_
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
@@ -17,7 +26,6 @@ namespace K4os.Compression.LZ4.Engine
 	#else
 	using Mem = Internal.Mem64;
 	using ptr_t = Int64;
-
 	#endif
 
 	#if BIT32
@@ -32,17 +40,17 @@ namespace K4os.Compression.LZ4.Engine
 			byte* dst,
 			int srcSize,
 			int outputSize,
-			endCondition_directive endOnInput,
-			earlyEnd_directive partialDecoding,
-			dict_directive dict,
+			LLTypes.endCondition_directive endOnInput,
+			LLTypes.earlyEnd_directive partialDecoding,
+			LLTypes.dict_directive dict,
 			byte* lowPrefix,
 			byte* dictStart,
 			size_t dictSize)
 		{
 			return LZ4_decompress_generic(
 				src, dst, srcSize, outputSize,
-				endOnInput == endCondition_directive.endOnInputSize,
-				partialDecoding == earlyEnd_directive.partial,
+				endOnInput == LLTypes.endCondition_directive.endOnInputSize,
+				partialDecoding == LLTypes.earlyEnd_directive.partial,
 				dict,
 				lowPrefix,
 				dictStart,
@@ -58,7 +66,7 @@ namespace K4os.Compression.LZ4.Engine
 			int outputSize,
 			bool endOnInput, // endCondition_directive
 			bool partialDecoding, // earlyEnd_directive
-			dict_directive dict,
+			LLTypes.dict_directive dict,
 			byte* lowPrefix,
 			byte* dictStart,
 			size_t dictSize)
@@ -140,7 +148,7 @@ namespace K4os.Compression.LZ4.Engine
 						/* Do not deal with overlapping matches. */
 						if ((length != ML_MASK)
 							&& (offset >= 8)
-							&& (dict == dict_directive.withPrefix64k || match >= lowPrefix))
+							&& (dict == LLTypes.dict_directive.withPrefix64k || match >= lowPrefix))
 						{
 							/* Copy the match. */
 							Mem.Copy18(op, match);
@@ -271,7 +279,7 @@ namespace K4os.Compression.LZ4.Engine
 						goto _output_error; /* Error : offset outside buffers */
 
 					/* match starting within external dictionary */
-					if ((dict == dict_directive.usingExtDict) && (match < lowPrefix))
+					if ((dict == LLTypes.dict_directive.usingExtDict) && (match < lowPrefix))
 					{
 						if ((op + length > oend - LASTLITERALS))
 						{
@@ -403,8 +411,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxDecompressedSize,
-				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
-				dict_directive.noDict,
+				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
+				LLTypes.dict_directive.noDict,
 				(byte*) dest, null, 0);
 		}
 
@@ -413,8 +421,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
-				dict_directive.withPrefix64k,
+				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
+				LLTypes.dict_directive.withPrefix64k,
 				(byte*) dest - 64 * KB, null, 0);
 		}
 
@@ -424,20 +432,19 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
-				dict_directive.noDict,
+				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
+				LLTypes.dict_directive.noDict,
 				(byte*) dest - prefixSize, null, 0);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static int LZ4_decompress_safe_doubleDict(
+		public static int LZ4_decompress_safe_doubleDict(
 			byte* source, byte* dest, int compressedSize, int maxOutputSize,
 			size_t prefixSize, void* dictStart, size_t dictSize)
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
-				dict_directive.usingExtDict,
+				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
+				LLTypes.dict_directive.usingExtDict,
 				(byte*) dest - prefixSize, (byte*) dictStart, dictSize);
 		}
 
@@ -448,9 +455,97 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
-				dict_directive.usingExtDict,
+				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
+				LLTypes.dict_directive.usingExtDict,
 				(byte*) dest, (byte*) dictStart, dictSize);
+		}
+
+		public static int LZ4_decompress_safe_usingDict(
+			byte* source, byte* dest, int compressedSize, int maxOutputSize, byte* dictStart,
+			int dictSize)
+		{
+			if (dictSize == 0)
+				return LZ4_decompress_safe(source, dest, compressedSize, maxOutputSize);
+
+			if (dictStart + dictSize == dest)
+			{
+				if (dictSize >= 64 * KB - 1)
+				{
+					return LZ4_decompress_safe_withPrefix64k(
+						source, dest, compressedSize, maxOutputSize);
+				}
+
+				Debug.Assert(dictSize >= 0);
+				return LZ4_decompress_safe_withSmallPrefix(
+					source, dest, compressedSize, maxOutputSize, (size_t) dictSize);
+			}
+
+			Debug.Assert(dictSize >= 0);
+			return LZ4_decompress_safe_forceExtDict(
+				source, dest, compressedSize, maxOutputSize, dictStart, (size_t) dictSize);
+		}
+
+		public static int LZ4_decompress_safe_partial(
+			byte* src, byte* dst, int compressedSize, int targetOutputSize, int dstCapacity)
+		{
+			var minCapacity = LZ4_min((size_t) targetOutputSize, (size_t) dstCapacity);
+			return LZ4_decompress_generic(
+				src, dst, compressedSize, (int) minCapacity,
+				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.partial,
+				LLTypes.dict_directive.noDict, (byte*) dst, null, 0);
+		}
+
+		public static int LZ4_decompress_safe_continue(
+			LLTypes.LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
+			int maxOutputSize)
+		{
+			LLTypes.LZ4_streamDecode_t* lz4sd = LZ4_streamDecode;
+			int result;
+
+			if (lz4sd->prefixSize == 0)
+			{
+				/* The first call, no dictionary yet. */
+				Debug.Assert(lz4sd->extDictSize == 0);
+				result = LZ4_decompress_safe(source, dest, compressedSize, maxOutputSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize = (size_t) result;
+				lz4sd->prefixEnd = (byte*) dest + result;
+			}
+			else if (lz4sd->prefixEnd == (byte*) dest)
+			{
+				/* They're rolling the current segment. */
+				if (lz4sd->prefixSize >= 64 * KB - 1)
+					result = LZ4_decompress_safe_withPrefix64k(
+						source, dest, compressedSize, maxOutputSize);
+				else if (lz4sd->extDictSize == 0)
+					result = LZ4_decompress_safe_withSmallPrefix(
+						source, dest, compressedSize, maxOutputSize, lz4sd->prefixSize);
+				else
+					result = LZ4_decompress_safe_doubleDict(
+						source, dest, compressedSize, maxOutputSize, lz4sd->prefixSize,
+						lz4sd->externalDict, lz4sd->extDictSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize += (size_t) result;
+				lz4sd->prefixEnd += result;
+			}
+			else
+			{
+				/* The buffer wraps around, or they're switching to another buffer. */
+				lz4sd->extDictSize = lz4sd->prefixSize;
+				lz4sd->externalDict = lz4sd->prefixEnd - lz4sd->extDictSize;
+				result = LZ4_decompress_safe_forceExtDict(
+					source, dest, compressedSize, maxOutputSize,
+					lz4sd->externalDict, lz4sd->extDictSize);
+				if (result <= 0) return result;
+
+				lz4sd->prefixSize = (size_t) result;
+				lz4sd->prefixEnd = (byte*) dest + result;
+			}
+
+			return result;
 		}
 	}
 }
+

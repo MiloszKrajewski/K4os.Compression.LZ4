@@ -24,7 +24,9 @@
 			new LZ4FastChainEncoder(blockSize, extraBlocks);
 
 		private static ILZ4Encoder CreateHighEncoder(
-			LZ4Level level, int blockSize, int extraBlocks) =>
-			new LZ4HighChainEncoder(level, blockSize, extraBlocks);
+			LZ4Level level, int blockSize, int extraBlocks) => 
+			null;
+		#warning implement me
+			// new LZ4HighChainEncoder(level, blockSize, extraBlocks);
 	}
 }

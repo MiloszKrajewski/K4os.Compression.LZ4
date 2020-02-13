@@ -1,4 +1,11 @@
-﻿// ReSharper disable IdentifierTypo
+//---------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//---------------------------------------------------------
+#define BIT32
+
+// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -7,9 +14,10 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Engine;
 using size_t = System.UInt32;
 
-namespace K4os.Compression.LZ4.Engine
+namespace K4os.Compression.LZ4.Engine_
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
@@ -130,38 +138,6 @@ namespace K4os.Compression.LZ4.Engine
 			byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
 			LZ4_getPositionOnHash(LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
 
-		public static LZ4_stream_t* LZ4_createStream() =>
-			(LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4_stream_t));
-
-		public static LZ4_stream_t* LZ4_initStream(LZ4_stream_t* buffer)
-		{
-			Mem.Zero((byte*) buffer, sizeof(LZ4_stream_t));
-			return buffer;
-		}
-
-		public static void LZ4_freeStream(LZ4_stream_t* LZ4_stream)
-		{
-			if (LZ4_stream != null) Mem.Free(LZ4_stream);
-		}
-		
-		
-		public static LZ4_streamDecode_t* LZ4_createStreamDecode() => 
-			(LZ4_streamDecode_t*) Mem.AllocZero(sizeof(LZ4_streamDecode_t));
-
-		public static void LZ4_freeStreamDecode (LZ4_streamDecode_t* LZ4_stream)
-		{
-			if (LZ4_stream != null) Mem.Free(LZ4_stream);
-		}
-
-		public static void LZ4_setStreamDecode (LZ4_streamDecode_t* LZ4_streamDecode, byte* dictionary, int dictSize)
-		{
-			var lz4sd = LZ4_streamDecode;
-			lz4sd->prefixSize = (uint) dictSize;
-			lz4sd->prefixEnd = dictionary + dictSize;
-			lz4sd->externalDict = null;
-			lz4sd->extDictSize  = 0;
-		}
-
 		#region dictionary
 
 		protected static void LZ4_renormDictT(LZ4_stream_t* LZ4_dict, int nextSize)
@@ -181,7 +157,7 @@ namespace K4os.Compression.LZ4.Engine
 			if (LZ4_dict->dictSize > 64 * KB) LZ4_dict->dictSize = 64 * KB;
 			LZ4_dict->dictionary = dictEnd - LZ4_dict->dictSize;
 		}
-
+		
 		public int LZ4_loadDict(LZ4_stream_t* LZ4_dict, byte* dictionary, int dictSize)
 		{
 			const int HASH_UNIT = ARCH_SIZE;
@@ -215,26 +191,7 @@ namespace K4os.Compression.LZ4.Engine
 			return (int) dict->dictSize;
 		}
 
-		public int LZ4_saveDict(LZ4_stream_t* LZ4_dict, byte* safeBuffer, int dictSize)
-		{
-			var dict = LZ4_dict;
-			var previousDictEnd = dict->dictionary + dict->dictSize;
-
-			if ((uint) dictSize > 64 * KB)
-			{
-				dictSize = 64 * KB;
-			}
-
-			if ((uint) dictSize > dict->dictSize) dictSize = (int) dict->dictSize;
-
-			Mem.Move(safeBuffer, previousDictEnd - dictSize, dictSize);
-
-			dict->dictionary = safeBuffer;
-			dict->dictSize = (uint) dictSize;
-
-			return dictSize;
-		}
-
 		#endregion
 	}
 }
+

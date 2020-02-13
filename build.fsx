@@ -1,3 +1,6 @@
+open System.Text.RegularExpressions
+open Tools
+
 #r "paket:
 	nuget Fake.Core.Target
 	nuget Fake.Core.ReleaseNotes
@@ -41,7 +44,8 @@ Target.create "Clean" (fun _ -> clean ())
 Target.create "Restore" (fun _ -> restore ())
 
 Target.create "Preprocess" (fun _ ->
-    let preprocess path source target =
+    let preprocess (source, target) =
+        Trace.logfn "%s -> %s" source target
         let defines = [ "BIT32" ]
         [
             "//---------------------------------------------------------\r\n//"
@@ -49,17 +53,15 @@ Target.create "Preprocess" (fun _ ->
             "//\r\n//---------------------------------------------------------"
             for d in defines do sprintf "#define %s" d
             ""
-            path @@ source |> File.loadText
+            source |> File.loadText
         ]
         |> Seq.toArray
-        |> File.saveLines (path @@ target)
+        |> File.saveLines target
+
     let root = "./src/K4os.Compression.LZ4"
-    let memory = root @@ "Internal"
-    let engine = root @@ "Engine"
-    preprocess memory "Mem64.cs" "Mem32.cs"
-    preprocess engine "LLTools64.cs" "LLTools32.cs"
-    preprocess engine "LLFast64.cs" "LLFast32.cs"
-    preprocess engine "LLDec64.cs" "LLDec32.cs"
+    !! (root @@ "**/x64/*64.cs")
+    |> Seq.map (fun fn -> fn, String.replace "64" "32" fn)
+    |> Seq.iter preprocess
 )
 
 Target.create "Build" (fun _ -> build ())

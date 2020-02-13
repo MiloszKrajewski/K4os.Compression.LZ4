@@ -1,28 +1,18 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
-// ReSharper disable IdentifierTypo
+﻿// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4.Engine
+using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Engine;
+using K4os.Compression.LZ4.Internal;
+
+namespace K4os.Compression.LZ4.Engine_
 {
-	internal unsafe class LLTools
+	internal unsafe class LLTools: LLTypes
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]
-
-		protected const int LZ4_MEMORY_USAGE = 14;
-		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
-		protected const int LZ4_DISTANCE_MAX = 65535;
-		protected const int LZ4_DISTANCE_ABSOLUTE_MAX = 65535;
-
-		protected const int LZ4_HASHLOG = LZ4_MEMORY_USAGE - 2;
-		protected const int LZ4_HASHTABLESIZE = 1 << LZ4_MEMORY_USAGE;
-		protected const int LZ4_HASH_SIZE_U32 = 1 << LZ4_HASHLOG;
-
-		protected const int ACCELERATION_DEFAULT = 1;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int LZ4_compressBound(int isize) =>
@@ -31,89 +21,6 @@ namespace K4os.Compression.LZ4.Engine
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int LZ4_decoderRingBufferSize(int isize) =>
 			65536 + 14 + isize;
-
-		[StructLayout(LayoutKind.Sequential)]
-		internal struct LZ4_stream_t
-		{
-			public fixed uint hashTable[LZ4_HASH_SIZE_U32];
-			public uint currentOffset;
-			public bool dirty;
-			public tableType_t tableType;
-			public byte* dictionary;
-			public LZ4_stream_t* dictCtx;
-			public uint dictSize;
-		};
-
-		[StructLayout(LayoutKind.Sequential)]
-		internal struct LZ4_streamDecode_t
-		{
-			public byte* externalDict;
-			public uint extDictSize;
-			public byte* prefixEnd;
-			public uint prefixSize;
-		};
-
-		protected const int MINMATCH = 4;
-
-		protected const int WILDCOPYLENGTH = 8;
-		protected const int LASTLITERALS = 5;
-		protected const int MFLIMIT = 12; // WILDCOPYLENGTH + MINMATCH;
-
-		protected const int MATCH_SAFEGUARD_DISTANCE = 2 * WILDCOPYLENGTH - MINMATCH;
-		protected const int FASTLOOP_SAFE_DISTANCE = 64;
-
-		protected const int LZ4_minLength = MFLIMIT + 1;
-
-		protected const int KB = 1 << 10;
-		protected const int MB = 1 << 20;
-		protected const uint GB = 1u << 30;
-
-		//???
-		// protected const int MAXD_LOG = 16;
-		// protected const int MAX_DISTANCE = (1 << MAXD_LOG) - 1;
-
-		protected const int ML_BITS = 4;
-		protected const uint ML_MASK = (1U << ML_BITS) - 1;
-		protected const int RUN_BITS = 8 - ML_BITS;
-		protected const uint RUN_MASK = (1U << RUN_BITS) - 1;
-
-		protected const int LZ4_64Klimit = 64 * KB + (MFLIMIT - 1);
-		protected const int LZ4_skipTrigger = 6;
-
-		public enum limitedOutput_directive
-		{
-			notLimited = 0, limitedOutput = 1, fillOutput = 2
-		}
-
-		public enum tableType_t
-		{
-			clearedTable = 0, byPtr, byU32, byU16
-		}
-
-		public enum dict_directive
-		{
-			noDict = 0, withPrefix64k, usingExtDict, usingDictCtx
-		}
-
-		public enum dictIssue_directive
-		{
-			noDictIssue = 0, dictSmall
-		}
-
-		public enum endCondition_directive
-		{
-			endOnOutputSize = 0, endOnInputSize = 1
-		}
-
-		public enum earlyEnd_directive
-		{
-			full = 0, partial = 1
-		}
-		
-		protected enum variable_length_error
-		{
-			loop_error = -2, initial_error = -1, ok = 0
-		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_hash4(uint sequence, tableType_t tableType)
@@ -250,6 +157,58 @@ namespace K4os.Compression.LZ4.Engine
 			while (s == 255);
 
 			return length;
+		}
+
+		public static int LZ4_saveDict(LZ4_stream_t* LZ4_dict, byte* safeBuffer, int dictSize)
+		{
+			var dict = LZ4_dict;
+			var previousDictEnd = dict->dictionary + dict->dictSize;
+
+			if ((uint) dictSize > 64 * KB)
+			{
+				dictSize = 64 * KB;
+			}
+
+			if ((uint) dictSize > dict->dictSize) dictSize = (int) dict->dictSize;
+
+			Mem.Move(safeBuffer, previousDictEnd - dictSize, dictSize);
+
+			dict->dictionary = safeBuffer;
+			dict->dictSize = (uint) dictSize;
+
+			return dictSize;
+		}
+
+		public static LZ4_stream_t* LZ4_createStream() =>
+			(LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4_stream_t));
+
+		public static LZ4_stream_t* LZ4_initStream(LZ4_stream_t* buffer)
+		{
+			Mem.Zero((byte*) buffer, sizeof(LZ4_stream_t));
+			return buffer;
+		}
+
+		public static void LZ4_freeStream(LZ4_stream_t* LZ4_stream)
+		{
+			if (LZ4_stream != null) Mem.Free(LZ4_stream);
+		}
+
+		public static LZ4_streamDecode_t* LZ4_createStreamDecode() =>
+			(LZ4_streamDecode_t*) Mem.AllocZero(sizeof(LZ4_streamDecode_t));
+
+		public static void LZ4_freeStreamDecode(LZ4_streamDecode_t* LZ4_stream)
+		{
+			if (LZ4_stream != null) Mem.Free(LZ4_stream);
+		}
+
+		public static void LZ4_setStreamDecode(
+			LZ4_streamDecode_t* LZ4_streamDecode, byte* dictionary, int dictSize)
+		{
+			var lz4sd = LZ4_streamDecode;
+			lz4sd->prefixSize = (uint) dictSize;
+			lz4sd->prefixEnd = dictionary + dictSize;
+			lz4sd->externalDict = null;
+			lz4sd->extDictSize = 0;
 		}
 
 		protected static readonly uint[] inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
