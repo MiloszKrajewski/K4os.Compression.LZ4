@@ -1,11 +1,11 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Mem = K4os.Compression.LZ4.Internal.Mem64;
+using K4os.Compression.LZ4.vPrev.Internal;
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4.Test.Baseline
+namespace K4os.Compression.LZ4.vPrev.Engine
 {
 	internal unsafe class LZ4_xx
 	{
@@ -196,7 +196,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 					&& (token & ML_MASK) != 15)
 				{
 					var ll = (int) (token >> ML_BITS);
-					int off = Mem.Peek2(ip + ll);
+					int off = Mem.Peek16(ip + ll);
 					var matchPtr = op + ll - off;
 					if (off >= 18 && matchPtr >= lowPrefix)
 					{
@@ -255,17 +255,17 @@ namespace K4os.Compression.LZ4.Test.Baseline
 					break;
 				}
 
-				Mem.WildCopy8(op, ip, cpy);
+				Mem.WildCopy(op, ip, cpy);
 				ip += length;
 				op = cpy;
 
-				int offset = Mem.Peek2(ip);
+				int offset = Mem.Peek16(ip);
 				ip += 2;
 				var match = op - offset;
 				if (checkOffset && match + dictSize < lowPrefix)
 					goto _output_error;
 
-				Mem.Poke4(op, (uint) offset);
+				Mem.Poke32(op, (uint) offset);
 
 				length = (int) (token & ML_MASK);
 				if (length == ML_MASK)
@@ -345,7 +345,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 
 					if (op < oCopyLimit)
 					{
-						Mem.WildCopy8(op, match, oCopyLimit);
+						Mem.WildCopy(op, match, oCopyLimit);
 						match += oCopyLimit - op;
 						op = oCopyLimit;
 					}
@@ -356,7 +356,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 				{
 					Mem.Copy8(op, match);
 					if (length > 16)
-						Mem.WildCopy8(op + 8, match + 8, cpy);
+						Mem.WildCopy(op + 8, match + 8, cpy);
 				}
 
 				op = cpy; /* correction */

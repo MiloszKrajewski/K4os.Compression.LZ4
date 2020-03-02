@@ -1,9 +1,11 @@
 using System;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Test.Adapters
 {
 	public class CurrentLZ4
 	{
+		public const int ExpectedVersion = 192;
+
 		public static byte[] Encode(
 			byte[] source, int sourceIndex, int sourceLength, LZ4Level level)
 		{
@@ -11,6 +13,9 @@ namespace K4os.Compression.LZ4.Test
 			var buffer = new byte[bufferLength];
 			var targetLength = LZ4Codec.Encode(
 				source, sourceIndex, sourceLength, buffer, 0, bufferLength, level);
+			if (targetLength <= 0)
+				throw new ArgumentException("Encoding failed. No bytes returned.");
+			
 			if (targetLength == bufferLength)
 				return buffer;
 

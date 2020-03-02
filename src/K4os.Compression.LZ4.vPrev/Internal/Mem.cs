@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace K4os.Compression.LZ4.Test.Baseline
+namespace K4os.Compression.LZ4.vPrev.Internal
 {
 	/// <summary>Utility class with memory related functions.</summary>
-	public unsafe class MemX
+	public unsafe class Mem
 	{
 		/// <summary>1 KiB</summary>
 		public const int K1 = 1024;
@@ -106,7 +106,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 		/// <param name="source">The source block address.</param>
 		/// <param name="limit">The limit (in target block).</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void WildCopy8(byte* target, byte* source, void* limit)
+		public static void WildCopy(byte* target, byte* source, void* limit)
 		{
 			do
 			{
@@ -361,48 +361,48 @@ namespace K4os.Compression.LZ4.Test.Baseline
 		/// <param name="p">Address.</param>
 		/// <returns>Byte at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static byte Peek1(void* p) => *(byte*) p;
+		public static byte Peek8(void* p) => *(byte*) p;
 
 		/// <summary>Reads exactly 2 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>2 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ushort Peek2(void* p) => *(ushort*) p;
+		public static ushort Peek16(void* p) => *(ushort*) p;
 
 		/// <summary>Reads exactly 4 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>4 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint Peek4(void* p) => *(uint*) p;
+		public static uint Peek32(void* p) => *(uint*) p;
 
 		/// <summary>Reads exactly 8 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Peek8(void* p) => *(ulong*) p;
+		public static ulong Peek64(void* p) => *(ulong*) p;
 
 		/// <summary>Writes exactly 1 byte to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke1(void* p, byte v) => *(byte*) p = v;
+		public static void Poke8(void* p, byte v) => *(byte*) p = v;
 
 		/// <summary>Writes exactly 2 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke2(void* p, ushort v) => *(ushort*) p = v;
+		public static void Poke16(void* p, ushort v) => *(ushort*) p = v;
 
 		/// <summary>Writes exactly 4 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke4(void* p, uint v) => *(uint*) p = v;
+		public static void Poke32(void* p, uint v) => *(uint*) p = v;
 
 		/// <summary>Writes exactly 8 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke8(void* p, ulong v) => *(ulong*) p = v;
+		public static void Poke64(void* p, ulong v) => *(ulong*) p = v;
 	}
 }

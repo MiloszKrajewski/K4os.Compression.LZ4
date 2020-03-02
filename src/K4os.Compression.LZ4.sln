@@ -43,6 +43,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K4os.Compression.LZ4.Legacy
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHelpers", "TestHelpers\TestHelpers.csproj", "{9EB376FB-BF9F-4134-9C62-5C3BFA9C3896}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K4os.Compression.LZ4.vPrev", "K4os.Compression.LZ4.vPrev\K4os.Compression.LZ4.vPrev.csproj", "{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,16 @@ Global
 		{9EB376FB-BF9F-4134-9C62-5C3BFA9C3896}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9EB376FB-BF9F-4134-9C62-5C3BFA9C3896}.Optimized|Any CPU.ActiveCfg = Debug|Any CPU
 		{9EB376FB-BF9F-4134-9C62-5C3BFA9C3896}.Optimized|Any CPU.Build.0 = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Debug|x64.Build.0 = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Debug|x86.Build.0 = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Optimized|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CE9F378-2FBF-4CD1-B0B0-1F51BD1B8854}.Optimized|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

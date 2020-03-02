@@ -1,9 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
-using K4os.Compression.LZ4.Engine;
-using K4os.Compression.LZ4.Engine_;
+using K4os.Compression.LZ4.vPrev.Engine;
 
-namespace K4os.Compression.LZ4
+namespace K4os.Compression.LZ4.vPrev
 {
 	/// <summary>
 	/// Static class exposing LZ4 block compression methods.
@@ -11,13 +10,13 @@ namespace K4os.Compression.LZ4
 	public class LZ4Codec
 	{
 		/// <summary>Version of LZ4 implementation.</summary>
-		public const int Version = 192;
-
+		public const int Version = 181;
+		
 		/// <summary>Maximum size after compression.</summary>
 		/// <param name="length">Length of input buffer.</param>
 		/// <returns>Maximum length after compression.</returns>
 		public static int MaximumOutputSize(int length) =>
-			LLTools.LZ4_compressBound(length);
+			LZ4_xx.LZ4_compressBound(length);
 
 		/// <summary>Compresses data from one buffer into another.</summary>
 		/// <param name="source">Input buffer.</param>
@@ -36,10 +35,9 @@ namespace K4os.Compression.LZ4
 
 			var encoded =
 				level == LZ4Level.L00_FAST
-					? LLFast.LZ4_compress_fast(source, target, sourceLength, targetLength, 1)
-					: -1;
-#warning implement
-			// : LowLevelHighCompressor64.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
+					? LZ4_64.LZ4_compress_default(source, target, sourceLength, targetLength)
+					: LZ4_64_HC.LZ4_compress_HC(
+						source, target, sourceLength, targetLength, (int) level);
 			return encoded <= 0 ? -1 : encoded;
 		}
 
@@ -99,7 +97,7 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var decoded = LLDec.LZ4_decompress_safe(source, target, sourceLength, targetLength);
+			var decoded = LZ4_xx.LZ4_decompress_safe(source, target, sourceLength, targetLength);
 			return decoded <= 0 ? -1 : decoded;
 		}
 

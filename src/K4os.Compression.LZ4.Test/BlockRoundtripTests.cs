@@ -1,9 +1,9 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using K4os.Compression.LZ4.Internal;
+using K4os.Compression.LZ4.Test.Adapters;
 using TestHelpers;
 using Xunit;
-using _LZ4 = LZ4.LZ4Codec;
 
 namespace K4os.Compression.LZ4.Test
 {
@@ -11,20 +11,19 @@ namespace K4os.Compression.LZ4.Test
 	{
 		private static void Roundtrip(byte[] source)
 		{
-			var compressedOld = _LZ4.Encode(source, 0, source.Length);
-			var compressedNew = CurrentLZ4.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
-
-			Tools.SameBytes(
-				source,
-				_LZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+			var legacy = LegacyLZ4.Encode(source, 0, source.Length);
+			var baseline = BaselineLZ4.Encode(source, 0, source.Length);
+			var current = CurrentLZ4.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 			
-			Tools.SameBytes(
-				source,
-				CurrentLZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+			void TestDecode(byte[] compressed, Func<byte[], int, int, int, byte[]> func) =>
+				Tools.SameBytes(source, func(compressed, 0, compressed.Length, source.Length));
 
-			Tools.SameBytes(
-				source,
-				CurrentLZ4.Decode(compressedOld, 0, compressedOld.Length, source.Length));
+			TestDecode(current, LegacyLZ4.Decode); 
+			TestDecode(current, BaselineLZ4.Decode); 
+			TestDecode(current, CurrentLZ4.Decode);
+			
+			TestDecode(legacy, CurrentLZ4.Decode); 
+			TestDecode(baseline, CurrentLZ4.Decode); 
 		}
 
 		[Fact]
@@ -60,6 +59,7 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(0, 17)]
 		[InlineData(255, 1000)]
 		[InlineData(65, 67)]
+		[InlineData(0xAA, Mem.K64)]
 		public void RepeatedByteRountrip(byte value, int length)
 		{
 			var bytes = new byte[length];

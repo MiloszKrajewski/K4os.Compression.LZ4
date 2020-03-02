@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using K4os.Compression.LZ4.Test.Adapters;
 using TestHelpers;
 using Xunit;
 

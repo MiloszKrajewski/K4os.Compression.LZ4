@@ -8,6 +8,7 @@
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\K4os.Compression.LZ4.vPrev\K4os.Compression.LZ4.vPrev.csproj" />
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj" />
   </ItemGroup>

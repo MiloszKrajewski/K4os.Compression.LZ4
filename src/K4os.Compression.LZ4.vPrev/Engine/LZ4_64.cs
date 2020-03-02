@@ -1,9 +1,9 @@
-using System.Runtime.CompilerServices;
-using Mem = K4os.Compression.LZ4.Internal.Mem64;
+﻿using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.vPrev.Internal;
 
 // ReSharper disable InconsistentNaming
 
-namespace K4os.Compression.LZ4.Test.Baseline
+namespace K4os.Compression.LZ4.vPrev.Engine
 {
 #if BIT32
 	internal unsafe class LZ4_32: LZ4_xx
@@ -87,14 +87,14 @@ namespace K4os.Compression.LZ4.Test.Baseline
 			}
 
 #if !BIT32
-			if (pIn < pInLimit - 3 && Mem.Peek4(pMatch) == Mem.Peek4(pIn))
+			if (pIn < pInLimit - 3 && Mem.Peek32(pMatch) == Mem.Peek32(pIn))
 			{
 				pIn += 4;
 				pMatch += 4;
 			}
 #endif
 
-			if (pIn < pInLimit - 1 && Mem.Peek2(pMatch) == Mem.Peek2(pIn))
+			if (pIn < pInLimit - 1 && Mem.Peek16(pMatch) == Mem.Peek16(pIn))
 			{
 				pIn += 2;
 				pMatch += 2;
@@ -113,7 +113,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 			if (tableType != tableType_t.byU16)
 				return LZ4_hash5(LZ4_read_ARCH(p), tableType);
 #endif
-			return LZ4_hash4(Mem.Peek4(p), tableType);
+			return LZ4_hash4(Mem.Peek32(p), tableType);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -222,7 +222,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 					while (
 						dictIssue == dictIssue_directive.dictSmall && match < lowRefLimit
 						|| tableType != tableType_t.byU16 && match + MAX_DISTANCE < ip
-						|| Mem.Peek4(match + refDelta) != Mem.Peek4(ip));
+						|| Mem.Peek32(match + refDelta) != Mem.Peek32(ip));
 				}
 
 				while (ip > anchor && match + refDelta > lowLimit && ip[-1] == match[refDelta - 1])
@@ -252,12 +252,12 @@ namespace K4os.Compression.LZ4.Test.Baseline
 						*token = (byte) (litLength << ML_BITS);
 					}
 
-					Mem.WildCopy8(op, anchor, op + litLength);
+					Mem.WildCopy(op, anchor, op + litLength);
 					op += litLength;
 				}
 
 				_next_match:
-				Mem.Poke2(op, (ushort) (ip - match));
+				Mem.Poke16(op, (ushort) (ip - match));
 				op += 2;
 
 				{
@@ -291,11 +291,11 @@ namespace K4os.Compression.LZ4.Test.Baseline
 					{
 						*token += (byte) ML_MASK;
 						matchCode -= ML_MASK;
-						Mem.Poke4(op, 0xFFFFFFFF);
+						Mem.Poke32(op, 0xFFFFFFFF);
 						while (matchCode >= 4 * 255)
 						{
 							op += 4;
-							Mem.Poke4(op, 0xFFFFFFFF);
+							Mem.Poke32(op, 0xFFFFFFFF);
 							matchCode -= 4 * 255;
 						}
 
@@ -333,7 +333,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 				LZ4_putPosition(ip, cctx->hashTable, tableType, ibase);
 				if ((dictIssue != dictIssue_directive.dictSmall || match >= lowRefLimit)
 					&& match + MAX_DISTANCE >= ip
-					&& Mem.Peek4(match + refDelta) == Mem.Peek4(ip))
+					&& Mem.Peek32(match + refDelta) == Mem.Peek32(ip))
 				{
 					token = op++;
 					*token = 0;
@@ -467,7 +467,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 					}
 					while (
 						tableType != tableType_t.byU16 && match + MAX_DISTANCE < ip
-						|| Mem.Peek4(match) != Mem.Peek4(ip));
+						|| Mem.Peek32(match) != Mem.Peek32(ip));
 				}
 
 				while (ip > anchor && match > lowLimit && ip[-1] == match[-1])
@@ -499,12 +499,12 @@ namespace K4os.Compression.LZ4.Test.Baseline
 						*token = (byte) (litLength << ML_BITS);
 					}
 
-					Mem.WildCopy8(op, anchor, op + litLength);
+					Mem.WildCopy(op, anchor, op + litLength);
 					op += litLength;
 				}
 
 				_next_match:
-				Mem.Poke2(op, (ushort) (ip - match));
+				Mem.Poke16(op, (ushort) (ip - match));
 				op += 2;
 
 				{
@@ -544,7 +544,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 
 				match = LZ4_getPosition(ip, ctx->hashTable, tableType, base_);
 				LZ4_putPosition(ip, ctx->hashTable, tableType, base_);
-				if (match + MAX_DISTANCE >= ip && Mem.Peek4(match) == Mem.Peek4(ip))
+				if (match + MAX_DISTANCE >= ip && Mem.Peek32(match) == Mem.Peek32(ip))
 				{
 					token = op++;
 					*token = 0;
