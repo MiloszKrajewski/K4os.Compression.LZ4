@@ -6,9 +6,16 @@ using _LZ4 = LZ4.LZ4Codec;
 
 namespace K4os.Compression.LZ4.Test
 {
+	public class BaselineLZ4
+	{
+		public int Decode(byte[] source, int offset, int length)
+		{
+			
+		}
+	}
+
 	public class BlockRoundtripTests
 	{
-
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = _LZ4.Encode(source, 0, source.Length);
@@ -51,10 +58,7 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(0)]
 		[InlineData(255)]
 		[InlineData(65)]
-		public void SingleByteRountrip(byte value)
-		{
-			Roundtrip(new[] { value });
-		}
+		public void SingleByteRountrip(byte value) { Roundtrip(new[] { value }); }
 
 		[Theory]
 		[InlineData(160, 33)]
@@ -105,8 +109,10 @@ namespace K4os.Compression.LZ4.Test
 		{
 			var original = Tools.LoadChunk(Tools.FindFile(".corpus/x-ray"), 0, 0x10000);
 			var target = new byte[LZ4Codec.MaximumOutputSize(original.Length)];
-			var required = LZ4Codec.Encode(original, 0, original.Length, target, 0, target.Length, LZ4Level.L00_FAST);
-			var minimal = LZ4Codec.Encode(original, 0, original.Length, target, 0, required, LZ4Level.L00_FAST);
+			var required = LZ4Codec.Encode(
+				original, 0, original.Length, target, 0, target.Length, LZ4Level.L00_FAST);
+			var minimal = LZ4Codec.Encode(
+				original, 0, original.Length, target, 0, required, LZ4Level.L00_FAST);
 			Assert.Equal(required, minimal);
 		}
 	}
