@@ -45,8 +45,8 @@ namespace K4os.Compression.LZ4.Test
 		{
 			var src = Tools.LoadChunk(Tools.FindFile(filename), index, length);
 
-			var dst = LZ4CodecHelper.Encode(src, 0, src.Length, LZ4Level.L00_FAST);
-			var cmp = LZ4CodecHelper.Decode(dst, 0, dst.Length, src.Length);
+			var dst = CurrentLZ4.Encode(src, 0, src.Length, LZ4Level.L00_FAST);
+			var cmp = CurrentLZ4.Decode(dst, 0, dst.Length, src.Length);
 
 			string AsHex(uint value) => $"0x{value:x8}";
 
@@ -116,8 +116,8 @@ namespace K4os.Compression.LZ4.Test
 		{
 			var src = Tools.LoadChunk(Tools.FindFile(filename), index, length);
 
-			var dst = LZ4CodecHelper.Encode(src, 0, src.Length, (LZ4Level) level);
-			var cmp = LZ4CodecHelper.Decode(dst, 0, dst.Length, src.Length);
+			var dst = CurrentLZ4.Encode(src, 0, src.Length, (LZ4Level) level);
+			var cmp = CurrentLZ4.Decode(dst, 0, dst.Length, src.Length);
 
 			string AsHex(uint value) => $"0x{value:x8}";
 

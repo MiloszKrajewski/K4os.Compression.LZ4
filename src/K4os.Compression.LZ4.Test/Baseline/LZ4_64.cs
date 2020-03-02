@@ -1,13 +1,12 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Mem = K4os.Compression.LZ4.Internal.Mem64;
-// ReSharper disable IdentifierTypo
-// ReSharper disable AccessToStaticMemberViaDerivedType
+
 // ReSharper disable InconsistentNaming
 
 namespace K4os.Compression.LZ4.Test.Baseline
 {
-	#if BIT32
-	internal unsafe class _LZ4_32: _LZ4_xx
+#if BIT32
+	internal unsafe class LZ4_32: LZ4_xx
 	{
 		protected const int ARCH_SIZE = 4;
 		protected const int STEPSIZE = 4;
@@ -32,8 +31,8 @@ namespace K4os.Compression.LZ4.Test.Baseline
 			inputSize < LZ4_64Klimit ? tableType_t.byU16 :
 			sizeof(byte*) == sizeof(uint) ? tableType_t.byPtr :
 			tableType_t.byU32;
-	#else
-	internal unsafe class _LZ4_64: _LZ4_xx
+#else
+	internal unsafe class LZ4_64: LZ4_xx
 	{
 		protected const int ARCH_SIZE = 8;
 		protected const int STEPSIZE = 8;
@@ -55,13 +54,12 @@ namespace K4os.Compression.LZ4.Test.Baseline
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(ulong val) =>
-			DeBruijnBytePos[
-				unchecked((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
+			DeBruijnBytePos[unchecked ((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static tableType_t LZ4_tableType(int inputSize) =>
 			inputSize < LZ4_64Klimit ? tableType_t.byU16 : tableType_t.byU32;
-		#endif
+#endif
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
@@ -88,13 +86,13 @@ namespace K4os.Compression.LZ4.Test.Baseline
 				pMatch += STEPSIZE;
 			}
 
-			#if !BIT32
+#if !BIT32
 			if (pIn < pInLimit - 3 && Mem.Peek4(pMatch) == Mem.Peek4(pIn))
 			{
 				pIn += 4;
 				pMatch += 4;
 			}
-			#endif
+#endif
 
 			if (pIn < pInLimit - 1 && Mem.Peek2(pMatch) == Mem.Peek2(pIn))
 			{
@@ -111,10 +109,10 @@ namespace K4os.Compression.LZ4.Test.Baseline
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint LZ4_hashPosition(void* p, tableType_t tableType)
 		{
-			#if !BIT32
+#if !BIT32
 			if (tableType != tableType_t.byU16)
 				return LZ4_hash5(LZ4_read_ARCH(p), tableType);
-			#endif
+#endif
 			return LZ4_hash4(Mem.Peek4(p), tableType);
 		}
 
@@ -124,8 +122,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 			LZ4_putPositionOnHash(p, LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static byte* LZ4_getPosition(
-			byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
+		static byte* LZ4_getPosition(byte* p, void* tableBase, tableType_t tableType, byte* srcBase) =>
 			LZ4_getPositionOnHash(LZ4_hashPosition(p, tableType), tableBase, tableType, srcBase);
 
 		public static int LZ4_compress_generic(
@@ -350,8 +347,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 			{
 				var lastRun = (int) (iend - anchor);
 				if (outputLimited == limitedOutput_directive.limitedOutput
-					&& op - dest + lastRun + 1 + (lastRun + 255 - RUN_MASK) / 255
-					> (uint) maxOutputSize)
+					&& op - dest + lastRun + 1 + (lastRun + 255 - RUN_MASK) / 255 > (uint) maxOutputSize)
 					return 0;
 
 				if (lastRun >= RUN_MASK)
@@ -406,8 +402,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 			byte* source, byte* dest, int inputSize, int maxOutputSize, int acceleration)
 		{
 			LZ4_stream_t ctx;
-			return LZ4_compress_fast_extState(
-				&ctx, source, dest, inputSize, maxOutputSize, acceleration);
+			return LZ4_compress_fast_extState(&ctx, source, dest, inputSize, maxOutputSize, acceleration);
 		}
 
 		public static int LZ4_compress_default(
@@ -613,8 +608,7 @@ namespace K4os.Compression.LZ4.Test.Baseline
 					LZ4_tableType(*srcSizePtr));
 		}
 
-		public static int LZ4_compress_destSize(
-			byte* src, byte* dst, int* srcSizePtr, int targetDstSize)
+		public static int LZ4_compress_destSize(byte* src, byte* dst, int* srcSizePtr, int targetDstSize)
 		{
 			LZ4_stream_t ctxBody;
 			return LZ4_compress_destSize_extState(&ctxBody, src, dst, srcSizePtr, targetDstSize);

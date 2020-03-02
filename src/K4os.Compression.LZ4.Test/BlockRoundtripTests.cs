@@ -1,37 +1,30 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using K4os.Compression.LZ4.Internal;
 using TestHelpers;
 using Xunit;
 using _LZ4 = LZ4.LZ4Codec;
 
 namespace K4os.Compression.LZ4.Test
 {
-	public class BaselineLZ4
-	{
-		public int Decode(byte[] source, int offset, int length)
-		{
-			
-		}
-	}
-
 	public class BlockRoundtripTests
 	{
 		private static void Roundtrip(byte[] source)
 		{
 			var compressedOld = _LZ4.Encode(source, 0, source.Length);
-			// var compressedNew = LZ4CodecHelper.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
-
-			// Tools.SameBytes(
-			// 	source,
-			// 	_LZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
-			//
-			// Tools.SameBytes(
-			// 	source,
-			// 	LZ4CodecHelper.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+			var compressedNew = CurrentLZ4.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 
 			Tools.SameBytes(
 				source,
-				LZ4CodecHelper.Decode(compressedOld, 0, compressedOld.Length, source.Length));
+				_LZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+			
+			Tools.SameBytes(
+				source,
+				CurrentLZ4.Decode(compressedNew, 0, compressedNew.Length, source.Length));
+
+			Tools.SameBytes(
+				source,
+				CurrentLZ4.Decode(compressedOld, 0, compressedOld.Length, source.Length));
 		}
 
 		[Fact]

@@ -1,13 +1,13 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Mem = K4os.Compression.LZ4.Internal.Mem64;
+
 // ReSharper disable IdentifierTypo
-// ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable InconsistentNaming
 
 namespace K4os.Compression.LZ4.Test.Baseline
 {
-	internal unsafe class _LZ4_xx
+	internal unsafe class LZ4_xx
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]

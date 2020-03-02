@@ -168,7 +168,7 @@ namespace K4os.Compression.LZ4.Internal
 		{
 			do
 			{
-				Copy8(source, target);
+				Copy8(target, source);
 				target += sizeof(ulong);
 				source += sizeof(ulong);
 			}

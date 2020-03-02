@@ -2,7 +2,7 @@ using System;
 
 namespace K4os.Compression.LZ4.Test
 {
-	public class LZ4CodecHelper
+	public class CurrentLZ4
 	{
 		public static byte[] Encode(
 			byte[] source, int sourceIndex, int sourceLength, LZ4Level level)
