@@ -4,10 +4,9 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Engine;
 using K4os.Compression.LZ4.Internal;
 
-namespace K4os.Compression.LZ4.Engine_
+namespace K4os.Compression.LZ4.Engine
 {
 	internal unsafe class LLTools: LLTypes
 	{

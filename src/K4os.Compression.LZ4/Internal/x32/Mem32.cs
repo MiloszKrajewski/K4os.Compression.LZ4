@@ -23,7 +23,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Peek8(void* p)
+		public static ulong _Peek8(void* p)
 		{
 			#if !BIT32
 			return *(ulong*) p;
@@ -36,7 +36,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke8(void* p, ulong v)
+		public static void _Poke8(void* p, ulong v)
 		{
 			#if !BIT32
 			*(ulong*) p = v;
@@ -52,13 +52,13 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong PeekW(void* p) => Peek8(p);
+		public static ulong PeekW(void* p) => _Peek8(p);
 
 		/// <summary>Writes 8 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PokeW(void* p, ulong v) => Poke8(p, v);
+		public static void PokeW(void* p, ulong v) => _Poke8(p, v);
 		
 		#else
 
@@ -96,7 +96,7 @@ namespace K4os.Compression.LZ4.Internal
 			
 			while (length >= sizeof(ulong))
 			{
-				Poke8(target, value8);
+				_Poke8(target, value8);
 				target += sizeof(ulong);
 				length -= sizeof(ulong);
 			}
@@ -175,7 +175,7 @@ namespace K4os.Compression.LZ4.Internal
 		{
 			do
 			{
-				Copy8(source, target);
+				Copy8(target, source);
 				target += sizeof(ulong);
 				source += sizeof(ulong);
 			}

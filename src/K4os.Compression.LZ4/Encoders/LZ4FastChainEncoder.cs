@@ -1,5 +1,4 @@
 ﻿using K4os.Compression.LZ4.Engine;
-using K4os.Compression.LZ4.Engine_;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders

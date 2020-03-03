@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Test
 	{
 		[SuppressMessage("ReSharper", "StringLiteralTypo")]
 		[SuppressMessage("ReSharper", "CommentTypo")]
-#if DEBUG
+#if !DEBUG
 		[Theory(Skip = "Too long")]
 #else
 		[Theory]
@@ -59,7 +59,7 @@ namespace K4os.Compression.LZ4.Test
 			Assert.Equal(AsHex(expectedChecksum), AsHex(Tools.Adler32(dst)));
 		}
 
-#if DEBUG
+#if !DEBUG
 		[Theory(Skip = "Too long")]
 #else
 		[Theory]

@@ -7,11 +7,9 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Engine;
-using K4os.Compression.LZ4.Engine_;
 using size_t = System.UInt32;
 
-namespace K4os.Compression.LZ4.Engine_
+namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
@@ -492,7 +490,7 @@ namespace K4os.Compression.LZ4.Engine_
 			LLTypes.LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
 			int maxOutputSize)
 		{
-			LLTypes.LZ4_streamDecode_t* lz4sd = LZ4_streamDecode;
+			var lz4sd = LZ4_streamDecode;
 			int result;
 
 			if (lz4sd->prefixSize == 0)

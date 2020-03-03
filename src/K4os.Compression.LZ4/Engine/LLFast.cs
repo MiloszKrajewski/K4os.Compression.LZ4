@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Engine_;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Engine
 {
+	// ReSharper disable once InconsistentNaming
 	internal unsafe class LLFast
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
