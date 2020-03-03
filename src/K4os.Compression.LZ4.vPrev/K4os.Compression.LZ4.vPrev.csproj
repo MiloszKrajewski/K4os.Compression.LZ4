@@ -7,10 +7,6 @@
     <Configurations>Debug;Release;Optimized</Configurations>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
-  <PropertyGroup>
-    <PackageId>K4os.Compression.LZ4.vPrev</PackageId>
-    <PackageTags>compression lz4</PackageTags>
-  </PropertyGroup>
   <Import Project="..\..\Common.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
