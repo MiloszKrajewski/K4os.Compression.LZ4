@@ -497,7 +497,7 @@ namespace K4os.Compression.LZ4.Engine
 			LLTypes.LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
 			int maxOutputSize)
 		{
-			LLTypes.LZ4_streamDecode_t* lz4sd = LZ4_streamDecode;
+			var lz4sd = LZ4_streamDecode;
 			int result;
 
 			if (lz4sd->prefixSize == 0)

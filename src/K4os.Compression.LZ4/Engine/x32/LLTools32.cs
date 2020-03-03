@@ -19,10 +19,10 @@ namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
-
+	using ptr_t = Int32;
 	#else
 	using Mem = Internal.Mem64;
-	using ptr_t = Int64;
+
 	#endif
 
 	#if BIT32
