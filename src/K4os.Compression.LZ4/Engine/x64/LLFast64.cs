@@ -13,10 +13,8 @@ namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
-	using ptr_t = Int32;
 	#else
 	using Mem = Internal.Mem64;
-	using ptr_t = Int64;
 	#endif
 
 	#if BIT32
@@ -77,7 +75,7 @@ namespace K4os.Compression.LZ4.Engine
 
 			uint offset = 0;
 			uint forwardH;
-
+			
 			if (outputDirective == limitedOutput_directive.fillOutput && maxOutputSize < 1)
 			{
 				return 0;
@@ -160,7 +158,7 @@ namespace K4os.Compression.LZ4.Engine
 						uint current = (uint) (forwardIp - @base);
 						uint matchIndex = LZ4_getIndexOnHash(h, cctx->hashTable, tableType);
 						Debug.Assert(matchIndex <= current);
-						Debug.Assert(forwardIp - @base < (ptr_t) (2 * GB - 1));
+						Debug.Assert(forwardIp - @base < (2 * GB - 1));
 						ip = forwardIp;
 						forwardIp += step;
 						step = (searchMatchNb++ >> LZ4_skipTrigger);
@@ -529,7 +527,9 @@ namespace K4os.Compression.LZ4.Engine
 				}
 				else
 				{
-					var tableType = BIT32 && (ptr_t) source > LZ4_DISTANCE_MAX ? tableType_t.byPtr : tableType_t.byU32;
+					var tableType = sizeof(void*) < 8 && source > (byte*)LZ4_DISTANCE_MAX 
+						? tableType_t.byPtr 
+						: tableType_t.byU32;
 					return LZ4_compress_generic(
 						ctx, source, dest,
 						inputSize, null, 0, limitedOutput_directive.notLimited,
@@ -549,7 +549,9 @@ namespace K4os.Compression.LZ4.Engine
 				}
 				else
 				{
-					var tableType = BIT32 && (ptr_t) source > LZ4_DISTANCE_MAX ? tableType_t.byPtr : tableType_t.byU32;
+					var tableType = sizeof(void*) < 8 && source > (byte*)LZ4_DISTANCE_MAX 
+						? tableType_t.byPtr 
+						: tableType_t.byU32;
 					return LZ4_compress_generic(
 						ctx, source, dest,
 						inputSize, null, maxOutputSize, limitedOutput_directive.limitedOutput,

@@ -2,6 +2,7 @@
 // ReSharper disable InconsistentNaming
 // ReSharper disable CommentTypo
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Engine

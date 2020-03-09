@@ -20,10 +20,8 @@ namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
-	using ptr_t = Int32;
 	#else
 	using Mem = Internal.Mem64;
-	using ptr_t = Int64;
 	#endif
 
 	#if BIT32
@@ -38,17 +36,17 @@ namespace K4os.Compression.LZ4.Engine
 			byte* dst,
 			int srcSize,
 			int outputSize,
-			LLTypes.endCondition_directive endOnInput,
-			LLTypes.earlyEnd_directive partialDecoding,
-			LLTypes.dict_directive dict,
+			endCondition_directive endOnInput,
+			earlyEnd_directive partialDecoding,
+			dict_directive dict,
 			byte* lowPrefix,
 			byte* dictStart,
 			size_t dictSize)
 		{
 			return LZ4_decompress_generic(
 				src, dst, srcSize, outputSize,
-				endOnInput == LLTypes.endCondition_directive.endOnInputSize,
-				partialDecoding == LLTypes.earlyEnd_directive.partial,
+				endOnInput == endCondition_directive.endOnInputSize,
+				partialDecoding == earlyEnd_directive.partial,
 				dict,
 				lowPrefix,
 				dictStart,
@@ -64,7 +62,7 @@ namespace K4os.Compression.LZ4.Engine
 			int outputSize,
 			bool endOnInput, // endCondition_directive
 			bool partialDecoding, // earlyEnd_directive
-			LLTypes.dict_directive dict,
+			dict_directive dict,
 			byte* lowPrefix,
 			byte* dictStart,
 			size_t dictSize)
@@ -146,7 +144,7 @@ namespace K4os.Compression.LZ4.Engine
 						/* Do not deal with overlapping matches. */
 						if ((length != ML_MASK)
 							&& (offset >= 8)
-							&& (dict == LLTypes.dict_directive.withPrefix64k || match >= lowPrefix))
+							&& (dict == dict_directive.withPrefix64k || match >= lowPrefix))
 						{
 							/* Copy the match. */
 							Mem.Copy18(op, match);
@@ -167,12 +165,12 @@ namespace K4os.Compression.LZ4.Engine
 						length += LZ4_readVLE(&ip, iend - RUN_MASK, endOnInput, endOnInput, &error);
 						if (error == variable_length_error.initial_error) { goto _output_error; }
 
-						if ((safeDecode) && ((ptr_t) (op) + length < (ptr_t) (op)))
+						if ((safeDecode) && ((op) + length < (op)))
 						{
 							goto _output_error;
 						} /* overflow detection */
 
-						if ((safeDecode) && ((ptr_t) (ip) + length < (ptr_t) (ip)))
+						if ((safeDecode) && ((ip) + length < (ip)))
 						{
 							goto _output_error;
 						} /* overflow detection */
@@ -267,7 +265,7 @@ namespace K4os.Compression.LZ4.Engine
 						length += LZ4_readVLE(
 							&ip, iend - LASTLITERALS + 1, endOnInput, false, &error);
 						if (error != variable_length_error.ok) goto _output_error;
-						if ((safeDecode) && ((ptr_t) (op) + length < (ptr_t) op))
+						if ((safeDecode) && ((op) + length < op))
 							goto _output_error; /* overflow detection */
 					}
 
@@ -277,7 +275,7 @@ namespace K4os.Compression.LZ4.Engine
 						goto _output_error; /* Error : offset outside buffers */
 
 					/* match starting within external dictionary */
-					if ((dict == LLTypes.dict_directive.usingExtDict) && (match < lowPrefix))
+					if ((dict == dict_directive.usingExtDict) && (match < lowPrefix))
 					{
 						if ((op + length > oend - LASTLITERALS))
 						{
@@ -409,8 +407,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxDecompressedSize,
-				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
-				LLTypes.dict_directive.noDict,
+				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
+				dict_directive.noDict,
 				(byte*) dest, null, 0);
 		}
 
@@ -419,8 +417,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
-				LLTypes.dict_directive.withPrefix64k,
+				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
+				dict_directive.withPrefix64k,
 				(byte*) dest - 64 * KB, null, 0);
 		}
 
@@ -430,8 +428,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
-				LLTypes.dict_directive.noDict,
+				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
+				dict_directive.noDict,
 				(byte*) dest - prefixSize, null, 0);
 		}
 
@@ -441,8 +439,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
-				LLTypes.dict_directive.usingExtDict,
+				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
+				dict_directive.usingExtDict,
 				(byte*) dest - prefixSize, (byte*) dictStart, dictSize);
 		}
 
@@ -453,8 +451,8 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			return LZ4_decompress_generic(
 				source, dest, compressedSize, maxOutputSize,
-				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.full,
-				LLTypes.dict_directive.usingExtDict,
+				endCondition_directive.endOnInputSize, earlyEnd_directive.full,
+				dict_directive.usingExtDict,
 				(byte*) dest, (byte*) dictStart, dictSize);
 		}
 
@@ -489,12 +487,12 @@ namespace K4os.Compression.LZ4.Engine
 			var minCapacity = LZ4_min((size_t) targetOutputSize, (size_t) dstCapacity);
 			return LZ4_decompress_generic(
 				src, dst, compressedSize, (int) minCapacity,
-				LLTypes.endCondition_directive.endOnInputSize, LLTypes.earlyEnd_directive.partial,
-				LLTypes.dict_directive.noDict, (byte*) dst, null, 0);
+				endCondition_directive.endOnInputSize, earlyEnd_directive.partial,
+				dict_directive.noDict, (byte*) dst, null, 0);
 		}
 
 		public static int LZ4_decompress_safe_continue(
-			LLTypes.LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
+			LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
 			int maxOutputSize)
 		{
 			var lz4sd = LZ4_streamDecode;

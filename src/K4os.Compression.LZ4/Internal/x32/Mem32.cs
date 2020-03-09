@@ -19,6 +19,20 @@ namespace K4os.Compression.LZ4.Internal
 	public unsafe class Mem32: Mem
 	#endif
 	{
+		#if !BIT32
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* AsPtr(long value) => (void*) value;
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* AsPtr(ulong value) => (void*) value;
+		#else
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* AsPtr(int value) => (void*) value;
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void* AsPtr(uint value) => (void*) value;
+		#endif
+		
 		/// <summary>Reads exactly 8 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>

@@ -12,10 +12,8 @@ namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
-	using ptr_t = Int32;
 	#else
 	using Mem = Internal.Mem64;
-
 	#endif
 
 	#if BIT32
@@ -25,8 +23,7 @@ namespace K4os.Compression.LZ4.Engine
 	#endif
 	{
 		#if BIT32
-		protected const bool BIT32 = true;
-		protected const int ARCH_SIZE = 4;
+		protected const int ALGORITHM_ARCH = 4;
 
 		private static readonly uint[] DeBruijnBytePos = {
 			0, 0, 3, 0, 3, 1, 3, 0,
@@ -40,8 +37,7 @@ namespace K4os.Compression.LZ4.Engine
 			DeBruijnBytePos[
 				unchecked((uint) ((int) val & -(int) val) * 0x077CB531U >> 27)];
 		#else
-		protected const bool BIT32 = false;
-		protected const int ARCH_SIZE = 8;
+		protected const int ALGORITHM_ARCH = 8;
 
 		private static readonly uint[] DeBruijnBytePos = {
 			0, 0, 0, 0, 0, 1, 1, 2,
@@ -63,7 +59,7 @@ namespace K4os.Compression.LZ4.Engine
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
 		{
-			const int STEPSIZE = ARCH_SIZE;
+			const int STEPSIZE = ALGORITHM_ARCH;
 
 			var pStart = pIn;
 
@@ -151,7 +147,7 @@ namespace K4os.Compression.LZ4.Engine
 		
 		public int LZ4_loadDict(LZ4_stream_t* LZ4_dict, byte* dictionary, int dictSize)
 		{
-			const int HASH_UNIT = ARCH_SIZE;
+			const int HASH_UNIT = ALGORITHM_ARCH;
 			var dict = LZ4_dict;
 			const tableType_t tableType = tableType_t.byU32;
 			var p = dictionary;

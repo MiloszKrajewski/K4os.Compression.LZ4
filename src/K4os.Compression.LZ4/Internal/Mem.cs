@@ -50,11 +50,13 @@ namespace K4os.Compression.LZ4.Internal
 		public static readonly byte[] Empty = Array.Empty<byte>();
 		#endif
 
+		public static bool Force32Bit { get; set; }
+
 		/// <summary>Checks if process is ran in 32-bit mode.</summary>
 		public static bool Is32Bit
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => IntPtr.Size < 8;
+			get => Force32Bit || IntPtr.Size < 8;
 		}
 
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
