@@ -13,19 +13,10 @@
     <RepositoryUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4</RepositoryUrl>
     <PackageIconUrl>https://github.com/MiloszKrajewski/K4os.Compression.LZ4/blob/master/doc/icon.png?raw=true</PackageIconUrl>
   </PropertyGroup>
-  <!-- Signed in release only -->
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../K4os.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <!-- Internals visible to test when not release -->
-  <ItemGroup Condition=" '$(Configuration)' != 'Release' ">
+  <!-- Internals visible to test -->
+  <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>$(AssemblyName).Test</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-  <!-- Optimize when... optimized -->
-  <PropertyGroup Condition=" '$(Configuration)' == 'Optimized' ">
-    <Optimize>true</Optimize>
-  </PropertyGroup>
 </Project>
