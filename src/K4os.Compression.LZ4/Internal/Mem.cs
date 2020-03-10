@@ -49,14 +49,12 @@ namespace K4os.Compression.LZ4.Internal
 		#else
 		public static readonly byte[] Empty = Array.Empty<byte>();
 		#endif
-
-		public static bool Force32Bit { get; set; }
-
+		
 		/// <summary>Checks if process is ran in 32-bit mode.</summary>
-		public static bool Is32Bit
+		public static bool System32
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => Force32Bit || IntPtr.Size < 8;
+			get => sizeof(void*) < sizeof(ulong);
 		}
 
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
@@ -126,7 +124,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// <returns>Original pointer.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static byte* Fill(byte* target, byte value, int length) =>
-			Is32Bit ? Mem32.Fill(target, value, length) : Mem64.Fill(target, value, length);
+			System32 ? Mem32.Fill(target, value, length) : Mem64.Fill(target, value, length);
 
 		/// <summary>Allocates block of memory and fills it with zeroes.</summary>
 		/// <param name="size">Size in bytes.</param>

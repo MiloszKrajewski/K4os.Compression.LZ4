@@ -1,6 +1,6 @@
+#pragma warning disable 1591
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
-// ReSharper disable CommentTypo
 
 using System;
 using System.Runtime.InteropServices;
@@ -33,7 +33,7 @@ namespace K4os.Compression.LZ4.Engine
 		};
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct LZ4_streamDecode_t
+		public struct LZ4_streamDecode_t
 		{
 			public byte* externalDict;
 			public uint extDictSize;

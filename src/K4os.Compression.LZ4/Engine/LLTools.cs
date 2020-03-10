@@ -1,4 +1,5 @@
-﻿// ReSharper disable IdentifierTypo
+﻿#pragma warning disable 1591
+// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 
 using System;
@@ -8,10 +9,20 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe class LLTools: LLTypes
+	public unsafe class LLTools: LLTypes
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+		
+		public static bool Force32Bit { get; set; }
+
+		/// <summary>Checks if process is ran in 32-bit mode.</summary>
+		public static bool Algorithm32
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => Force32Bit || Mem.System32;
+		}
+
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int LZ4_compressBound(int isize) =>
