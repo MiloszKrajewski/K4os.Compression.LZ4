@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe class LLTypes
+	public unsafe class LLTypes
 	{
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
@@ -21,7 +21,7 @@ namespace K4os.Compression.LZ4.Engine
 		protected const int ACCELERATION_DEFAULT = 1;
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct LZ4_stream_t
+		public struct LZ4_stream_t
 		{
 			public fixed uint hashTable[LZ4_HASH_SIZE_U32];
 			public uint currentOffset;
