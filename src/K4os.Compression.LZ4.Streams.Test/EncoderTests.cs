@@ -52,11 +52,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 			}
 		}
 
-		#if DEBUG
-		[Theory(Skip = "Too long")]
-		#else
 		[Theory]
-		#endif
 		[InlineData("-1 -BD -B4 -BX", Mem.K8)]
 		[InlineData("-1 -BD -B5", Mem.K8)]
 		[InlineData("-1 -BD -B6 -BX", Mem.K8)]

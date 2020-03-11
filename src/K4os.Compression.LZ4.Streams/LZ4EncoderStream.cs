@@ -246,7 +246,7 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		/*
-		private void Write64(ulong value)
+		private void Stash64(ulong value)
 		{
 		    _buffer16[_index16 + 0] = (byte) value;
 		    _buffer16[_index16 + 1] = (byte) (value >> 8);

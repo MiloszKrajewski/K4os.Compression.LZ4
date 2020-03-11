@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Legacy.Test.Internal;
 using TestHelpers;
@@ -10,11 +9,7 @@ namespace K4os.Compression.LZ4.Legacy.Test
 {
 	public class EncoderTests
 	{
-#if DEBUG
-		[Theory(Skip = "Too long")]
-#else
 		[Theory]
-		#endif
 		[InlineData(false, Mem.M1, Mem.K8)]
 		[InlineData(false, Mem.K8, Mem.M1)]
 		[InlineData(true, Mem.K8, Mem.M1)]

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe class LLTypes
+	internal unsafe partial class LLTypes
 	{
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
@@ -63,6 +63,9 @@ namespace K4os.Compression.LZ4.Engine
 		protected const uint ML_MASK = (1U << ML_BITS) - 1;
 		protected const int RUN_BITS = 8 - ML_BITS;
 		protected const uint RUN_MASK = (1U << RUN_BITS) - 1;
+		
+		protected const int OPTIMAL_ML = (int) ((ML_MASK - 1) + MINMATCH);
+		protected const int LZ4_OPT_NUM = (1 << 12);
 
 		protected const int LZ4_64Klimit = 64 * KB + (MFLIMIT - 1);
 		protected const int LZ4_skipTrigger = 6;
@@ -100,6 +103,6 @@ namespace K4os.Compression.LZ4.Engine
 		protected enum variable_length_error
 		{
 			loop_error = -2, initial_error = -1, ok = 0
-		};
+		}
 	}
 }

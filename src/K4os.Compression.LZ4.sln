@@ -25,9 +25,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sanitized", "sanitized", "{9E28A764-FAC1-4E5C-ABAF-2B2F75173177}"
 	ProjectSection(SolutionItems) = preProject
 		sanitized\lz4.c = sanitized\lz4.c
-		sanitized\lz4frame.c = sanitized\lz4frame.c
 		sanitized\lz4hc.c = sanitized\lz4hc.c
-		sanitized\lz4opt.h = sanitized\lz4opt.h
+		sanitized\lz4.h = sanitized\lz4.h
+		sanitized\lz4hc.h = sanitized\lz4hc.h
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "K4os.Compression.LZ4.Benchmarks", "K4os.Compression.LZ4.Benchmarks\K4os.Compression.LZ4.Benchmarks.csproj", "{41EFE9C2-F186-4933-A224-C3D69105739C}"
