@@ -4,8 +4,6 @@
     <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net46</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <Configurations>Debug;Release;Optimized</Configurations>
-    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <Import Project="..\..\Common.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />

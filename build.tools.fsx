@@ -194,13 +194,10 @@ module Proj =
         solutions |> Seq.iter build
 
     let test project =
-        let configName = settings |> Config.value "Test" "Configuration"
-        let config = configName |> Option.map DotNet.Custom |> Option.def DotNet.Release
-        let rebuild = configName.IsSome
         project |> DotNet.test (fun p ->
             { p with
-                // NoBuild = not rebuild
-                // NoRestore = not rebuild
+                NoBuild = false
+                NoRestore = false
                 Configuration = DotNet.Release
                 Common = { p.Common with Verbosity = Some DotNet.Normal }
             })

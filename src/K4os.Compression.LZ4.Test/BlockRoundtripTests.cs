@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Engine;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Test.Adapters;
 using TestHelpers;
@@ -9,49 +11,35 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class BlockRoundtripTests
 	{
-		private static void Roundtrip(byte[] source)
+		private static void Roundtrip(byte[] source, bool enforce32 = false)
 		{
-			Mem.Force32Bit = false;
+			LLTools.Enforce32 = enforce32;
 			try
 			{
-			var legacy = LegacyLZ4.Encode(source, 0, source.Length);
-			var baseline = BaselineLZ4.Encode(source, 0, source.Length);
+				var legacy = LegacyLZ4.Encode(source, 0, source.Length);
+				var baseline = BaselineLZ4.Encode(source, 0, source.Length);
+				var current = CurrentLZ4.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
 
-				Mem.Force32Bit = true;
-				var current32 = CurrentLZ4.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
-				Mem.Force32Bit = false;
-				var current64 = CurrentLZ4.Encode(source, 0, source.Length, LZ4Level.L00_FAST);
-			
-			void TestDecode(byte[] compressed, Func<byte[], int, int, int, byte[]> func) =>
-				Tools.SameBytes(source, func(compressed, 0, compressed.Length, source.Length));
+				void TestDecode(byte[] compressed, Func<byte[], int, int, int, byte[]> func) =>
+					Tools.SameBytes(source, func(compressed, 0, compressed.Length, source.Length));
 
-				TestDecode(current32, LegacyLZ4.Decode);
-				TestDecode(current32, BaselineLZ4.Decode);
-				Mem.Force32Bit = true;
-				TestDecode(current32, CurrentLZ4.Decode);
-				Mem.Force32Bit = false;
-				TestDecode(current32, CurrentLZ4.Decode);
+				TestDecode(current, LegacyLZ4.Decode);
+				TestDecode(current, BaselineLZ4.Decode);
+				TestDecode(current, CurrentLZ4.Decode);
 
-				TestDecode(current64, LegacyLZ4.Decode);
-				TestDecode(current64, BaselineLZ4.Decode);
-				Mem.Force32Bit = true;
-				TestDecode(current64, CurrentLZ4.Decode);
-				Mem.Force32Bit = false;
-				TestDecode(current64, CurrentLZ4.Decode);
-			
-				Mem.Force32Bit = true;
 				TestDecode(legacy, CurrentLZ4.Decode);
-				Mem.Force32Bit = false;
-			TestDecode(legacy, CurrentLZ4.Decode); 
-				Mem.Force32Bit = true;
 				TestDecode(baseline, CurrentLZ4.Decode);
-				Mem.Force32Bit = false;
-			TestDecode(baseline, CurrentLZ4.Decode); 
 			}
 			finally
 			{
-				Mem.Force32Bit = false;
+				LLTools.Enforce32 = false;
 			}
+		}
+
+		private static void Roundtrip(byte[] source)
+		{
+			Roundtrip(source, false);
+			Roundtrip(source, true);
 		}
 
 		[Fact]

@@ -4,7 +4,6 @@
     <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net46</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <Platforms>AnyCPU</Platforms>
     <PackageTags>compression lz4 stream</PackageTags>
   </PropertyGroup>
   <ItemGroup>
