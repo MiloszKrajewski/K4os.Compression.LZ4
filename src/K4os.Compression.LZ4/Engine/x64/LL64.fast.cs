@@ -1,11 +1,4 @@
-//---------------------------------------------------------
-//
-// This file has been generated. All changes will be lost.
-//
-//---------------------------------------------------------
-#define BIT32
-
-// ReSharper disable IdentifierTypo
+﻿// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -25,9 +18,9 @@ namespace K4os.Compression.LZ4.Engine
 	#endif
 
 	#if BIT32
-	internal unsafe class LLFast32: LLTools32
+	internal unsafe partial class LL32: LL
 	#else
-	internal unsafe class LLFast64: LLTools64
+	internal unsafe partial class LL64: LL
 	#endif
 	{
 		#region LZ4_compress_generic
@@ -568,7 +561,7 @@ namespace K4os.Compression.LZ4.Engine
 			}
 		}
 
-		public static int LZ4_compress_fast(
+		public new static int LZ4_compress_fast(
 			byte* source, byte* dest, int inputSize, int maxOutputSize, int acceleration)
 		{
 			LZ4_stream_t ctx;
@@ -580,7 +573,7 @@ namespace K4os.Compression.LZ4.Engine
 			byte* src, byte* dst, int srcSize, int maxOutputSize) =>
 			LZ4_compress_fast(src, dst, srcSize, maxOutputSize, 1);
 
-		public static int LZ4_compress_fast_continue(
+		public new static int LZ4_compress_fast_continue(
 			LZ4_stream_t* LZ4_stream,
 			byte* source, byte* dest,
 			int inputSize, int maxOutputSize,
@@ -668,4 +661,3 @@ namespace K4os.Compression.LZ4.Engine
 		}
 	}
 }
-

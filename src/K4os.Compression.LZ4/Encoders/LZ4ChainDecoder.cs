@@ -5,7 +5,7 @@ using K4os.Compression.LZ4.Internal;
 namespace K4os.Compression.LZ4.Encoders
 {
 	// fast decoder context
-	using LZ4Context = LLTypes.LZ4_streamDecode_t;
+	using LZ4Context = LL.LZ4_streamDecode_t;
 
 	/// <summary>LZ4 decoder handling dependent blocks.</summary>
 	public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
@@ -108,7 +108,7 @@ namespace K4os.Compression.LZ4.Encoders
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
 			Mem.Move(_outputBuffer, _outputBuffer + dictStart, dictSize);
-			LLTools.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
+			LL.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
 			return dictSize;
 		}
 
@@ -116,12 +116,12 @@ namespace K4os.Compression.LZ4.Encoders
 		{ 
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
-			LLTools.LZ4_setStreamDecode(_context, _outputBuffer + dictStart, dictSize);
+			LL.LZ4_setStreamDecode(_context, _outputBuffer + dictStart, dictSize);
 			return index;
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
-			LLDec.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
+			LL.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
 
 		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()

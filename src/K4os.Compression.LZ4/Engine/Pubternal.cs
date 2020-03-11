@@ -16,11 +16,11 @@ namespace K4os.Compression.LZ4.Engine
 		/// <summary>Pubternal wrapper for LZ4_stream_t.</summary>
 		public class FastContext: UnmanagedResources
 		{
-			internal LLTypes.LZ4_stream_t* Context { get; }
+			internal LL.LZ4_stream_t* Context { get; }
 
 			/// <summary>Creates new instance of wrapper for LZ4_stream_t.</summary>
 			public FastContext() =>
-				Context = (LLTypes.LZ4_stream_t*) Mem.AllocZero(sizeof(LLTypes.LZ4_stream_t));
+				Context = (LL.LZ4_stream_t*) Mem.AllocZero(sizeof(LL.LZ4_stream_t));
 
 			/// <inheritdoc/>
 			protected override void ReleaseUnmanaged() => Mem.Free(Context);
@@ -41,7 +41,7 @@ namespace K4os.Compression.LZ4.Engine
 			byte* source, byte* target,
 			int sourceLength, int targetLength,
 			int acceleration) =>
-			LLFast.LZ4_compress_fast_continue(
+			LL.LZ4_compress_fast_continue(
 				context.Context,
 				source, target,
 				sourceLength, targetLength,

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe partial class LLTypes
+	internal unsafe partial class LL
 	{
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;

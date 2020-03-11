@@ -6,7 +6,7 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe class LLHigh: LLTools
+	internal unsafe partial class LL
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint HASH_FUNCTION(uint value) =>

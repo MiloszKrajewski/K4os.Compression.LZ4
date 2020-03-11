@@ -1,4 +1,11 @@
-﻿// ReSharper disable IdentifierTypo
+//---------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//---------------------------------------------------------
+#define BIT32
+
+// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -17,9 +24,9 @@ namespace K4os.Compression.LZ4.Engine
 	#endif
 
 	#if BIT32
-	internal unsafe class LLTools32: LLTools
+	internal unsafe partial class LL32: LL
 	#else
-	internal unsafe class LLTools64: LLTools
+	internal unsafe partial class LL64: LL
 	#endif
 	{
 		#if BIT32
@@ -181,3 +188,4 @@ namespace K4os.Compression.LZ4.Engine
 		#endregion
 	}
 }
+

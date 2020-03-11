@@ -5,16 +5,14 @@ namespace K4os.Compression.LZ4.Engine
 {
 	#if BIT32
 	using Mem = Internal.Mem32;
-	using LLFast = LLFast32;
 	#else
 	using Mem = Internal.Mem64;
-	using LLFast = LLFast64;
 	#endif
 
 	#if BIT32
-	internal class LLHigh32: LLHigh
+	internal unsafe partial class LL32: LL
 	#else
-	internal class LLHigh64: LLHigh
+	internal unsafe partial class LL64: LL
 	#endif
 	{
 		

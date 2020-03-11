@@ -59,7 +59,7 @@ Target.create "Preprocess" (fun _ ->
         |> File.saveLines target
 
     let root = "./src/K4os.Compression.LZ4"
-    !! (root @@ "**/x64/*64.cs")
+    !! (root @@ "**/x64/*64*.cs")
     |> Seq.map (fun fn -> fn, String.replace "64" "32" fn)
     |> Seq.iter preprocess
 )

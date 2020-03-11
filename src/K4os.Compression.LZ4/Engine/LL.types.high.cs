@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	internal unsafe partial class LLTypes
+	internal unsafe partial class LL
 	{
 		protected enum dictCtx_directive { noDictCtx = 0, usingDictCtxHc }
 
