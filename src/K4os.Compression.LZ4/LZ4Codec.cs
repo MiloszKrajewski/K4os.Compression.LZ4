@@ -12,6 +12,18 @@ namespace K4os.Compression.LZ4
 		/// <summary>Version of LZ4 implementation.</summary>
 		public const int Version = 192;
 
+		/// <summary>
+		/// Enforces 32-bit compression/decompression algorithm even on 64-bit systems.
+		/// Please note, this property should not be used on regular basis, it just allows
+		/// to workaround some problems on platforms which do not support 64-bit the same was
+		/// as Intel (for example: unaligned read/writes)
+		/// </summary>
+		public static bool Enforce32
+		{
+			get => LLTools.Enforce32;
+			set => LLTools.Enforce32 = value;
+		}
+
 		/// <summary>Maximum size after compression.</summary>
 		/// <param name="length">Length of input buffer.</param>
 		/// <returns>Maximum length after compression.</returns>

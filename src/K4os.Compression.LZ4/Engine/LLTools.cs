@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591
-// ReSharper disable IdentifierTypo
+﻿// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 
 using System;
@@ -9,7 +8,7 @@ using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	public unsafe class LLTools: LLTypes
+	internal unsafe class LLTools: LLTypes
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]

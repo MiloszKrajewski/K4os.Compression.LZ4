@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	public unsafe class LLFast
+	internal unsafe class LLFast
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int LZ4_compress_fast(

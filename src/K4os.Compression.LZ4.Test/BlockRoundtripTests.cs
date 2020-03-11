@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Engine;
+using System.Text;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Test.Adapters;
 using TestHelpers;
@@ -11,9 +10,9 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class BlockRoundtripTests
 	{
-		private static void Roundtrip(byte[] source, bool enforce32 = false)
+		private static void Roundtrip(byte[] source, bool enforce32)
 		{
-			LLTools.Enforce32 = enforce32;
+			LZ4Codec.Enforce32 = enforce32;
 			try
 			{
 				var legacy = LegacyLZ4.Encode(source, 0, source.Length);
@@ -32,21 +31,21 @@ namespace K4os.Compression.LZ4.Test
 			}
 			finally
 			{
-				LLTools.Enforce32 = false;
+				LZ4Codec.Enforce32 = false;
 			}
 		}
 
 		private static void Roundtrip(byte[] source)
 		{
 			Roundtrip(source, false);
-			Roundtrip(source, true);
+			if (!Mem.System32) Roundtrip(source, true);
 		}
 
 		[Fact]
 		public void QuickFoxRoundtrip()
 		{
 			var text = "The quick brown fox jumps over the lazy dog";
-			var textBytes = System.Text.Encoding.UTF8.GetBytes(text);
+			var textBytes = Encoding.UTF8.GetBytes(text);
 
 			var encoded = new byte[LZ4Codec.MaximumOutputSize(textBytes.Length)];
 			var encodedLength = LZ4Codec.Encode(

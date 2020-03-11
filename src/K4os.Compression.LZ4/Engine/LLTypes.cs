@@ -1,4 +1,3 @@
-#pragma warning disable 1591
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 
@@ -7,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	public unsafe class LLTypes
+	internal unsafe class LLTypes
 	{
 		protected const int LZ4_MEMORY_USAGE = 14;
 		protected const int LZ4_MAX_INPUT_SIZE = 0x7E000000;
