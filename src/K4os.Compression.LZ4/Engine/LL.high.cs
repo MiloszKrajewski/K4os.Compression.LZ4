@@ -13,9 +13,9 @@ namespace K4os.Compression.LZ4.Engine
 			(value * 2654435761U) >> (MINMATCH * 8 - LZ4HC_HASH_LOG);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint LZ4HC_hashPtr(void* ptr) => HASH_FUNCTION(Mem.Peek4(ptr));
-
+		private static ref ushort DELTANEXTU16(ushort* table, int pos) => ref table[(ushort) (pos)];
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ref ushort DELTANEXTU16(ushort* table, int pos) => ref table[(ushort) (pos)];
+		public static uint LZ4HC_hashPtr(void* ptr) => HASH_FUNCTION(Mem.Peek4(ptr));
 	}
 }

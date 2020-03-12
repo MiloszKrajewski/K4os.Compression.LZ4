@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Engine
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int LZ4_decompress_safe(
 			byte* source, byte* target, int sourceLength, int targetLength) =>
-			LL.Algorithm32
+			Algorithm32
 				? LL32.LZ4_decompress_safe(
 					source, target, sourceLength, targetLength)
 				: LL64.LZ4_decompress_safe(
@@ -20,7 +20,7 @@ namespace K4os.Compression.LZ4.Engine
 		public static int LZ4_decompress_safe_continue(
 			LZ4_streamDecode_t* context,
 			byte* source, byte* target, int sourceLength, int targetLength) =>
-			LL.Algorithm32
+			Algorithm32
 				? LL32.LZ4_decompress_safe_continue(
 					context, source, target, sourceLength, targetLength)
 				: LL64.LZ4_decompress_safe_continue(
