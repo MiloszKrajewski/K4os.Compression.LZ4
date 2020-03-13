@@ -279,7 +279,7 @@ namespace K4os.Compression.LZ4.Engine
 					{
 						if ((op + length > oend - LASTLITERALS))
 						{
-							if (partialDecoding) length = LZ4_min(length, (size_t) (oend - op));
+							if (partialDecoding) length = MIN(length, (size_t) (oend - op));
 							else goto _output_error; /* doesn't respect parsing restriction */
 						}
 
@@ -484,7 +484,7 @@ namespace K4os.Compression.LZ4.Engine
 		public static int LZ4_decompress_safe_partial(
 			byte* src, byte* dst, int compressedSize, int targetOutputSize, int dstCapacity)
 		{
-			var minCapacity = LZ4_min((size_t) targetOutputSize, (size_t) dstCapacity);
+			var minCapacity = MIN((size_t) targetOutputSize, (size_t) dstCapacity);
 			return LZ4_decompress_generic(
 				src, dst, compressedSize, (int) minCapacity,
 				endCondition_directive.endOnInputSize, earlyEnd_directive.partial,

@@ -34,6 +34,7 @@ module Sanitizer =
         replaceText @"uint64_t" "ulong" >>
         replaceText @"uptrval" "ptr_t" >>
         replaceText @"base" "@base" >>
+        replaceText @"ref" "@ref" >>
         replaceText @"LZ4_writeLE16" "Mem.Poke2" >>
         replaceText @"LZ4_read16" "Mem.Peek2" >>
         replaceText @"LZ4_read32" "Mem.Peek4" >>

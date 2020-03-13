@@ -129,9 +129,21 @@ namespace K4os.Compression.LZ4.Engine
 				default: return ((ushort*) tableBase)[h] + srcBase;
 			}
 		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int MIN(int a, int b) => a < b ? a : b;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint LZ4_min(uint a, uint b) => a < b ? a : b;
+		public static uint MIN(uint a, uint b) => a < b ? a : b;
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static uint MAX(uint a, uint b) => a < b ? b : a;
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static long MAX(long a, long b) => a < b ? b : a;
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static long MIN(long a, long b) => a < b ? a : b;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_readVLE(
