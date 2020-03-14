@@ -2,6 +2,7 @@
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using size_t = System.UInt32;
@@ -15,14 +16,13 @@ namespace K4os.Compression.LZ4.Engine
 	#else
 	using Mem = Internal.Mem64;
 	using reg_t = System.UInt64;
-
 	#endif
 
 	#if BIT32
 	internal unsafe partial class LL32: LL
 	#else
 	internal unsafe partial class LL64: LL
-		#endif
+	#endif
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static uint LZ4HC_countPattern(byte* ip, byte* iEnd, uint pattern32)
@@ -99,7 +99,7 @@ namespace K4os.Compression.LZ4.Engine
 			{
 				int matchLength = 0;
 				nbAttempts--;
-				Debug.Assert(matchIndex < ipIndex);
+				Assert(matchIndex < ipIndex);
 				if (favorDecSpeed != 0 && (ipIndex - matchIndex < 8))
 				{
 					/* do nothing */
@@ -108,9 +108,9 @@ namespace K4os.Compression.LZ4.Engine
 				{
 					/* within current Prefix */
 					byte* matchPtr = @base + matchIndex;
-					Debug.Assert(matchPtr >= lowPrefixPtr);
-					Debug.Assert(matchPtr < ip);
-					Debug.Assert(longest >= 1);
+					Assert(matchPtr >= lowPrefixPtr);
+					Assert(matchPtr < ip);
+					Assert(longest >= 1);
 					if (Mem.Peek2(iLowLimit + longest - 1)
 						== Mem.Peek2(matchPtr - lookBackLength + longest - 1))
 					{
@@ -162,7 +162,7 @@ namespace K4os.Compression.LZ4.Engine
 				if (chainSwap && matchLength == longest)
 				{
 					/* better match => select a better chain */
-					Debug.Assert(lookBackLength == 0); /* search forward only */
+					Assert(lookBackLength == 0); /* search forward only */
 					if (matchIndex + (uint) longest <= ipIndex)
 					{
 						int kTrigger = 4;
@@ -252,7 +252,7 @@ namespace K4os.Compression.LZ4.Engine
 									/* Limit backLength not go further than lowestMatchIndex */
 									backLength = matchCandidateIdx - MAX(
 										matchCandidateIdx - (uint) backLength, lowestMatchIndex);
-									Debug.Assert(
+									Assert(
 										matchCandidateIdx - backLength >= lowestMatchIndex);
 									currentSegmentLength = backLength + forwardPatternLength;
 									/* Adjust to end of pattern if the source pattern fits, otherwise the beginning of the pattern */
@@ -271,7 +271,7 @@ namespace K4os.Compression.LZ4.Engine
 										else
 										{
 											/* Can only happen if started in the prefix */
-											Debug.Assert(
+											Assert(
 												newMatchIndex >= dictLimit - 3
 												&& newMatchIndex < dictLimit && !extDict);
 											matchIndex = dictLimit;
@@ -284,7 +284,7 @@ namespace K4os.Compression.LZ4.Engine
 											- (uint) backLength; /* farthest position in current segment, will find a match of length currentSegmentLength + maybe some back */
 										if (!LZ4HC_protectDictEnd(dictLimit, newMatchIndex))
 										{
-											Debug.Assert(
+											Assert(
 												newMatchIndex >= dictLimit - 3
 												&& newMatchIndex < dictLimit && !extDict);
 											matchIndex = dictLimit;
@@ -299,11 +299,11 @@ namespace K4os.Compression.LZ4.Engine
 													currentSegmentLength, srcPatternLength);
 												if ((size_t) longest < maxML)
 												{
-													Debug.Assert(@base + matchIndex != ip);
+													Assert(@base + matchIndex != ip);
 													if ((size_t) (ip - @base) - matchIndex
 														> LZ4_DISTANCE_MAX) break;
 
-													Debug.Assert(maxML < 2 * GB);
+													Assert(maxML < 2 * GB);
 													longest = (int) maxML;
 													*matchpos =
 														@base
@@ -339,7 +339,7 @@ namespace K4os.Compression.LZ4.Engine
 			{
 				size_t dictEndOffset = (size_t) (dictCtx->end - dictCtx->@base);
 				uint dictMatchIndex = dictCtx->hashTable[LZ4HC_hashPtr(ip)];
-				Debug.Assert(dictEndOffset <= 1 * GB);
+				Assert(dictEndOffset <= 1 * GB);
 				matchIndex = dictMatchIndex + lowestMatchIndex - (uint) dictEndOffset;
 				while (ipIndex - matchIndex <= LZ4_DISTANCE_MAX && nbAttempts-- != 0)
 				{
@@ -460,14 +460,14 @@ namespace K4os.Compression.LZ4.Engine
 			*op += length;
 
 			/* Encode Offset */
-			Debug.Assert(
+			Assert(
 				(*ip - match)
 				<= LZ4_DISTANCE_MAX); /* note : consider providing offset as a value, rather than as a pointer difference */
 			Mem.Poke2(*op, (ushort) (*ip - match));
 			*op += 2;
 
 			/* Encode MatchLength */
-			Debug.Assert(matchLength >= MINMATCH);
+			Assert(matchLength >= MINMATCH);
 			length = (size_t) matchLength - MINMATCH;
 			if ((limit != 0) && (*op + (length / 255) + (1 + LASTLITERALS) > oend))
 				return 1; /* Check output limit */
@@ -826,7 +826,7 @@ namespace K4os.Compression.LZ4.Engine
 			if (sufficient_len >= LZ4_OPT_NUM) sufficient_len = LZ4_OPT_NUM - 1;
 
 			/* Main Loop */
-			Debug.Assert(ip - anchor < LZ4_MAX_INPUT_SIZE);
+			Assert(ip - anchor < LZ4_MAX_INPUT_SIZE);
 			while (ip <= mflimit)
 			{
 				int llen = (int) (ip - anchor);
@@ -871,7 +871,7 @@ namespace K4os.Compression.LZ4.Engine
 					int mlen = MINMATCH;
 					int matchML = firstMatch.len; /* necessarily < sufficient_len < LZ4_OPT_NUM */
 					int offset = firstMatch.off;
-					Debug.Assert(matchML < LZ4_OPT_NUM);
+					Assert(matchML < LZ4_OPT_NUM);
 					for (; mlen <= matchML; mlen++)
 					{
 						int cost = LZ4HC_sequencePrice(llen, mlen);
@@ -960,7 +960,7 @@ namespace K4os.Compression.LZ4.Engine
 						int matchML = newMatch.len;
 						int ml = MINMATCH;
 
-						Debug.Assert(cur + newMatch.len < LZ4_OPT_NUM);
+						Assert(cur + newMatch.len < LZ4_OPT_NUM);
 						for (; ml <= matchML; ml++)
 						{
 							int pos = cur + ml;
@@ -979,11 +979,11 @@ namespace K4os.Compression.LZ4.Engine
 								price = opt[cur].price + LZ4HC_sequencePrice(0, ml);
 							}
 
-							Debug.Assert((uint) favorDecSpeed <= 1);
+							Assert((uint) favorDecSpeed <= 1);
 							if (pos > last_match_pos + TRAILING_LITERALS
 								|| price <= opt[pos].price - (int) favorDecSpeed)
 							{
-								Debug.Assert(pos < LZ4_OPT_NUM);
+								Assert(pos < LZ4_OPT_NUM);
 								if ((ml == matchML) /* last pos of last match */
 									&& (last_match_pos < pos))
 									last_match_pos = pos;
@@ -1008,14 +1008,14 @@ namespace K4os.Compression.LZ4.Engine
 					}
 				} /* for (cur = 1; cur <= last_match_pos; cur++) */
 
-				Debug.Assert(last_match_pos < LZ4_OPT_NUM + TRAILING_LITERALS);
+				Assert(last_match_pos < LZ4_OPT_NUM + TRAILING_LITERALS);
 				best_mlen = opt[last_match_pos].mlen;
 				best_off = opt[last_match_pos].off;
 				cur = last_match_pos - best_mlen;
 
 				encode: /* cur, last_match_pos, best_mlen, best_off must be set */
-				Debug.Assert(cur < LZ4_OPT_NUM);
-				Debug.Assert(last_match_pos >= 1); /* == 1 when only one candidate */
+				Assert(cur < LZ4_OPT_NUM);
+				Assert(last_match_pos >= 1); /* == 1 when only one candidate */
 				{
 					int candidate_pos = cur;
 					int selected_matchLength = best_mlen;
@@ -1033,7 +1033,7 @@ namespace K4os.Compression.LZ4.Engine
 						if (next_matchLength > candidate_pos)
 							break; /* last match elected, first match to encode */
 
-						Debug.Assert(next_matchLength > 0); /* can be 1, means literal */
+						Assert(next_matchLength > 0); /* can be 1, means literal */
 						candidate_pos -= next_matchLength;
 					}
 				}
@@ -1053,8 +1053,8 @@ namespace K4os.Compression.LZ4.Engine
 						} /* literal; note: can end up with several literals, in which case, skip them */
 
 						rPos += ml;
-						Debug.Assert(ml >= MINMATCH);
-						Debug.Assert((offset >= 1) && (offset <= LZ4_DISTANCE_MAX));
+						Assert(ml >= MINMATCH);
+						Assert((offset >= 1) && (offset <= LZ4_DISTANCE_MAX));
 						opSaved = op;
 						if (LZ4HC_encodeSequence(&ip, &op, &anchor, ml, ip - offset, limit, oend)
 							!= 0) /* updates ip, op and anchor */
@@ -1167,7 +1167,7 @@ namespace K4os.Compression.LZ4.Engine
 				}
 				else
 				{
-					Debug.Assert(cParam.strat == lz4hc_strat_e.lz4opt);
+					Assert(cParam.strat == lz4hc_strat_e.lz4opt);
 					result = LZ4HC_compress_optimal(
 						ctx,
 						src, dst, srcSizePtr, dstCapacity,
@@ -1190,7 +1190,7 @@ namespace K4os.Compression.LZ4.Engine
 			int cLevel,
 			limitedOutput_directive limit)
 		{
-			Debug.Assert(ctx->dictCtx == null);
+			Assert(ctx->dictCtx == null);
 			return LZ4HC_compress_generic_internal(
 				ctx, src, dst, srcSizePtr, dstCapacity, cLevel, limit, dictCtx_directive.noDictCtx);
 		}
@@ -1205,7 +1205,7 @@ namespace K4os.Compression.LZ4.Engine
 			limitedOutput_directive limit)
 		{
 			size_t position = (size_t) (ctx->end - ctx->@base) - ctx->lowLimit;
-			Debug.Assert(ctx->dictCtx != null);
+			Assert(ctx->dictCtx != null);
 			if (position >= 64 * KB)
 			{
 				ctx->dictCtx = null;
@@ -1256,7 +1256,7 @@ namespace K4os.Compression.LZ4.Engine
 			limitedOutput_directive limit)
 		{
 			LZ4_streamHC_t* ctxPtr = LZ4_streamHCPtr;
-			Debug.Assert(ctxPtr != null);
+			Assert(ctxPtr != null);
 			/* auto-init if forgotten */
 			if (ctxPtr->@base == null) LZ4HC_init_internal(ctxPtr, (byte*) src);
 
@@ -1288,6 +1288,88 @@ namespace K4os.Compression.LZ4.Engine
 
 			return LZ4HC_compress_generic(
 				ctxPtr, src, dst, srcSizePtr, dstCapacity, ctxPtr->compressionLevel, limit);
+		}
+
+		public static int LZ4_compress_HC_continue(
+			LZ4_streamHC_t* LZ4_streamHCPtr, byte* src, byte* dst, int srcSize, int dstCapacity)
+		{
+			if (dstCapacity < LZ4_compressBound(srcSize))
+				return LZ4_compressHC_continue_generic(
+					LZ4_streamHCPtr, src, dst, &srcSize, dstCapacity,
+					limitedOutput_directive.limitedOutput);
+			else
+				return LZ4_compressHC_continue_generic(
+					LZ4_streamHCPtr, src, dst, &srcSize, dstCapacity,
+					limitedOutput_directive.notLimited);
+		}
+
+		public static int LZ4_compress_HC_continue_destSize(
+			LZ4_streamHC_t* LZ4_streamHCPtr, byte* src, byte* dst, int* srcSizePtr,
+			int targetDestSize)
+		{
+			return LZ4_compressHC_continue_generic(
+				LZ4_streamHCPtr, src, dst, srcSizePtr, targetDestSize,
+				limitedOutput_directive.fillOutput);
+		}
+
+		public static int LZ4_compress_HC_destSize(
+			LZ4_streamHC_t* state, byte* source, byte* dest, int* sourceSizePtr, int targetDestSize,
+			int cLevel)
+		{
+			LZ4_streamHC_t* ctx = LZ4_initStreamHC(state);
+			if (ctx == null) return 0; /* init failure */
+
+			LZ4HC_init_internal(ctx, (byte*) source);
+			LZ4_setCompressionLevel(ctx, cLevel);
+			return LZ4HC_compress_generic(
+				ctx, source, dest, sourceSizePtr, targetDestSize, cLevel,
+				limitedOutput_directive.fillOutput);
+		}
+
+		public static int LZ4_compress_HC_extStateHC_fastReset(
+			LZ4_streamHC_t* state, byte* src, byte* dst, int srcSize, int dstCapacity,
+			int compressionLevel)
+		{
+			LZ4_streamHC_t* ctx = ((LZ4_streamHC_t*) state);
+			if (((size_t) (state) & (sizeof(void*) - 1)) != 0)
+				return 0; /* Error : state is not aligned for pointers (32 or 64 bits) */
+
+			LZ4_resetStreamHC_fast((LZ4_streamHC_t*) state, compressionLevel);
+			LZ4HC_init_internal(ctx, (byte*) src);
+			if (dstCapacity < LZ4_compressBound(srcSize))
+				return LZ4HC_compress_generic(
+					ctx, src, dst, &srcSize, dstCapacity, compressionLevel,
+					limitedOutput_directive.limitedOutput);
+			else
+				return LZ4HC_compress_generic(
+					ctx, src, dst, &srcSize, dstCapacity, compressionLevel,
+					limitedOutput_directive.notLimited);
+		}
+
+		public static int LZ4_compress_HC_extStateHC(
+			LZ4_streamHC_t* state, byte* src, byte* dst, int srcSize, int dstCapacity,
+			int compressionLevel)
+		{
+			LZ4_streamHC_t* ctx = LZ4_initStreamHC(state);
+			if (ctx == null) return 0; /* init failure */
+
+			return LZ4_compress_HC_extStateHC_fastReset(
+				state, src, dst, srcSize, dstCapacity, compressionLevel);
+		}
+
+		public static int LZ4_compress_HC(
+			byte* src, byte* dst, int srcSize, int dstCapacity, int compressionLevel)
+		{
+			LZ4_streamHC_t* statePtr = (LZ4_streamHC_t*) Mem.Alloc(sizeof(LZ4_streamHC_t));
+			try
+			{
+				return LZ4_compress_HC_extStateHC(
+					statePtr, src, dst, srcSize, dstCapacity, compressionLevel);
+			}
+			finally
+			{
+				Mem.Free(statePtr);
+			}
 		}
 	}
 }

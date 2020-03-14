@@ -89,23 +89,23 @@
 	LZ4_loadDictHC
 	LZ4HC_setExternalDict
 	LZ4HC_compress_generic
-LZ4_compress_HC_continue
++ LZ4_compress_HC_continue
 	LZ4_compressHC_continue_generic
-LZ4_compress_HC_continue_destSize
++ LZ4_compress_HC_continue_destSize
 	LZ4_compressHC_continue_generic
-LZ4_compress_HC_destSize
++ LZ4_compress_HC_destSize
 	LZ4_initStreamHC
 	LZ4HC_init_internal
 	LZ4_setCompressionLevel
 	LZ4HC_compress_generic
-LZ4_compress_HC_extStateHC_fastReset
++ LZ4_compress_HC_extStateHC_fastReset
 	LZ4_resetStreamHC_fast
 	LZ4HC_init_internal
 	LZ4HC_compress_generic
-LZ4_compress_HC_extStateHC
++ LZ4_compress_HC_extStateHC
 	LZ4_initStreamHC
 	LZ4_compress_HC_extStateHC_fastReset
-LZ4_compress_HC
++ LZ4_compress_HC
 	LZ4_compress_HC_extStateHC
 
 --- private?

@@ -32,7 +32,7 @@ namespace K4os.Compression.LZ4.Encoders
 		/// <inheritdoc />
 		protected override int EncodeBlock(
 			byte* source, int sourceLength, byte* target, int targetLength) =>
-			LL.LZ4_compress_fast_continue(
+			LLxx.LZ4_compress_fast_continue(
 				_context, source, target, sourceLength, targetLength, 1);
 
 		/// <inheritdoc />

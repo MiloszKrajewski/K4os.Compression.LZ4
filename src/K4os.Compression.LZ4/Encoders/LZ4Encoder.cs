@@ -14,7 +14,7 @@
 		public static ILZ4Encoder Create(
 			bool chaining, LZ4Level level, int blockSize, int extraBlocks = 0) =>
 			!chaining ? CreateBlockEncoder(level, blockSize) :
-			level == LZ4Level.L00_FAST ? CreateFastEncoder(blockSize, extraBlocks) :
+			level < LZ4Level.L03_HC ? CreateFastEncoder(blockSize, extraBlocks) : 
 			CreateHighEncoder(level, blockSize, extraBlocks);
 
 		private static ILZ4Encoder CreateBlockEncoder(LZ4Level level, int blockSize) =>
@@ -25,8 +25,6 @@
 
 		private static ILZ4Encoder CreateHighEncoder(
 			LZ4Level level, int blockSize, int extraBlocks) => 
-			null;
-		#warning implement me
-			// new LZ4HighChainEncoder(level, blockSize, extraBlocks);
+			new LZ4HighChainEncoder(level, blockSize, extraBlocks);
 	}
 }

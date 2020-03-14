@@ -12,7 +12,6 @@
 // ReSharper disable BuiltInTypeReferenceStyle
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using size_t = System.UInt32;
 
@@ -92,7 +91,7 @@ namespace K4os.Compression.LZ4.Engine
 				size_t length;
 
 				/* Special cases */
-				Debug.Assert(lowPrefix <= op);
+				Assert(lowPrefix <= op);
 				if ((endOnInput) && ((outputSize == 0)))
 				{
 					/* Empty output buffer */
@@ -111,7 +110,7 @@ namespace K4os.Compression.LZ4.Engine
 					token = *ip++;
 					length = (size_t) (token >> ML_BITS); /* literal length */
 
-					Debug.Assert(!endOnInput || ip <= iend); /* ip < iend before the increment */
+					Assert(!endOnInput || ip <= iend); /* ip < iend before the increment */
 
 					/* A two-stage shortcut for the most common case:
 					* 1) If the literal length is 0..14, and there is enough space,
@@ -139,7 +138,7 @@ namespace K4os.Compression.LZ4.Engine
 						offset = Mem.Peek2(ip);
 						ip += 2;
 						match = op - offset;
-						Debug.Assert(match <= op); /* check overflow */
+						Assert(match <= op); /* check overflow */
 
 						/* Do not deal with overlapping matches. */
 						if ((length != ML_MASK)
@@ -192,25 +191,25 @@ namespace K4os.Compression.LZ4.Engine
 							/* Since we are partial decoding we may be in this block because of the output parsing
 							* restriction, which is not valid since the output buffer is allowed to be undersized.
 							*/
-							Debug.Assert(endOnInput);
+							Assert(endOnInput);
 							/* If we're in this block because of the input parsing condition, then we must be on the
 							* last sequence (or invalid), so we must check that we exactly consume the input.
 							*/
 							if ((ip + length > iend - (2 + 1 + LASTLITERALS))
 								&& (ip + length != iend)) { goto _output_error; }
 
-							Debug.Assert(ip + length <= iend);
+							Assert(ip + length <= iend);
 							/* We are finishing in the middle of a literals segment.
 							* Break after the copy.
 							*/
 							if (cpy > oend)
 							{
 								cpy = oend;
-								Debug.Assert(op <= oend);
+								Assert(op <= oend);
 								length = (size_t) (oend - op);
 							}
 
-							Debug.Assert(ip + length <= iend);
+							Assert(ip + length <= iend);
 						}
 						else
 						{
@@ -313,13 +312,13 @@ namespace K4os.Compression.LZ4.Engine
 						continue;
 					}
 
-					Debug.Assert(match >= lowPrefix);
+					Assert(match >= lowPrefix);
 
 					/* copy match within block */
 					cpy = op + length;
 
 					/* partialDecoding : may end anywhere within the block */
-					Debug.Assert(op <= oend);
+					Assert(op <= oend);
 					if (partialDecoding && (cpy > oend - MATCH_SAFEGUARD_DISTANCE))
 					{
 						size_t mlen = Math.Min(length, (size_t) (oend - op));
@@ -471,12 +470,12 @@ namespace K4os.Compression.LZ4.Engine
 						source, dest, compressedSize, maxOutputSize);
 				}
 
-				Debug.Assert(dictSize >= 0);
+				Assert(dictSize >= 0);
 				return LZ4_decompress_safe_withSmallPrefix(
 					source, dest, compressedSize, maxOutputSize, (size_t) dictSize);
 			}
 
-			Debug.Assert(dictSize >= 0);
+			Assert(dictSize >= 0);
 			return LZ4_decompress_safe_forceExtDict(
 				source, dest, compressedSize, maxOutputSize, dictStart, (size_t) dictSize);
 		}
@@ -501,7 +500,7 @@ namespace K4os.Compression.LZ4.Engine
 			if (lz4sd->prefixSize == 0)
 			{
 				/* The first call, no dictionary yet. */
-				Debug.Assert(lz4sd->extDictSize == 0);
+				Assert(lz4sd->extDictSize == 0);
 				result = LZ4_decompress_safe(source, dest, compressedSize, maxOutputSize);
 				if (result <= 0) return result;
 

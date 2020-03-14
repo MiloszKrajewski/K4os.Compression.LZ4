@@ -35,13 +35,13 @@ namespace K4os.Compression.LZ4.Engine
 		/// <param name="sourceLength">Source block length.</param>
 		/// <param name="targetLength">Target block length.</param>
 		/// <param name="acceleration">Acceleration.</param>
-		/// <returns></returns>
+		/// <returns>Number of bytes actually written to target.</returns>
 		public static int CompressFast(
 			FastContext context,
 			byte* source, byte* target,
 			int sourceLength, int targetLength,
 			int acceleration) =>
-			LL.LZ4_compress_fast_continue(
+			LLxx.LZ4_compress_fast_continue(
 				context.Context,
 				source, target,
 				sourceLength, targetLength,

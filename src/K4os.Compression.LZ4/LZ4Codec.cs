@@ -46,11 +46,9 @@ namespace K4os.Compression.LZ4
 				return 0;
 
 			var encoded =
-				level == LZ4Level.L00_FAST
-					? LL.LZ4_compress_fast(source, target, sourceLength, targetLength, 1)
-					: -1;
-#warning implement
-			// : LowLevelHighCompressor64.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
+				level < LZ4Level.L03_HC
+					? LLxx.LZ4_compress_fast(source, target, sourceLength, targetLength, 1)
+					: LLxx.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
 			return encoded <= 0 ? -1 : encoded;
 		}
 

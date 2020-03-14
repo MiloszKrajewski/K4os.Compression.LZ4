@@ -93,8 +93,8 @@ namespace K4os.Compression.LZ4.Engine
 			if ((tableType == tableType_t.byU16) && (inputSize >= LZ4_64Klimit)) { return 0; }
 
 			if (tableType == tableType_t.byPtr)
-				Debug.Assert(dictDirective == dict_directive.noDict);
-			Debug.Assert(acceleration >= 1);
+				Assert(dictDirective == dict_directive.noDict);
+			Assert(acceleration >= 1);
 
 			lowLimit = (byte*) source
 				- (dictDirective == dict_directive.withPrefix64k ? dictSize : 0);
@@ -144,7 +144,7 @@ namespace K4os.Compression.LZ4.Engine
 
 						if ((forwardIp > mflimitPlusOne)) goto _last_literals;
 
-						Debug.Assert(ip < mflimitPlusOne);
+						Assert(ip < mflimitPlusOne);
 
 						match = LZ4_getPositionOnHash(h, cctx->hashTable, tableType, @base);
 						forwardH = LZ4_hashPosition(forwardIp, tableType);
@@ -164,21 +164,21 @@ namespace K4os.Compression.LZ4.Engine
 						uint h = forwardH;
 						uint current = (uint) (forwardIp - @base);
 						uint matchIndex = LZ4_getIndexOnHash(h, cctx->hashTable, tableType);
-						Debug.Assert(matchIndex <= current);
-						Debug.Assert(forwardIp - @base < (2 * GB - 1));
+						Assert(matchIndex <= current);
+						Assert(forwardIp - @base < (2 * GB - 1));
 						ip = forwardIp;
 						forwardIp += step;
 						step = (searchMatchNb++ >> LZ4_skipTrigger);
 
 						if ((forwardIp > mflimitPlusOne)) goto _last_literals;
 
-						Debug.Assert(ip < mflimitPlusOne);
+						Assert(ip < mflimitPlusOne);
 
 						if (dictDirective == dict_directive.usingDictCtx)
 						{
 							if (matchIndex < startIndex)
 							{
-								Debug.Assert(tableType == tableType_t.byU32);
+								Assert(tableType == tableType_t.byU32);
 								matchIndex = LZ4_getIndexOnHash(
 									h, dictCtx->hashTable, tableType_t.byU32);
 								match = dictBase + matchIndex;
@@ -195,7 +195,7 @@ namespace K4os.Compression.LZ4.Engine
 						{
 							if (matchIndex < startIndex)
 							{
-								Debug.Assert(startIndex - matchIndex >= MINMATCH);
+								Assert(startIndex - matchIndex >= MINMATCH);
 								match = dictBase + matchIndex;
 								lowLimit = dictionary;
 							}
@@ -216,7 +216,7 @@ namespace K4os.Compression.LZ4.Engine
 						if ((dictIssue == dictIssue_directive.dictSmall)
 							&& (matchIndex < prefixIdxLimit)) { continue; }
 
-						Debug.Assert(matchIndex < current);
+						Assert(matchIndex < current);
 						if (((tableType != tableType_t.byU16)
 								|| (LZ4_DISTANCE_MAX < LZ4_DISTANCE_ABSOLUTE_MAX))
 							&& (matchIndex + LZ4_DISTANCE_MAX < current))
@@ -224,7 +224,7 @@ namespace K4os.Compression.LZ4.Engine
 							continue;
 						}
 
-						Debug.Assert((current - matchIndex) <= LZ4_DISTANCE_MAX);
+						Assert((current - matchIndex) <= LZ4_DISTANCE_MAX);
 
 						if (Mem.Peek4(match) == Mem.Peek4(ip))
 						{
@@ -293,13 +293,13 @@ namespace K4os.Compression.LZ4.Engine
 				if (maybe_extMem)
 				{
 					/* static test */
-					Debug.Assert(offset <= LZ4_DISTANCE_MAX && offset > 0);
+					Assert(offset <= LZ4_DISTANCE_MAX && offset > 0);
 					Mem.Poke2(op, (ushort) offset);
 					op += 2;
 				}
 				else
 				{
-					Debug.Assert(ip - match <= LZ4_DISTANCE_MAX);
+					Assert(ip - match <= LZ4_DISTANCE_MAX);
 					Mem.Poke2(op, (ushort) (ip - match));
 					op += 2;
 				}
@@ -313,7 +313,7 @@ namespace K4os.Compression.LZ4.Engine
 						&& (lowLimit == dictionary) /* match within extDict */)
 					{
 						byte* limit = ip + (dictEnd - match);
-						Debug.Assert(dictEnd > match);
+						Assert(dictEnd > match);
 						if (limit > matchlimit) limit = matchlimit;
 						matchCode = LZ4_count(ip + MINMATCH, match + MINMATCH, limit);
 						ip += (uint) matchCode + MINMATCH;
@@ -339,7 +339,7 @@ namespace K4os.Compression.LZ4.Engine
 							uint newMatchCode =
 								15 - 1 + ((uint) (olimit - op) - 1 - LASTLITERALS) * 255;
 							ip -= matchCode - newMatchCode;
-							Debug.Assert(newMatchCode < matchCode);
+							Assert(newMatchCode < matchCode);
 							matchCode = newMatchCode;
 							if ((ip <= filledIp))
 							{
@@ -358,7 +358,7 @@ namespace K4os.Compression.LZ4.Engine
 						}
 						else
 						{
-							Debug.Assert(outputDirective == limitedOutput_directive.limitedOutput);
+							Assert(outputDirective == limitedOutput_directive.limitedOutput);
 							return 0;
 						}
 					}
@@ -382,7 +382,7 @@ namespace K4os.Compression.LZ4.Engine
 						*token += (byte) (matchCode);
 				}
 				/* Ensure we have enough space for the last literals. */
-				Debug.Assert(
+				Assert(
 					!(outputDirective == limitedOutput_directive.fillOutput
 						&& op + 1 + LASTLITERALS > olimit));
 
@@ -413,7 +413,7 @@ namespace K4os.Compression.LZ4.Engine
 					uint h = LZ4_hashPosition(ip, tableType);
 					uint current = (uint) (ip - @base);
 					uint matchIndex = LZ4_getIndexOnHash(h, cctx->hashTable, tableType);
-					Debug.Assert(matchIndex < current);
+					Assert(matchIndex < current);
 					if (dictDirective == dict_directive.usingDictCtx)
 					{
 						if (matchIndex < startIndex)
@@ -449,7 +449,7 @@ namespace K4os.Compression.LZ4.Engine
 					}
 
 					LZ4_putIndexOnHash(current, h, cctx->hashTable, tableType);
-					Debug.Assert(matchIndex < current);
+					Assert(matchIndex < current);
 					if (((dictIssue != dictIssue_directive.dictSmall)
 							|| (matchIndex >= prefixIdxLimit))
 						&& (((tableType == tableType_t.byU16)
@@ -475,13 +475,13 @@ namespace K4os.Compression.LZ4.Engine
 				{
 					if (outputDirective == limitedOutput_directive.fillOutput)
 					{
-						Debug.Assert(olimit >= op);
+						Assert(olimit >= op);
 						lastRun = (size_t) (olimit - op) - 1;
 						lastRun -= (lastRun + 240) / 255;
 					}
 					else
 					{
-						Debug.Assert(outputDirective == limitedOutput_directive.limitedOutput);
+						Assert(outputDirective == limitedOutput_directive.limitedOutput);
 						return 0;
 					}
 				}
@@ -509,7 +509,7 @@ namespace K4os.Compression.LZ4.Engine
 			}
 
 			result = (int) (((byte*) op) - dest);
-			Debug.Assert(result > 0);
+			Assert(result > 0);
 			return result;
 		}
 
@@ -520,7 +520,7 @@ namespace K4os.Compression.LZ4.Engine
 			int acceleration)
 		{
 			var ctx = LZ4_initStream(state);
-			Debug.Assert(ctx != null);
+			Assert(ctx != null);
 			if (acceleration < 1) acceleration = ACCELERATION_DEFAULT;
 			if (maxOutputSize >= LZ4_compressBound(inputSize))
 			{
@@ -568,7 +568,7 @@ namespace K4os.Compression.LZ4.Engine
 			}
 		}
 
-		public new static int LZ4_compress_fast(
+		public static int LZ4_compress_fast(
 			byte* source, byte* dest, int inputSize, int maxOutputSize, int acceleration)
 		{
 			LZ4_stream_t ctx;
@@ -580,7 +580,7 @@ namespace K4os.Compression.LZ4.Engine
 			byte* src, byte* dst, int srcSize, int maxOutputSize) =>
 			LZ4_compress_fast(src, dst, srcSize, maxOutputSize, 1);
 
-		public new static int LZ4_compress_fast_continue(
+		public static int LZ4_compress_fast_continue(
 			LZ4_stream_t* LZ4_stream,
 			byte* source, byte* dest,
 			int inputSize, int maxOutputSize,

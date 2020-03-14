@@ -44,7 +44,7 @@ namespace K4os.Compression.LZ4.Engine
 
 		public static LZ4_streamHC_t* LZ4_initStreamHC(LZ4_streamHC_t* stream) =>
 			LZ4_initStreamHC(stream, sizeof(LZ4_streamHC_t));
-
+		
 		public static LZ4_streamHC_t* LZ4_createStreamHC()
 		{
 			LZ4_streamHC_t* LZ4_streamHCPtr = (LZ4_streamHC_t*) Mem.Alloc(sizeof(LZ4_streamHC_t));
@@ -141,7 +141,7 @@ namespace K4os.Compression.LZ4.Engine
 		public static void LZ4HC_init_internal(LZ4_streamHC_t* hc4, byte* start)
 		{
 			var startingOffset = (hc4->end - hc4->@base);
-			if (startingOffset > 1 * GB)
+			if (startingOffset < 0 || startingOffset > 1 * GB)
 			{
 				LZ4HC_clearTables(hc4);
 				startingOffset = 0;
@@ -178,7 +178,7 @@ namespace K4os.Compression.LZ4.Engine
 		public static int LZ4_loadDictHC(LZ4_streamHC_t* LZ4_streamHCPtr, byte* dictionary, int dictSize)
 		{
 			LZ4_streamHC_t* ctxPtr = LZ4_streamHCPtr;
-			Debug.Assert(LZ4_streamHCPtr != null);
+			Assert(LZ4_streamHCPtr != null);
 			if (dictSize > 64 * KB)
 			{
 				dictionary += dictSize - 64 * KB;
@@ -209,11 +209,11 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			int back = 0;
 			int min = (int) MAX(iMin - ip, mMin - match);
-			Debug.Assert(min <= 0);
-			Debug.Assert(ip >= iMin);
-			Debug.Assert((size_t) (ip - iMin) < (1U << 31));
-			Debug.Assert(match >= mMin);
-			Debug.Assert((size_t) (match - mMin) < (1U << 31));
+			Assert(min <= 0);
+			Assert(ip >= iMin);
+			Assert((size_t) (ip - iMin) < (1U << 31));
+			Assert(match >= mMin);
+			Assert((size_t) (match - mMin) < (1U << 31));
 			while ((back > min)
 				&& (ip[back - 1] == match[back - 1]))
 				back--;
@@ -258,7 +258,7 @@ namespace K4os.Compression.LZ4.Engine
 		public static int LZ4HC_literalsPrice(int litlen)
 		{
 			int price = litlen;
-			Debug.Assert(litlen >= 0);
+			Assert(litlen >= 0);
 			if (litlen >= (int)RUN_MASK)
 				price += 1 + ((litlen-(int)RUN_MASK) / 255);
 			return price;
@@ -268,8 +268,8 @@ namespace K4os.Compression.LZ4.Engine
 		public static int LZ4HC_sequencePrice(int litlen, int mlen)
 		{
 			int price = 1 + 2 ; /* token + 16-bit offset */
-			Debug.Assert(litlen >= 0);
-			Debug.Assert(mlen >= MINMATCH);
+			Assert(litlen >= 0);
+			Assert(mlen >= MINMATCH);
 
 			price += LZ4HC_literalsPrice(litlen);
 

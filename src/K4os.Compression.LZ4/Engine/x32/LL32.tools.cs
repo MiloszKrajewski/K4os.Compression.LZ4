@@ -136,7 +136,7 @@ namespace K4os.Compression.LZ4.Engine
 
 		protected static void LZ4_renormDictT(LZ4_stream_t* LZ4_dict, int nextSize)
 		{
-			Debug.Assert(nextSize >= 0);
+			Assert(nextSize >= 0);
 			if (LZ4_dict->currentOffset + (uint) nextSize <= 0x80000000) return;
 
 			var delta = LZ4_dict->currentOffset - 64 * KB;

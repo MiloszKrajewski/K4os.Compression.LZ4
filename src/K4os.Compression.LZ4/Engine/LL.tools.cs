@@ -6,12 +6,23 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Internal;
 
+using uptr_t = System.UInt64;
+using size_t = System.UInt32;
+
 namespace K4os.Compression.LZ4.Engine
 {
 	internal unsafe partial class LL
 	{
 		// [StructLayout(LayoutKind.Sequential)]
 		// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+		
+		[Conditional("DEBUG")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Assert(bool condition, string message = null)
+		{
+			if (!condition)
+				throw new ArgumentException(message ?? "Assert failed");
+		}
 
 		public static bool Enforce32 { get; set; } = false;
 
@@ -55,7 +66,7 @@ namespace K4os.Compression.LZ4.Engine
 					((ushort*) tableBase)[h] = 0;
 					return;
 				default:
-					Debug.Assert(false);
+					Assert(false);
 					return;
 			}
 		}
@@ -70,11 +81,11 @@ namespace K4os.Compression.LZ4.Engine
 					((uint*) tableBase)[h] = idx;
 					return;
 				case tableType_t.byU16:
-					Debug.Assert(idx < 65536);
+					Assert(idx < 65536);
 					((ushort*) tableBase)[h] = (ushort) idx;
 					return;
 				default:
-					Debug.Assert(false);
+					Assert(false);
 					return;
 			}
 		}
@@ -95,7 +106,7 @@ namespace K4os.Compression.LZ4.Engine
 					((ushort*) tableBase)[h] = (ushort) (p - srcBase);
 					return;
 				default:
-					Debug.Assert(false);
+					Assert(false);
 					return;
 			}
 		}
@@ -103,17 +114,17 @@ namespace K4os.Compression.LZ4.Engine
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_getIndexOnHash(uint h, void* tableBase, tableType_t tableType)
 		{
-			Debug.Assert(LZ4_MEMORY_USAGE > 2);
+			Assert(LZ4_MEMORY_USAGE > 2);
 			switch (tableType)
 			{
 				case tableType_t.byU32:
-					Debug.Assert(h < (1U << (LZ4_MEMORY_USAGE - 2)));
+					Assert(h < (1U << (LZ4_MEMORY_USAGE - 2)));
 					return ((uint*) tableBase)[h];
 				case tableType_t.byU16:
-					Debug.Assert(h < (1U << (LZ4_MEMORY_USAGE - 1)));
+					Assert(h < (1U << (LZ4_MEMORY_USAGE - 1)));
 					return ((ushort*) tableBase)[h];
 				default:
-					Debug.Assert(false);
+					Assert(false);
 					return 0;
 			}
 		}
