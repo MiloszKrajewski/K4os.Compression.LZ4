@@ -19,14 +19,14 @@ namespace K4os.Compression.LZ4.Encoders
 		public LZ4FastChainEncoder(int blockSize, int extraBlocks = 0):
 			base(true, blockSize, extraBlocks)
 		{
-			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
+			_context = LL.LZ4_createStream();
 		}
 
 		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();
-			Mem.Free(_context);
+			LL.LZ4_freeStream(_context);
 		}
 
 		/// <inheritdoc />

@@ -22,8 +22,7 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			if (level < LZ4Level.L03_HC) level = LZ4Level.L03_HC;
 			if (level > LZ4Level.L12_MAX) level = LZ4Level.L12_MAX;
-			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
-			LL.LZ4_initStreamHC(_context);
+			_context = LL.LZ4_createStreamHC();
 			LL.LZ4_resetStreamHC_fast(_context, (int) level);
 		}
 
@@ -31,7 +30,7 @@ namespace K4os.Compression.LZ4.Encoders
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();
-			Mem.Free(_context);
+			LL.LZ4_freeStreamHC(_context);
 		}
 
 		/// <inheritdoc />

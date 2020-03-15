@@ -28,7 +28,7 @@ namespace K4os.Compression.LZ4.Encoders
 			_outputLength = Mem.K64 + (1 + extraBlocks) * _blockSize + 32;
 			_outputIndex = 0;
 			_outputBuffer = (byte*) Mem.Alloc(_outputLength + 8);
-			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
+			_context = LL.LZ4_createStreamDecode();
 		}
 
 		/// <inheritdoc />
@@ -45,7 +45,8 @@ namespace K4os.Compression.LZ4.Encoders
 
 			Prepare(blockSize);
 
-			var decoded = DecodeBlock(source, length, _outputBuffer + _outputIndex, blockSize);
+			var decoded = DecodeBlock(
+				source, length, _outputBuffer + _outputIndex, blockSize);
 
 			if (decoded < 0)
 				throw new InvalidOperationException();
@@ -127,7 +128,7 @@ namespace K4os.Compression.LZ4.Encoders
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();
-			Mem.Free(_context);
+			LL.LZ4_freeStreamDecode(_context);
 			Mem.Free(_outputBuffer);
 		}
 	}
