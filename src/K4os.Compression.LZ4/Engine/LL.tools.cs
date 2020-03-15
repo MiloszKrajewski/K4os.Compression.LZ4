@@ -1,13 +1,19 @@
-﻿// ReSharper disable IdentifierTypo
-// ReSharper disable InconsistentNaming
-
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Internal;
 
-using uptr_t = System.UInt64;
+//------------------------------------------------------------------------------
+
+// ReSharper disable IdentifierTypo
+// ReSharper disable InconsistentNaming
+// ReSharper disable AccessToStaticMemberViaDerivedType
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+// ReSharper disable BuiltInTypeReferenceStyle
 using size_t = System.UInt32;
+using uptr_t = System.UInt64;
+
+//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {

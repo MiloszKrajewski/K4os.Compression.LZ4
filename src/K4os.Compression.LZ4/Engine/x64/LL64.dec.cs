@@ -1,21 +1,27 @@
+using System;
+using System.Runtime.CompilerServices;
+
+//------------------------------------------------------------------------------
+
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
-
-using System;
-using System.Runtime.CompilerServices;
+#if BIT32
+using reg_t = System.UInt32;
+using Mem = K4os.Compression.LZ4.Internal.Mem32;
+#else
+using reg_t = System.UInt64;
+using Mem = K4os.Compression.LZ4.Internal.Mem64;
+#endif
 using size_t = System.UInt32;
+using uptr_t = System.UInt64;
+
+//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
-	#if BIT32
-	using Mem = Internal.Mem32;
-	#else
-	using Mem = Internal.Mem64;
-	#endif
-
 	#if BIT32
 	internal unsafe partial class LL32: LL
 	#else
@@ -394,7 +400,7 @@ namespace K4os.Compression.LZ4.Engine
 			}
 		}
 
-		public new static int LZ4_decompress_safe(
+		public static int LZ4_decompress_safe(
 			byte* source, byte* dest, int compressedSize, int maxDecompressedSize)
 		{
 			return LZ4_decompress_generic(
@@ -483,7 +489,7 @@ namespace K4os.Compression.LZ4.Engine
 				dict_directive.noDict, (byte*) dst, null, 0);
 		}
 
-		public new static int LZ4_decompress_safe_continue(
+		public static int LZ4_decompress_safe_continue(
 			LZ4_streamDecode_t* LZ4_streamDecode, byte* source, byte* dest, int compressedSize,
 			int maxOutputSize)
 		{

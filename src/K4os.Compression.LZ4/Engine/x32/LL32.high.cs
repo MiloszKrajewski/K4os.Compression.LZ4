@@ -1,19 +1,31 @@
-//---------------------------------------------------------
+//------------------------------------------------------------------------------
 //
 // This file has been generated. All changes will be lost.
 //
-//---------------------------------------------------------
+//------------------------------------------------------------------------------
 #define BIT32
+
+using System;
+using System.Runtime.CompilerServices;
+
+//------------------------------------------------------------------------------
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
-
-using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+// ReSharper disable BuiltInTypeReferenceStyle
+#if BIT32
+using reg_t = System.UInt32;
+using Mem = K4os.Compression.LZ4.Internal.Mem32;
+#else
+using reg_t = System.UInt64;
+using Mem = K4os.Compression.LZ4.Internal.Mem64;
+#endif
 using size_t = System.UInt32;
-using ptr_t = System.Int64;
+using uptr_t = System.UInt64;
+
+//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {

@@ -121,7 +121,7 @@ namespace K4os.Compression.LZ4.Encoders
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
-			LL.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
+			LLxx.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
 
 		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()

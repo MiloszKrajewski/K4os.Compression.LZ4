@@ -1,12 +1,38 @@
+using System.Runtime.CompilerServices;
+
+//------------------------------------------------------------------------------
+
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
+// ReSharper disable AccessToStaticMemberViaDerivedType
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+// ReSharper disable BuiltInTypeReferenceStyle
 
-using System.Runtime.CompilerServices;
+//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
 	internal unsafe class LLxx
 	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int LZ4_decompress_safe(
+			byte* source, byte* target, int sourceLength, int targetLength) =>
+			LL.Algorithm32
+				? LL32.LZ4_decompress_safe(
+					source, target, sourceLength, targetLength)
+				: LL64.LZ4_decompress_safe(
+					source, target, sourceLength, targetLength);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int LZ4_decompress_safe_continue(
+			LL.LZ4_streamDecode_t* context,
+			byte* source, byte* target, int sourceLength, int targetLength) =>
+			LL.Algorithm32
+				? LL32.LZ4_decompress_safe_continue(
+					context, source, target, sourceLength, targetLength)
+				: LL64.LZ4_decompress_safe_continue(
+					context, source, target, sourceLength, targetLength);
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int LZ4_compress_fast(
 			byte* source, byte* target, int sourceLength, int targetLength,

@@ -48,9 +48,9 @@ Target.create "Preprocess" (fun _ ->
         Trace.logfn "%s -> %s" source target
         let defines = [ "BIT32" ]
         [
-            "//---------------------------------------------------------\r\n//"
+            "//------------------------------------------------------------------------------\r\n//"
             "// This file has been generated. All changes will be lost."
-            "//\r\n//---------------------------------------------------------"
+            "//\r\n//------------------------------------------------------------------------------"
             for d in defines do sprintf "#define %s" d
             ""
             source |> File.loadText
@@ -153,8 +153,7 @@ Target.create "Restore:Corpus" (fun _ ->
 
 open Fake.Core.TargetOperators
 
-"Preprocess" ==> "Build"
-"Restore:Corpus" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release"
+"Restore:Corpus" ==> "Preprocess" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Release"
 "Release" ==> "Release:GitHub" ==> "Release:Nuget"
 "Clean" ?=> "Restore"
 "Clean" ==> "Rebuild"

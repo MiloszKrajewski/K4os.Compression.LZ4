@@ -32,7 +32,9 @@ module Sanitizer =
         replaceText @"uint16_t" "ushort" >>
         replaceText @"uint32_t" "uint" >>
         replaceText @"uint64_t" "ulong" >>
-        replaceText @"uptrval" "ptr_t" >>
+        replaceText @"uptrval" "uptr_t" >>
+        replaceText @"reg_t" "ureg_t" >>
+        replaceText @"unsigned" "uint" >>
         replaceText @"base" "@base" >>
         replaceText @"ref" "@ref" >>
         replaceText @"LZ4_writeLE16" "Mem.Poke2" >>

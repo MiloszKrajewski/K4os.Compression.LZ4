@@ -108,7 +108,7 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var decoded = LL.LZ4_decompress_safe(source, target, sourceLength, targetLength);
+			var decoded = LLxx.LZ4_decompress_safe(source, target, sourceLength, targetLength);
 			return decoded <= 0 ? -1 : decoded;
 		}
 

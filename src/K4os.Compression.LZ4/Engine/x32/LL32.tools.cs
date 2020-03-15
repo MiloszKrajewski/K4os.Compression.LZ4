@@ -1,19 +1,31 @@
-//---------------------------------------------------------
+//------------------------------------------------------------------------------
 //
 // This file has been generated. All changes will be lost.
 //
-//---------------------------------------------------------
+//------------------------------------------------------------------------------
 #define BIT32
+
+using System;
+using System.Runtime.CompilerServices;
+
+//------------------------------------------------------------------------------
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
+#if BIT32
+using reg_t = System.UInt32;
+using Mem = K4os.Compression.LZ4.Internal.Mem32;
+#else
+using reg_t = System.UInt64;
+using Mem = K4os.Compression.LZ4.Internal.Mem64;
+#endif
+using size_t = System.UInt32;
+using uptr_t = System.UInt64;
 
-using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
@@ -21,6 +33,7 @@ namespace K4os.Compression.LZ4.Engine
 	using Mem = Internal.Mem32;
 	#else
 	using Mem = Internal.Mem64;
+
 	#endif
 
 	#if BIT32
@@ -151,7 +164,7 @@ namespace K4os.Compression.LZ4.Engine
 			if (LZ4_dict->dictSize > 64 * KB) LZ4_dict->dictSize = 64 * KB;
 			LZ4_dict->dictionary = dictEnd - LZ4_dict->dictSize;
 		}
-		
+
 		public int LZ4_loadDict(LZ4_stream_t* LZ4_dict, byte* dictionary, int dictSize)
 		{
 			const int HASH_UNIT = ALGORITHM_ARCH;

@@ -1,6 +1,10 @@
+## 1.2.1-beta (2020/03/15)
+* port of lz4 1.9.2
+* explicit support for both 32 and 64 environments
+
 ## 1.1.11 (2019/07/03)
 * Added (experimental!) support for .NET 4.5
-0
+
 ## 1.1.10 (2019/06/11)
 * Added explicit "unchecked" around De Bruijn calculation
 
