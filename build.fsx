@@ -154,7 +154,7 @@ Target.create "Restore:Corpus" (fun _ ->
 open Fake.Core.TargetOperators
 
 "Restore:Corpus" ==> "Preprocess" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Release"
-"Release" ==> "Release:GitHub" ==> "Release:Nuget"
+// "Release" ==> "Release:GitHub" ==> "Release:Nuget"
 "Clean" ?=> "Restore"
 "Clean" ==> "Rebuild"
 "Build" ?=> "Test"
