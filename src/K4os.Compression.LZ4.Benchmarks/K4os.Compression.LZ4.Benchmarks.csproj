@@ -12,13 +12,17 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
-  <ItemGroup>
-    <!--
+  <ItemGroup><!--
     <ProjectReference Include="..\K4os.Compression.LZ4.Streams.Test\K4os.Compression.LZ4.Streams.Test.csproj" />
     <ProjectReference Include="..\K4os.Compression.LZ4.Streams\K4os.Compression.LZ4.Streams.csproj" />
     <ProjectReference Include="..\K4os.Compression.LZ4.Test\K4os.Compression.LZ4.Test.csproj" />
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
     -->
+  
+    <ProjectReference Include="..\K4os.Compression.LZ4.Streams\K4os.Compression.LZ4.Streams.csproj" />
+    <ProjectReference Include="..\K4os.Compression.LZ4.vPrev\K4os.Compression.LZ4.vPrev.csproj" />
+    <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
+    <ProjectReference Include="..\TestHelpers\TestHelpers.csproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
