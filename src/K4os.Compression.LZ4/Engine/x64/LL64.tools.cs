@@ -38,7 +38,7 @@ namespace K4os.Compression.LZ4.Engine
 		#if BIT32
 		protected const int ALGORITHM_ARCH = 4;
 
-		private static readonly uint[] DeBruijnBytePos = {
+		private static readonly uint[] _DeBruijnBytePos = {
 			0, 0, 3, 0, 3, 1, 3, 0,
 			3, 2, 2, 1, 3, 2, 0, 1,
 			3, 3, 1, 2, 2, 2, 2, 0,
@@ -52,7 +52,7 @@ namespace K4os.Compression.LZ4.Engine
 		#else
 		protected const int ALGORITHM_ARCH = 8;
 
-		private static readonly uint[] DeBruijnBytePos = {
+		private static readonly uint[] _DeBruijnBytePos = {
 			0, 0, 0, 0, 0, 1, 1, 2,
 			0, 3, 1, 3, 1, 4, 2, 7,
 			0, 2, 3, 6, 1, 5, 3, 5,
@@ -68,6 +68,8 @@ namespace K4os.Compression.LZ4.Engine
 			DeBruijnBytePos[
 				unchecked((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
 		#endif
+
+		private static readonly uint* DeBruijnBytePos = Mem.CloneArray(_DeBruijnBytePos);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)

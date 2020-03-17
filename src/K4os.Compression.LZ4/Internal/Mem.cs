@@ -44,12 +44,12 @@ namespace K4os.Compression.LZ4.Internal
 		public const int M4 = 4 * M1;
 
 		/// <summary>Empty byte array.</summary>
-		#if NET45
+#if NET45
 		public static readonly byte[] Empty = new byte[0];
-		#else
+#else
 		public static readonly byte[] Empty = Array.Empty<byte>();
-		#endif
-		
+#endif
+
 		/// <summary>Checks if process is ran in 32-bit mode.</summary>
 		public static bool System32
 		{
@@ -77,12 +77,13 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
-			#if !NET45
+#if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
-			#else
+#else
 			if (length <= 0) return;
+
 			Unsafe.CopyBlock(target, source, (uint) length);
-			#endif
+#endif
 		}
 
 		/// <summary>
@@ -95,12 +96,13 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
-			#if !NET45
+#if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
-			#else
+#else
 			if (length <= 0) return;
+
 			Unsafe.CopyBlock(target, source, (uint) length);
-			#endif
+#endif
 		}
 
 		/// <summary>Allocated block of memory. It is NOT initialized with zeroes.</summary>
@@ -130,7 +132,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="size">Size in bytes.</param>
 		/// <returns>Pointer to allocated block.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void* AllocZero(int size) => 
+		public static void* AllocZero(int size) =>
 			Zero((byte*) Alloc(size), size);
 
 		/// <summary>
@@ -196,5 +198,25 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy4(byte* target, byte* source) =>
 			*(uint*) target = *(uint*) source;
+
+		public static int* CloneArray(int[] array)
+		{
+			var length = sizeof(int) * array.Length;
+			var target = Alloc(length);
+			fixed(void* source = &array[0])
+				Copy((byte*) target, (byte*) source, length);
+
+			return (int*) target;
+		}
+
+		public static uint* CloneArray(uint[] array)
+		{
+			var length = sizeof(uint) * array.Length;
+			var target = Alloc(length);
+			fixed (void* source = &array[0])
+				Copy((byte*) target, (byte*) source, length);
+
+			return (uint*) target;
+		}
 	}
 }

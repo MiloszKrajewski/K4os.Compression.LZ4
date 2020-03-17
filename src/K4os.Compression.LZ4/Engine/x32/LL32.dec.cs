@@ -327,7 +327,7 @@ namespace K4os.Compression.LZ4.Engine
 					Assert(op <= oend);
 					if (partialDecoding && (cpy > oend - MATCH_SAFEGUARD_DISTANCE))
 					{
-						size_t mlen = Math.Min(length, (size_t) (oend - op));
+						size_t mlen = MIN(length, (size_t) (oend - op));
 						byte* matchEnd = match + mlen;
 						byte* copyEnd = op + mlen;
 						if (matchEnd > op)
