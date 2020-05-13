@@ -244,10 +244,10 @@ namespace K4os.Compression.LZ4.Engine
 			lz4sd->extDictSize = 0;
 		}
 
-		protected static readonly uint[] _inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
-		protected static readonly int[] _dec64table = { 0, 0, 0, -1, -4, 1, 2, 3 };
+		private static readonly uint[] _inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
+		private static readonly int[] _dec64table = { 0, 0, 0, -1, -4, 1, 2, 3 };
 
-		protected static uint* inc32table = Mem.CloneArray(_inc32table);
-		protected static int* dec64table = Mem.CloneArray(_dec64table);
+		protected static readonly uint* inc32table = Mem.CloneArray(_inc32table);
+		protected static readonly int* dec64table = Mem.CloneArray(_dec64table);
 	}
 }

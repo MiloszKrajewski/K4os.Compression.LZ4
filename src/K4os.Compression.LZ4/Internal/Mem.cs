@@ -199,6 +199,9 @@ namespace K4os.Compression.LZ4.Internal
 		public static void Copy4(byte* target, byte* source) =>
 			*(uint*) target = *(uint*) source;
 
+		/// <summary>Clones managed array to unmanaged one. Allows quicker yet less safe unchecked access.</summary>
+		/// <param name="array">Input array.</param>
+		/// <returns>Cloned array.</returns>
 		public static int* CloneArray(int[] array)
 		{
 			var length = sizeof(int) * array.Length;
@@ -209,6 +212,9 @@ namespace K4os.Compression.LZ4.Internal
 			return (int*) target;
 		}
 
+		/// <summary>Clones managed array to unmanaged one. Allows quicker yet less safe unchecked access.</summary>
+		/// <param name="array">Input array.</param>
+		/// <returns>Cloned array.</returns>
 		public static uint* CloneArray(uint[] array)
 		{
 			var length = sizeof(uint) * array.Length;
