@@ -14,6 +14,7 @@ namespace K4os.Compression.LZ4.Engine
 {
 	internal static unsafe class LLxx
 	{
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_decompress_safe(
 			byte* source, byte* target, int sourceLength, int targetLength) =>
 			LL.Algorithm32
@@ -22,6 +23,7 @@ namespace K4os.Compression.LZ4.Engine
 				: LL64.LZ4_decompress_safe(
 					source, target, sourceLength, targetLength);
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_decompress_safe_continue(
 			LL.LZ4_streamDecode_t* context,
 			byte* source, byte* target, int sourceLength, int targetLength) =>
@@ -30,7 +32,8 @@ namespace K4os.Compression.LZ4.Engine
 					context, source, target, sourceLength, targetLength)
 				: LL64.LZ4_decompress_safe_continue(
 					context, source, target, sourceLength, targetLength);
-		
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_compress_fast(
 			byte* source, byte* target, int sourceLength, int targetLength,
 			int acceleration) =>
@@ -40,6 +43,7 @@ namespace K4os.Compression.LZ4.Engine
 				: LL64.LZ4_compress_fast(
 					source, target, sourceLength, targetLength, acceleration);
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_compress_fast_continue(
 			LL.LZ4_stream_t* context,
 			byte* source, byte* target, int sourceLength, int targetLength,
@@ -54,6 +58,7 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength,
 					acceleration);
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_compress_HC(
 			byte* source, byte* target, int sourceLength, int targetLength, int level) =>
 			LL.Algorithm32
@@ -62,6 +67,7 @@ namespace K4os.Compression.LZ4.Engine
 				: LL64.LZ4_compress_HC(
 					source, target, sourceLength, targetLength, level);
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_compress_HC_continue(
 			LL.LZ4_streamHC_t* context, 
 			byte* source, byte* target, int sourceLength, int targetLength) =>

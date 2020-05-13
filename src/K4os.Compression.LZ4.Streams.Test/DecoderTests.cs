@@ -75,7 +75,8 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
 				// We need this to work even if the stream gives us only a single byte at a time
-				using (var input = LZ4Stream.Decode(Tools.Slow(File.OpenRead(encoded)), Mem.M1))
+				using (var input = LZ4Stream.Decode(
+					Tools.Slow(File.OpenRead(encoded)), Mem.M1, interactive: true))
 				{
 					var buffer = new byte[0x80000];
 					Assert.Equal(5000, input.Read(buffer, 0, 5000));
@@ -98,7 +99,8 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 			{
 				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
-				using (var input = LZ4Stream.Decode(File.OpenRead(encoded), Mem.M1))
+				using (var input = LZ4Stream.Decode(
+					File.OpenRead(encoded), Mem.M1, interactive: true))
 				{
 					var buffer = new byte[0x80000];
 					Assert.Equal(5000, input.Read(buffer, 0, 5000));
@@ -227,14 +229,14 @@ namespace K4os.Compression.LZ4.Streams.Test
 				File.Delete(encoded);
 			}
 		}
-		
+
 		[Fact]
 		public void Issue27_DataPreparedWithPython()
 		{
 			var raw = new byte[] {
-				4, 34, 77, 24, 104, 64, 
-				5, 0, 0, 0, 0, 0, 0, 0, 
-				97, 5, 0, 0, 128, 104, 101, 
+				4, 34, 77, 24, 104, 64,
+				5, 0, 0, 0, 0, 0, 0, 0,
+				97, 5, 0, 0, 128, 104, 101,
 				108, 108, 111, 0, 0, 0, 0
 			};
 			using (var input = LZ4Stream.Decode(new MemoryStream(raw)))

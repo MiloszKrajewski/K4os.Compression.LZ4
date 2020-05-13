@@ -14,8 +14,8 @@ namespace K4os.Compression.LZ4.Streams
 	/// </summary>
 	public class LZ4DecoderStream: Stream, IDisposable
 	{
-		private readonly bool _interactive = true;
 		private readonly bool _leaveOpen;
+		private readonly bool _interactive;
 
 		private readonly Stream _inner;
 		
@@ -38,15 +38,19 @@ namespace K4os.Compression.LZ4.Streams
 		/// <param name="decoderFactory">A function which will create appropriate decoder depending
 		/// on frame descriptor.</param>
 		/// <param name="leaveOpen">If <c>true</c> inner stream will not be closed after disposing.</param>
+		/// <param name="interactive">If <c>true</c> reading from stream will be "interactive" allowing
+		/// to read bytes as soon as possible, even if more data is expected.</param>
 		public LZ4DecoderStream(
 			Stream inner,
 			Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
-			bool leaveOpen = false)
+			bool leaveOpen = false,
+			bool interactive = false)
 		{
 			_inner = inner;
 			_decoderFactory = decoderFactory;
 			_leaveOpen = leaveOpen;
 			_position = 0;
+			_interactive = interactive;
 		}
 
 		/// <inheritdoc />
