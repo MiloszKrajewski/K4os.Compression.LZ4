@@ -310,5 +310,5 @@ Code above will read old (lz4net) format and write to new format
 
 ### Issues
 
-Please use [this template](doc/issue-template.md) when raising one. Try to be as helpful as possible to help me reproduce it.
+Please use [this template](doc/issue-template.txt) when raising one. Try to be as helpful as possible to help me reproduce it.
 
