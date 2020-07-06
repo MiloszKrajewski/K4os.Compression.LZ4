@@ -307,3 +307,8 @@ using (var target = LZ4Stream.Encode(File.Create(filename + ".new")))
 
 Code above will read old (lz4net) format and write to new format 
 ([lz4_Frame_format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md)).
+
+### Issues
+
+Please use [this template](doc/issue-template.md) when raising one. Try to be as helpful as possible to help me reproduce it.
+
