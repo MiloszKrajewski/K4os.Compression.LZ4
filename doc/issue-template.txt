@@ -20,6 +20,7 @@
 
 6. Environment
 
-* Library version: _ (release, beta)
-* .NET version: _ (Framework, Core, Mono, Unity, Xamarin)
+* LZ4: _ (release, beta)
+* .NET: _ (Framework, Core, Mono, Unity, Xamarin)
+* OS: _ (Windows, MacOS, Android)
 * CPU: _ (Intel, ARM, Samsung, 32/64 bit)
