@@ -10,7 +10,7 @@
 
 ...
 
-4. Steps to reporduce
+4. Steps to reproduce
 
 ...
 
