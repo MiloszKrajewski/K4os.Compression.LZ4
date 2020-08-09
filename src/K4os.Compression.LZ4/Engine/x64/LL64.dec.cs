@@ -33,6 +33,73 @@ namespace K4os.Compression.LZ4.Engine
 	internal unsafe partial class LL64: LL
 	#endif
 	{
+		#if LZ4_FAST_DEC_LOOP
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void LZ4_memcpy_using_offset_base(
+			byte* dstPtr, byte* srcPtr, byte* dstEnd, uint offset)
+		{
+			if (offset < 8)
+			{
+				dstPtr[0] = srcPtr[0];
+				dstPtr[1] = srcPtr[1];
+				dstPtr[2] = srcPtr[2];
+				dstPtr[3] = srcPtr[3];
+				srcPtr += inc32table[offset];
+				Mem.Copy4(dstPtr + 4, srcPtr);
+				srcPtr -= dec64table[offset];
+				dstPtr += 8;
+			}
+			else
+			{
+				Mem.Copy8(dstPtr, srcPtr);
+				dstPtr += 8;
+				srcPtr += 8;
+			}
+
+			Mem.WildCopy8(dstPtr, srcPtr, dstEnd);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void LZ4_memcpy_using_offset(byte* dstPtr, byte* srcPtr, byte* dstEnd, size_t offset)
+		{
+			var v = stackalloc byte[8];
+
+			Assert(dstEnd >= dstPtr + MINMATCH);
+			
+			// Mem.Poke4(dstPtr, 0); /* silence an msan warning when offset==0 */
+
+			switch (offset)
+			{
+				case 1:
+					Mem.ZBlk(v, *srcPtr, 8);
+					break;
+				case 2:
+					Mem.Copy2(v, srcPtr);
+					Mem.Copy2(&v[2], srcPtr);
+					Mem.Copy4(&v[4], &v[0]);
+					break;
+				case 4:
+					Mem.Copy4(v, srcPtr);
+					Mem.Copy4(&v[4], srcPtr);
+					break;
+				default:
+					LZ4_memcpy_using_offset_base(dstPtr, srcPtr, dstEnd, offset);
+					return;
+			}
+
+			Mem.Copy8(dstPtr, v);
+			dstPtr += 8;
+			
+			while (dstPtr < dstEnd)
+			{
+				Mem.Copy8(dstPtr, v);
+				dstPtr += 8;
+			}
+		}
+
+		#endif
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int LZ4_decompress_generic(
 			byte* src,
@@ -231,9 +298,7 @@ namespace K4os.Compression.LZ4.Engine
 							}
 						}
 
-						Mem.Move(
-							op, ip,
-							(int) length); /* supports overlapping memory regions, which only matters for in-place decompression scenarios */
+						Mem.Move(op, ip, (int) length); /* supports overlapping memory regions, which only matters for in-place decompression scenarios */
 						ip += length;
 						op += length;
 						/* Necessarily EOF when !partialDecoding. When partialDecoding
