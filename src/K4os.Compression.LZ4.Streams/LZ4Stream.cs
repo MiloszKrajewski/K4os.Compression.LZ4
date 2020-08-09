@@ -18,7 +18,7 @@ namespace K4os.Compression.LZ4.Streams
 		public static LZ4EncoderStream Encode(
 			Stream stream, LZ4EncoderSettings settings = null, bool leaveOpen = false)
 		{
-			settings = settings ?? LZ4EncoderSettings.Default;
+			settings ??= LZ4EncoderSettings.Default;
 			var frameInfo = new LZ4Descriptor(
 				settings.ContentLength,
 				settings.ContentChecksum,
@@ -60,29 +60,40 @@ namespace K4os.Compression.LZ4.Streams
 		/// <param name="stream">Inner stream.</param>
 		/// <param name="settings">Decompression settings.</param>
 		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
+		/// <param name="interactive">If <c>true</c> reading from stream will be "interactive" allowing
+		/// to read bytes as soon as possible, even if more data is expected.</param>
 		/// <returns>Decompression stream.</returns>
 		public static LZ4DecoderStream Decode(
-			Stream stream, LZ4DecoderSettings settings = null, bool leaveOpen = false)
+			Stream stream,
+			LZ4DecoderSettings settings = null,
+			bool leaveOpen = false,
+			bool interactive = false)
 		{
-			settings = settings ?? LZ4DecoderSettings.Default;
+			settings ??= LZ4DecoderSettings.Default;
 			var extraMemory = settings.ExtraMemory;
 			return new LZ4DecoderStream(
 				stream,
 				i => LZ4Decoder.Create(
 					i.Chaining, i.BlockSize, ExtraBlocks(i.BlockSize, extraMemory)),
-				leaveOpen);
+				leaveOpen,
+				interactive);
 		}
 
 		/// <summary>Creates decompression stream on top of inner stream.</summary>
 		/// <param name="stream">Inner stream.</param>
 		/// <param name="extraMemory">Extra memory used for decompression.</param>
 		/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
+		/// <param name="interactive">If <c>true</c> reading from stream will be "interactive" allowing
+		/// to read bytes as soon as possible, even if more data is expected.</param>
 		/// <returns>Decompression stream.</returns>
 		public static LZ4DecoderStream Decode(
-			Stream stream, int extraMemory, bool leaveOpen = false)
+			Stream stream, 
+			int extraMemory, 
+			bool leaveOpen = false,
+			bool interactive = false)
 		{
 			var settings = new LZ4DecoderSettings { ExtraMemory = extraMemory };
-			return Decode(stream, settings, leaveOpen);
+			return Decode(stream, settings, leaveOpen, interactive);
 		}
 
 		private static int ExtraBlocks(int blockSize, int extraMemory) =>

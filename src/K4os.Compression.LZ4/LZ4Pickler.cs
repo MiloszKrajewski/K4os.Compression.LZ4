@@ -148,10 +148,10 @@ namespace K4os.Compression.LZ4
 			{
 				var llenFlags = llen == 4 ? 3 : llen; // 2 bits
 				var flags = (byte) ((llenFlags << 6) | CurrentVersion);
-				Mem.Poke8(resultP + 0, flags);
-				if (llen == 1) Mem.Poke8(resultP + 1, (byte) diff);
-				else if (llen == 2) Mem.Poke16(resultP + 1, (ushort) diff);
-				else if (llen == 4) Mem.Poke32(resultP + 1, (uint) diff);
+				Mem.Poke1(resultP + 0, flags);
+				if (llen == 1) Mem.Poke1(resultP + 1, (byte) diff);
+				else if (llen == 2) Mem.Poke2(resultP + 1, (ushort) diff);
+				else if (llen == 4) Mem.Poke4(resultP + 1, (uint) diff);
 				Mem.Move(resultP + llen + 1, target, targetLength);
 			}
 

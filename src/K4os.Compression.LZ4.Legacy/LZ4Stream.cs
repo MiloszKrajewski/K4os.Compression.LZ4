@@ -148,7 +148,7 @@ namespace K4os.Compression.LZ4.Legacy
 				}
 
 				var b = buffer[0];
-				result = result + ((ulong) (b & 0x7F) << count);
+				result += (ulong) (b & 0x7F) << count;
 				count += 7;
 				if ((b & 0x80) == 0 || count >= 64) break;
 			}

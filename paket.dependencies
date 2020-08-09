@@ -6,7 +6,6 @@ nuget K4os.Hash.xxHash
 nuget System.Memory
 
 nuget lz4net
-nuget SharpZipLib
 nuget BenchmarkDotNet
 
 nuget xunit

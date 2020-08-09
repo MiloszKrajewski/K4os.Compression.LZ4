@@ -1,12 +1,8 @@
 using System;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
-
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
-
 using TestHelpers;
-
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -52,11 +48,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 			}
 		}
 
-		#if DEBUG
-		[Theory(Skip = "Too long")]
-		#else
 		[Theory]
-		#endif
 		[InlineData("-1 -BD -B4 -BX", Mem.K8)]
 		[InlineData("-1 -BD -B5", Mem.K8)]
 		[InlineData("-1 -BD -B6 -BX", Mem.K8)]

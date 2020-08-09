@@ -1,24 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net45;net462</TargetFrameworks>
+    <TargetFrameworks>net452;net462</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\K4os.Compression.LZ4.vPrev\K4os.Compression.LZ4.vPrev.csproj" />
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\K4os.Compression.LZ4\Engine\LZ4_64.cs">
-      <Link>Injected\LZ4_64.cs</Link>
-    </Compile>
-    <Compile Include="..\K4os.Compression.LZ4\Engine\LZ4_64_HC.cs">
-      <Link>Injected\LZ4_64_HC.cs</Link>
-    </Compile>
-    <Compile Include="..\K4os.Compression.LZ4\Engine\LZ4_xx.cs">
-      <Link>Injected\LZ4_xx.cs</Link>
-    </Compile>
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

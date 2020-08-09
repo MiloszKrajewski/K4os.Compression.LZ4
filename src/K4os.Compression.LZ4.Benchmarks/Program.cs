@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Running;
+﻿using System;
+using BenchmarkDotNet.Running;
 
 namespace K4os.Compression.LZ4.Benchmarks
 {

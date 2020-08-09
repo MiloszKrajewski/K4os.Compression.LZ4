@@ -1,3 +1,6 @@
+open System.Text.RegularExpressions
+open Tools
+
 #r "paket:
 	nuget Fake.Core.Target
 	nuget Fake.Core.ReleaseNotes
@@ -40,6 +43,30 @@ Target.create "Clean" (fun _ -> clean ())
 
 Target.create "Restore" (fun _ -> restore ())
 
+Target.create "Preprocess" (fun _ ->
+    let preprocess defines (source, target) =
+        Trace.logfn "%s -> %s" source target
+        [
+            "//------------------------------------------------------------------------------\r\n//"
+            "// This file has been generated. All changes will be lost."
+            "//\r\n//------------------------------------------------------------------------------"
+            for d in defines do sprintf "#define %s" d
+            ""
+            source |> File.loadText
+        ]
+        |> Seq.toArray
+        |> File.saveLines target
+
+    let root = "./src/K4os.Compression.LZ4"
+    !! (root @@ "**/x64/*64*.cs")
+    |> Seq.map (fun fn -> fn, String.replace "64" "32" fn)
+    |> Seq.iter (preprocess ["BIT32"])
+    
+    !! (root @@ "**/x64/*64*.cs")
+    |> Seq.map (fun fn -> fn, String.replace "64" "A7" fn)
+    |> Seq.iter (preprocess ["ARMv7"; "BIT32"])
+)
+
 Target.create "Build" (fun _ -> build ())
 
 Target.create "Rebuild" ignore
@@ -78,8 +105,8 @@ Target.create "Sanitize" (fun _ ->
         Sanitizer.sanitize (sprintf "./orig/lib/%s" fn) (sprintf "./src/sanitized/%s" fn) rules
     sanitize "lz4.c"
     sanitize "lz4hc.c"
-    sanitize "lz4opt.h"
-    sanitize "lz4frame.c"
+    sanitize "lz4.h"
+    sanitize "lz4hc.h"
 )
 
 let enusure7Zexe () =
@@ -129,8 +156,8 @@ Target.create "Restore:Corpus" (fun _ ->
 
 open Fake.Core.TargetOperators
 
-"Restore:Corpus" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Test" ==> "Release"
-"Release" ==> "Release:GitHub" ==> "Release:Nuget"
+"Restore:Corpus" ==> "Preprocess" ==> "Refresh" ==> "Restore" ==> "Build" ==> "Rebuild" ==> "Release"
+// "Release" ==> "Release:GitHub" ==> "Release:Nuget"
 "Clean" ?=> "Restore"
 "Clean" ==> "Rebuild"
 "Build" ?=> "Test"

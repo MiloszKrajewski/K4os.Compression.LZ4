@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders
@@ -29,7 +28,7 @@ namespace K4os.Compression.LZ4.Encoders
 			var dictSize = chaining ? Mem.K64 : 0;
 
 			_blockSize = blockSize;
-			_inputLength = dictSize + (1 + extraBlocks) * blockSize + 8;
+			_inputLength = dictSize + (1 + extraBlocks) * blockSize + 32;
 			_inputIndex = _inputPointer = 0;
 			_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
 		}

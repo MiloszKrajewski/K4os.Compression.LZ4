@@ -5,7 +5,7 @@ using K4os.Compression.LZ4.Internal;
 namespace K4os.Compression.LZ4.Encoders
 {
 	// fast decoder context
-	using LZ4Context = LZ4_xx.LZ4_streamDecode_t;
+	using LZ4Context = LL.LZ4_streamDecode_t;
 
 	/// <summary>LZ4 decoder handling dependent blocks.</summary>
 	public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
@@ -25,10 +25,10 @@ namespace K4os.Compression.LZ4.Encoders
 			extraBlocks = Math.Max(extraBlocks, 0);
 
 			_blockSize = blockSize;
-			_outputLength = Mem.K64 + (1 + extraBlocks) * _blockSize + 8;
+			_outputLength = Mem.K64 + (1 + extraBlocks) * _blockSize + 32;
 			_outputIndex = 0;
 			_outputBuffer = (byte*) Mem.Alloc(_outputLength + 8);
-			_context = (LZ4Context*) Mem.AllocZero(sizeof(LZ4Context));
+			_context = LL.LZ4_createStreamDecode();
 		}
 
 		/// <inheritdoc />
@@ -45,7 +45,8 @@ namespace K4os.Compression.LZ4.Encoders
 
 			Prepare(blockSize);
 
-			var decoded = DecodeBlock(source, length, _outputBuffer + _outputIndex, blockSize);
+			var decoded = DecodeBlock(
+				source, length, _outputBuffer + _outputIndex, blockSize);
 
 			if (decoded < 0)
 				throw new InvalidOperationException();
@@ -108,7 +109,7 @@ namespace K4os.Compression.LZ4.Encoders
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
 			Mem.Move(_outputBuffer, _outputBuffer + dictStart, dictSize);
-			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
+			LL.LZ4_setStreamDecode(_context, _outputBuffer, dictSize);
 			return dictSize;
 		}
 
@@ -116,18 +117,18 @@ namespace K4os.Compression.LZ4.Encoders
 		{ 
 			var dictStart = Math.Max(index - Mem.K64, 0);
 			var dictSize = index - dictStart;
-			LZ4_xx.LZ4_setStreamDecode(_context, _outputBuffer + dictStart, dictSize);
+			LL.LZ4_setStreamDecode(_context, _outputBuffer + dictStart, dictSize);
 			return index;
 		}
 
 		private int DecodeBlock(byte* source, int sourceLength, byte* target, int targetLength) =>
-			LZ4_xx.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
+			LLxx.LZ4_decompress_safe_continue(_context, source, target, sourceLength, targetLength);
 
 		/// <inheritdoc />
 		protected override void ReleaseUnmanaged()
 		{
 			base.ReleaseUnmanaged();
-			Mem.Free(_context);
+			LL.LZ4_freeStreamDecode(_context);
 			Mem.Free(_outputBuffer);
 		}
 	}

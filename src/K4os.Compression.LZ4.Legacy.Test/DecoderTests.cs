@@ -9,11 +9,7 @@ namespace K4os.Compression.LZ4.Legacy.Test
 {
 	public class DecoderTests
 	{
-#if DEBUG
-		[Theory(Skip = "Too long")]
-#else
 		[Theory]
-		#endif
 		[InlineData(false, Mem.M1, Mem.K8)]
 		[InlineData(false, Mem.K8, Mem.M1)]
 		[InlineData(true, Mem.M1, Mem.K8)]

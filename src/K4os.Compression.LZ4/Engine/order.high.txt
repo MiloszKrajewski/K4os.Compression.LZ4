@@ -1,0 +1,142 @@
+--- done
+
++ LZ4_sizeofStateHC
++ LZ4_setCompressionLevel
++ LZ4_favorDecompressionSpeed
+
++ LZ4_initStreamHC
+	LZ4_setCompressionLevel
++ LZ4_createStreamHC
+	LZ4_initStreamHC
++ LZ4_freeStreamHC
++ LZ4_resetStreamHC_fast
+	LZ4_initStreamHC
+	LZ4_setCompressionLevel
+	
++ DELTANEXTU16
++ LZ4HC_hashPtr
+    DELTANEXTU16
++ LZ4HC_Insert
+	LZ4HC_hashPtr
+	DELTANEXTU16
+
++ LZ4HC_setExternalDict
++ LZ4HC_clearTables
++ LZ4HC_init_internal
+	LZ4HC_clearTables
++ LZ4_saveDictHC
++ LZ4_loadDictHC
+	LZ4_initStreamHC
+	LZ4_setCompressionLevel
+	LZ4HC_init_internal
+	LZ4HC_Insert
+	
++ LZ4HC_rotl32
++ LZ4HC_protectDictEnd
++ LZ4HC_countBack
++ LZ4HC_countPattern
++ LZ4HC_reverseCountPattern
++ LZ4HC_rotatePattern
+	LZ4HC_rotl32
+
++ LZ4HC_InsertAndGetWiderMatch
+	LZ4HC_Insert
+	LZ4HC_hashPtr
+	LZ4HC_countBack
+	DELTANEXTU16
+	LZ4HC_countPattern
+	LZ4HC_protectDictEnd
+	LZ4HC_rotatePattern
+	LZ4HC_reverseCountPattern
++ LZ4HC_InsertAndFindBestMatch
+	LZ4HC_InsertAndGetWiderMatch
++ LZ4HC_FindLongerMatch
+	LZ4HC_InsertAndGetWiderMatch
+	
++ LZ4HC_literalsPrice
++ LZ4HC_sequencePrice
+	LZ4HC_literalsPrice
++ LZ4HC_encodeSequence
+
++ LZ4HC_compress_hashChain
+	LZ4HC_InsertAndFindBestMatch
+	LZ4HC_InsertAndGetWiderMatch
+	LZ4HC_encodeSequence
+	
++ LZ4HC_compress_optimal
+	LZ4HC_FindLongerMatch
+	LZ4HC_encodeSequence
+	LZ4HC_literalsPrice
+	LZ4HC_sequencePrice
+
++ LZ4HC_compress_generic_internal
+	LZ4HC_compress_hashChain
+	LZ4HC_compress_optimal
+	
++ LZ4HC_compress_generic_noDictCtx
+    LZ4HC_compress_generic_internal
++ LZ4HC_compress_generic_dictCtx
+    LZ4HC_compress_generic_noDictCtx
+    LZ4HC_setExternalDict
+    LZ4HC_compress_generic_internal
+	
++ LZ4HC_compress_generic
+    LZ4HC_compress_generic_noDictCtx
+    LZ4HC_compress_generic_dictCtx
+	
++ LZ4_compressHC_continue_generic
+	LZ4HC_init_internal
+	LZ4_loadDictHC
+	LZ4HC_setExternalDict
+	LZ4HC_compress_generic
++ LZ4_compress_HC_continue
+	LZ4_compressHC_continue_generic
++ LZ4_compress_HC_continue_destSize
+	LZ4_compressHC_continue_generic
++ LZ4_compress_HC_destSize
+	LZ4_initStreamHC
+	LZ4HC_init_internal
+	LZ4_setCompressionLevel
+	LZ4HC_compress_generic
++ LZ4_compress_HC_extStateHC_fastReset
+	LZ4_resetStreamHC_fast
+	LZ4HC_init_internal
+	LZ4HC_compress_generic
++ LZ4_compress_HC_extStateHC
+	LZ4_initStreamHC
+	LZ4_compress_HC_extStateHC_fastReset
++ LZ4_compress_HC
+	LZ4_compress_HC_extStateHC
+
+--- private?
+
+
+--- obsolete?
+
+LZ4_compressHC
+LZ4_compressHC_limitedOutput
+LZ4_compressHC2
+LZ4_compressHC2_limitedOutput
+LZ4_compressHC_withStateHC
+LZ4_compressHC_limitedOutput_withStateHC
+LZ4_compressHC2_withStateHC
+LZ4_compressHC2_limitedOutput_withStateHC
+LZ4_compressHC_continue
+LZ4_compressHC_limitedOutput_continue
+
+LZ4_createHC
+LZ4_slideInputBufferHC
+LZ4_freeHC
+LZ4_compressHC2_continue
+LZ4_compressHC2_limitedOutput_continue
+LZ4_sizeofStreamStateHC
+LZ4_resetStreamStateHC
+LZ4_resetStreamHC
+
+--- experimental?
+
+LZ4_setCompressionLevel
+LZ4_favorDecompressionSpeed
+LZ4_resetStreamHC_fast
+LZ4_compress_HC_extStateHC_fastReset
+LZ4_attach_HC_dictionary

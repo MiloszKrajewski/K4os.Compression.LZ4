@@ -4,14 +4,15 @@
     <TargetFrameworks>netstandard1.6;netstandard2.0;net45;net46</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PackageId>K4os.Compression.LZ4</PackageId>
     <PackageTags>compression lz4</PackageTags>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DocumentationFile>bin\Release\K4os.Compression.LZ4.xml</DocumentationFile>
-  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Engine\x32" />
+    <Folder Include="Engine\xA7" />
+    <Folder Include="Internal\x32" />
+    <Folder Include="Internal\xA7" />
+  </ItemGroup>
   <Import Project="..\..\Common.targets" />
+  <Import Project="..\..\Signing.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
