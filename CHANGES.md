@@ -1,3 +1,6 @@
+## 1.2.3-alpha (2020/08/02)
+* unaligned memory access methods to address ARMv7/Unity bug   
+
 ## 1.2.2-beta (2020/05/13)
 * issue 32 (slow when combined with CryptStream) fixed 
 * breaking change: interactive mode is no longer default  

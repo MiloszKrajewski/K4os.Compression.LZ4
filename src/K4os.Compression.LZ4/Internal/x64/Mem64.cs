@@ -1,57 +1,99 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace K4os.Compression.LZ4.Internal
 {
 	/// <summary>Unsafe memory operations.</summary>
-	#if !BIT32
-	public unsafe class Mem64: Mem
-	#else
+	#if ARMv7
+	public unsafe class MemA7: Mem
+	#elif BIT32
 	public unsafe class Mem32: Mem
+	#else
+	public unsafe class Mem64: Mem
 	#endif
 	{
+		#if ARMv7
+		
+		// ---- ARMv7
+		
+		#else
+		
+		// ---- BIT32 & BIT64
+		
+		/// <summary>Reads exactly 2 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>2 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static ushort Peek2(void* p) => *(ushort*) p;
+		
+		/// <summary>Writes exactly 2 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static void Poke2(void* p, ushort v) => *(ushort*) p = v;
+		
+		/// <summary>Reads exactly 4 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>4 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static uint Peek4(void* p) => *(uint*) p;
+		
+		/// <summary>Writes exactly 4 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static void Poke4(void* p, uint v) => *(uint*) p = v;
+		
+		/// <summary>Copies exactly 1 byte from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static void Copy1(byte* target, byte* source) =>
+			*target = *source;
+		
+		/// <summary>Copies exactly 2 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static void Copy2(byte* target, byte* source) =>
+			*(ushort*) target = *(ushort*) source;
+		
+		/// <summary>Copies exactly 4 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public new static void Copy4(byte* target, byte* source) =>
+			*(uint*) target = *(uint*) source;
+		
+		#if !BIT32
+		
+		// ---- BIT64
+		
 		/// <summary>Reads exactly 8 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Peek8(void* p)
-		{
-			#if !BIT32
-			return *(ulong*) p;
-			#else
-			return *((uint*) p + 0) | (ulong) *((uint*) p + 1) << 32;
-			#endif
-		}
-
+		public new static ulong Peek8(void* p) => *(ulong*) p;
+		
 		/// <summary>Writes exactly 8 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke8(void* p, ulong v)
-		{
-			#if !BIT32
-			*(ulong*) p = v;
-			#else
-			*((uint*) p + 0) = (uint) v;
-			*((uint*) p + 1) = (uint) (v >> 32);
-			#endif
-		}
+		public new static void Poke8(void* p, ulong v) => *(ulong*) p = v;
 		
-		#if !BIT32
-
-		/// <summary>Reads 8 bytes from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>8 bytes at given address.</returns>
+		/// <summary>Copies exactly 8 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong PeekW(void* p) => Peek8(p);
-
-		/// <summary>Writes 8 bytes to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void PokeW(void* p, ulong v) => Poke8(p, v);
+		public new static void Copy8(byte* target, byte* source) => 
+			*(ulong*) target = *(ulong*) source;
 		
-		#else
+		#endif
+		
+		#endif
 
+		#if ARMv7 || BIT32
+		
 		/// <summary>Reads 4 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>4 bytes at given address.</returns>
@@ -63,73 +105,22 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="v">Value.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void PokeW(void* p, uint v) => Poke4(p, v);
+		
+		#else
+		
+		/// <summary>Reads 8 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>8 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong PeekW(void* p) => Peek8(p);
 
+		/// <summary>Writes 8 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void PokeW(void* p, ulong v) => Poke8(p, v);
+	
 		#endif
-
-		/// <summary>Fills memory block with repeating pattern of a single byte.</summary>
-		/// <param name="target">Address.</param>
-		/// <param name="value">A pattern.</param>
-		/// <param name="length">Length.</param>
-		/// <returns>Original pointer.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public new static byte* Fill(byte* target, byte value, int length)
-		{
-			var baseline = target;
-			
-			var value8 = (ulong) value;
-			value8 |= value8 << 8;
-			value8 |= value8 << 16;
-
-			#if !BIT32
-			
-			value8 |= value8 << 32;
-			
-			while (length >= sizeof(ulong))
-			{
-				Poke8(target, value8);
-				target += sizeof(ulong);
-				length -= sizeof(ulong);
-			}
-			
-			#endif
-
-			while (length >= sizeof(uint))
-			{
-				Poke4(target, (uint) value8);
-				target += sizeof(uint);
-				length -= sizeof(uint);
-			}
-
-			if (length >= sizeof(ushort))
-			{
-				Poke2(target, (ushort) value8);
-				target += sizeof(ushort);
-				length -= sizeof(ushort);
-			}
-
-			if (length > 0)
-			{
-				Poke1(target, (byte) value8);
-				// target++;
-			}
-
-			return baseline;
-		}
-
-		/// <summary>Copies exactly 8 bytes from source to target.</summary>
-		/// <param name="target">Target address.</param>
-		/// <param name="source">Source address.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy8(byte* target, byte* source)
-		{
-			#if !BIT32
-			*(ulong*) target = *(ulong*) source;
-			#else
-			var temp = Peek4(source + 4);
-			Copy4(target, source);
-			Poke4(target + 4, temp);
-			#endif
-		}
 
 		/// <summary>Copies exactly 16 bytes from source to target.</summary>
 		/// <param name="target">Target address.</param>

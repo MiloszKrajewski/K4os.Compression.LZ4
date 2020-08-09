@@ -3,6 +3,7 @@
 // This file has been generated. All changes will be lost.
 //
 //------------------------------------------------------------------------------
+#define ARMv7
 #define BIT32
 
 using System;

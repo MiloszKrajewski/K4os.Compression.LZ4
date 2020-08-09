@@ -1,4 +1,12 @@
-﻿using System;
+//------------------------------------------------------------------------------
+//
+// This file has been generated. All changes will be lost.
+//
+//------------------------------------------------------------------------------
+#define ARMv7
+#define BIT32
+
+using System;
 using System.Runtime.CompilerServices;
 
 //------------------------------------------------------------------------------
@@ -671,3 +679,4 @@ namespace K4os.Compression.LZ4.Engine
 		}
 	}
 }
+

@@ -18,30 +18,49 @@ namespace K4os.Compression.LZ4.Benchmarks
 			_target = new byte[LZ4Codec.MaximumOutputSize(_source.Length)];
 		}
 
-		[Benchmark]
-		public void Previous64()
-		{
-			LZ4PrevCodec.Encode(
-				_source, 0, _source.Length,
-				_target, 0, _target.Length);
-		}
-		
 		// [Benchmark]
-		// public void Current32()
+		// public void Previous64()
 		// {
-		// 	LZ4Codec.Enforce32 = true;
-		// 	LZ4Codec.Encode(
+		// 	LZ4PrevCodec.Encode(
 		// 		_source, 0, _source.Length,
 		// 		_target, 0, _target.Length);
-		// 	LZ4Codec.Enforce32 = false;
 		// }
+		
+		[Benchmark]
+		public void Current32()
+		{
+			LZ4Codec.Enforce32 = true;
+			var encoded = LZ4Codec.Encode(
+				_source, 0, _source.Length,
+				_target, 0, _target.Length);
+			LZ4Codec.Decode(
+				_target, 0, encoded,
+				_source, 0, _source.Length);
+			LZ4Codec.Enforce32 = false;
+		}
+		
+		[Benchmark]
+		public void CurrentA7()
+		{
+			LZ4Codec.EnforceA7 = true;
+			var encoded = LZ4Codec.Encode(
+				_source, 0, _source.Length,
+				_target, 0, _target.Length);
+			LZ4Codec.Decode(
+				_target, 0, encoded,
+				_source, 0, _source.Length);
+			LZ4Codec.EnforceA7 = false;
+		}
 		
 		[Benchmark]
 		public void Current64()
 		{
-			LZ4Codec.Encode(
+			var encoded = LZ4Codec.Encode(
 				_source, 0, _source.Length,
 				_target, 0, _target.Length);
+			LZ4Codec.Decode(
+				_target, 0, encoded,
+				_source, 0, _source.Length);
 		}
 	}
 }

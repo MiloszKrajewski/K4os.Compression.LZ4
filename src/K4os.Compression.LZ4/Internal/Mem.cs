@@ -63,13 +63,29 @@ namespace K4os.Compression.LZ4.Internal
 		/// <returns>Value rounded up.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int RoundUp(int value, int step) => (value + step - 1) / step * step;
+		
+		/// <summary>
+		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="source">The source block address.</param>
+		/// <param name="length">Length in bytes.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void CpBlk(void* target, void* source, uint length) => 
+			Unsafe.CopyBlockUnaligned(target, source, length);
+
+		/// <summary>
+		/// Fills <paramref name="target"/> memory block with predefined <paramref name="value"/>.
+		/// </summary>
+		/// <param name="target">The target block address.</param>
+		/// <param name="value">Value to be used.</param>
+		/// <param name="length">Length in bytes.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void ZBlk(void* target, byte value, uint length) => 
+			Unsafe.InitBlockUnaligned(target, value, length);
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
-		/// Even though it is called "copy" it actually behaves like "move" which
-		/// might be potential problem, although it shouldn't as I cannot think about
-		/// any situation when "copy" invalid behaviour (forward copy of overlapping blocks)
-		/// can be a desired.
 		/// </summary>
 		/// <param name="target">The target block address.</param>
 		/// <param name="source">The source block address.</param>
@@ -77,13 +93,8 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Copy(byte* target, byte* source, int length)
 		{
-#if !NET45
-			Buffer.MemoryCopy(source, target, length, length);
-#else
 			if (length <= 0) return;
-
-			Unsafe.CopyBlock(target, source, (uint) length);
-#endif
+			CpBlk(target, source, (uint) length);
 		}
 
 		/// <summary>
@@ -96,12 +107,15 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
+			if (target > source && source + length > target)
+				throw new InvalidOperationException("Unexpected memory overlap.");
+			
 #if !NET45
 			Buffer.MemoryCopy(source, target, length, length);
 #else
 			if (length <= 0) return;
-
-			Unsafe.CopyBlock(target, source, (uint) length);
+			
+			CpBlk(target, source, (uint) length);
 #endif
 		}
 
@@ -125,8 +139,11 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="length">Length.</param>
 		/// <returns>Original pointer.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static byte* Fill(byte* target, byte value, int length) =>
-			System32 ? Mem32.Fill(target, value, length) : Mem64.Fill(target, value, length);
+		public static byte* Fill(byte* target, byte value, int length)
+		{
+			if (length > 0) ZBlk(target, value, (uint) length);
+			return target;
+		}
 
 		/// <summary>Allocates block of memory and fills it with zeroes.</summary>
 		/// <param name="size">Size in bytes.</param>
@@ -142,63 +159,6 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Free(void* ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
 
-		/// <summary>Reads exactly 1 byte from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>Byte at given address.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static byte Peek1(void* p) => *(byte*) p;
-
-		/// <summary>Reads exactly 2 bytes from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>2 bytes at given address.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ushort Peek2(void* p) => *(ushort*) p;
-
-		/// <summary>Reads exactly 4 bytes from given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <returns>4 bytes at given address.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint Peek4(void* p) => *(uint*) p;
-
-		/// <summary>Writes exactly 1 byte to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke1(void* p, byte v) => *(byte*) p = v;
-
-		/// <summary>Writes exactly 2 bytes to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke2(void* p, ushort v) => *(ushort*) p = v;
-
-		/// <summary>Writes exactly 4 bytes to given address.</summary>
-		/// <param name="p">Address.</param>
-		/// <param name="v">Value.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Poke4(void* p, uint v) => *(uint*) p = v;
-
-		/// <summary>Copies exactly 1 byte from source to target.</summary>
-		/// <param name="target">Target address.</param>
-		/// <param name="source">Source address.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy1(byte* target, byte* source) =>
-			*target = *source;
-
-		/// <summary>Copies exactly 2 bytes from source to target.</summary>
-		/// <param name="target">Target address.</param>
-		/// <param name="source">Source address.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy2(byte* target, byte* source) =>
-			*(ushort*) target = *(ushort*) source;
-
-		/// <summary>Copies exactly 4 bytes from source to target.</summary>
-		/// <param name="target">Target address.</param>
-		/// <param name="source">Source address.</param>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy4(byte* target, byte* source) =>
-			*(uint*) target = *(uint*) source;
-
 		/// <summary>Clones managed array to unmanaged one. Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
@@ -206,7 +166,7 @@ namespace K4os.Compression.LZ4.Internal
 		{
 			var length = sizeof(int) * array.Length;
 			var target = Alloc(length);
-			fixed(void* source = &array[0])
+			fixed (void* source = &array[0])
 				Copy((byte*) target, (byte*) source, length);
 
 			return (int*) target;
@@ -224,5 +184,99 @@ namespace K4os.Compression.LZ4.Internal
 
 			return (uint*) target;
 		}
+		
+		/// <summary>Reads exactly 1 byte from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>Byte at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static byte Peek1(void* p) => *(byte*) p;
+
+		/// <summary>Writes exactly 1 byte to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Poke1(void* p, byte v) => *(byte*) p = v;
+
+		/// <summary>Reads exactly 2 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>2 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ushort Peek2(void* p)
+		{
+			ushort result;
+			CpBlk(&result, p, sizeof(ushort));
+			return result;
+		}
+
+		/// <summary>Writes exactly 2 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Poke2(void* p, ushort v) => 
+			CpBlk(p, &v, sizeof(ushort));
+
+		/// <summary>Reads exactly 4 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>4 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static uint Peek4(void* p)
+		{
+			uint result;
+			CpBlk(&result, p, sizeof(uint));
+			return result;
+		}
+
+		/// <summary>Writes exactly 4 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Poke4(void* p, uint v) => 
+			CpBlk(p, &v, sizeof(uint));
+
+		/// <summary>Reads exactly 8 bytes from given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <returns>8 bytes at given address.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong Peek8(void* p)
+		{
+			ulong result;
+			CpBlk(&result, p, sizeof(ulong));
+			return result;
+		}
+
+		/// <summary>Writes exactly 8 bytes to given address.</summary>
+		/// <param name="p">Address.</param>
+		/// <param name="v">Value.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Poke8(void* p, ulong v) => 
+			CpBlk(p, &v, sizeof(ulong));
+
+		/// <summary>Copies exactly 1 byte from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy1(byte* target, byte* source) =>
+			*target = *source;
+
+		/// <summary>Copies exactly 2 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy2(byte* target, byte* source) =>
+			CpBlk(target, source, 2);
+
+		/// <summary>Copies exactly 4 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy4(byte* target, byte* source) =>
+			CpBlk(target, source, 4);
+
+		/// <summary>Copies exactly 8 bytes from source to target.</summary>
+		/// <param name="target">Target address.</param>
+		/// <param name="source">Source address.</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Copy8(byte* target, byte* source) =>
+			CpBlk(target, source, 8);
 	}
 }

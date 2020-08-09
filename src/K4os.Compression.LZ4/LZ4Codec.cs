@@ -23,6 +23,20 @@ namespace K4os.Compression.LZ4
 			get => LL.Enforce32;
 			set => LL.Enforce32 = value;
 		}
+		
+		/// <summary>
+		/// Enforces ARMv7 compression/decompression. This forces aligned memory access which
+		/// are safer but slower (well, aligned memory access is not slower, but forcing
+		/// algorithm to do only those is). 
+		/// Please note, this property should not be used on regular basis, it just allows
+		/// to workaround some problems on platforms which do not support unaligned memory
+		/// access.
+		/// </summary>
+		public static bool EnforceA7
+		{
+			get => LL.EnforceA7;
+			set => LL.EnforceA7 = value;
+		}
 
 		/// <summary>Maximum size after compression.</summary>
 		/// <param name="length">Length of input buffer.</param>

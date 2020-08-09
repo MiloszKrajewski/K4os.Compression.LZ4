@@ -4,7 +4,7 @@ using K4os.Compression.LZ4.Internal;
 namespace K4os.Compression.LZ4.Engine
 {
 	/// <summary>
-	/// Existence of this class is admission of failure.
+	/// Existence of this class is an admission of failure.
 	/// I failed to export internals to test assemblies.
 	/// Using InternalsVisibleTo work, of course, but with signing (which was requested
 	/// in https://github.com/MiloszKrajewski/K4os.Compression.LZ4/issues/9) it is

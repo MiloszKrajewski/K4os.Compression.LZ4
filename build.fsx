@@ -44,9 +44,8 @@ Target.create "Clean" (fun _ -> clean ())
 Target.create "Restore" (fun _ -> restore ())
 
 Target.create "Preprocess" (fun _ ->
-    let preprocess (source, target) =
+    let preprocess defines (source, target) =
         Trace.logfn "%s -> %s" source target
-        let defines = [ "BIT32" ]
         [
             "//------------------------------------------------------------------------------\r\n//"
             "// This file has been generated. All changes will be lost."
@@ -61,7 +60,11 @@ Target.create "Preprocess" (fun _ ->
     let root = "./src/K4os.Compression.LZ4"
     !! (root @@ "**/x64/*64*.cs")
     |> Seq.map (fun fn -> fn, String.replace "64" "32" fn)
-    |> Seq.iter preprocess
+    |> Seq.iter (preprocess ["BIT32"])
+    
+    !! (root @@ "**/x64/*64*.cs")
+    |> Seq.map (fun fn -> fn, String.replace "64" "A7" fn)
+    |> Seq.iter (preprocess ["ARMv7"; "BIT32"])
 )
 
 Target.create "Build" (fun _ -> build ())
