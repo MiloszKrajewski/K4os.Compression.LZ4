@@ -101,7 +101,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 		{
 			using var hasher = MD5.Create();
 			using var compressed = File.OpenRead(_compressedFilename);
-			using var source = LZ4Stream.Decode(compressed, new LZ4DecoderSettings { });
+			using var source = LZ4Stream.Decode(compressed, new LZ4DecoderSettings());
 			using var hash = new CryptoStream(source, hasher, CryptoStreamMode.Read);
 			using var target = new MemoryStream();
 			hash.CopyTo(target);

@@ -1,12 +1,8 @@
 using System;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
-
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Test.Internal;
-
 using TestHelpers;
-
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test

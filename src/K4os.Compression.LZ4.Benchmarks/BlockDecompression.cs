@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using System.Threading;
 using BenchmarkDotNet.Attributes;
-using K4os.Compression.LZ4.Internal;
 using TestHelpers;
 using LZ4PrevCodec = K4os.Compression.LZ4.vPrev.LZ4Codec;
 
@@ -30,7 +28,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 		[Benchmark]
 		public void Previous64()
 		{
-			vPrev.LZ4Codec.Decode(
+			LZ4PrevCodec.Decode(
 				_source, 0, _source.Length,
 				_target, 0, _target.Length);
 		}
