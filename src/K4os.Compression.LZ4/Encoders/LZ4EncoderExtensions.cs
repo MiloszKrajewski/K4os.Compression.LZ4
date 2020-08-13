@@ -160,6 +160,32 @@ namespace K4os.Compression.LZ4.Encoders
 					forceEncode, allowCopy,
 					out loaded, out encoded);
 		}
+		
+		/// <summary>Tops encoder and encodes content.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="source">Source buffer (used to top up from).</param>
+		/// <param name="target">Target buffer (used to encode into)</param>
+		/// <param name="forceEncode">Forces encoding even if encoder is not full.</param>
+		/// <param name="allowCopy">Allows to copy bytes if compression was not possible.</param>
+		/// <param name="loaded">Number of bytes loaded (topped up)</param>
+		/// <param name="encoded">Number if bytes encoded or copied.
+		/// Value is 0 if no encoding was done.</param>
+		/// <returns>Action performed.</returns>
+		public static unsafe EncoderAction TopupAndEncode(
+			this ILZ4Encoder encoder,
+			ReadOnlySpan<byte> source,
+			Span<byte> target,
+			bool forceEncode, bool allowCopy,
+			out int loaded, out int encoded)
+		{
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
+				return encoder.TopupAndEncode(
+					sourceP, source.Length,
+					targetP, target.Length,
+					forceEncode, allowCopy,
+					out loaded, out encoded);
+		}
 
 		private static unsafe EncoderAction FlushAndEncode(
 			this ILZ4Encoder encoder,
@@ -176,15 +202,12 @@ namespace K4os.Compression.LZ4.Encoders
 				return loaded > 0 ? EncoderAction.Loaded : EncoderAction.None;
 
 			encoded = encoder.Encode(target, targetLength, allowCopy);
-			if (allowCopy && encoded < 0)
-			{
-				encoded = -encoded;
-				return EncoderAction.Copied;
-			}
-			else
-			{
+			if (!allowCopy || encoded >= 0) 
 				return EncoderAction.Encoded;
-			}
+
+			encoded = -encoded;
+			return EncoderAction.Copied;
+
 		}
 
 		/// <summary>Encoded remaining bytes in encoder.</summary>
@@ -219,7 +242,25 @@ namespace K4os.Compression.LZ4.Encoders
 		{
 			fixed (byte* targetP = target)
 				return encoder.FlushAndEncode(
-					targetP + targetOffset, targetLength, true, allowCopy, 0, out encoded);
+					targetP + targetOffset, targetLength, 
+					true, allowCopy, 0, out encoded);
+		}
+		
+		/// <summary>Encoded remaining bytes in encoder.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="allowCopy">Allows to copy bytes if compression was not possible.</param>
+		/// <param name="encoded">Number if bytes encoded or copied.
+		/// Value is 0 if no encoding was done.</param>
+		/// <returns>Action performed.</returns>
+		public static unsafe EncoderAction FlushAndEncode(
+			this ILZ4Encoder encoder,
+			Span<byte> target, bool allowCopy, out int encoded)
+		{
+			fixed (byte* targetP = target)
+				return encoder.FlushAndEncode(
+					targetP, target.Length, 
+					true, allowCopy, 0, out encoded);
 		}
 
 		/// <summary>Drains decoder by reading all bytes which are ready.</summary>

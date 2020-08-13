@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
-using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams
@@ -12,14 +11,9 @@ namespace K4os.Compression.LZ4.Streams
 	/// <summary>
 	/// LZ4 compression stream. 
 	/// </summary>
-	public class LZ4EncoderStream: Stream, IDisposable
+	public partial class LZ4EncoderStream: Stream, IDisposable
 	{
 		private readonly Stream _inner;
-		
-		// ReSharper disable once InconsistentNaming
-		private const int _length16 = 16;
-		private readonly byte[] _buffer16 = new byte[_length16 + 8];
-		private int _index16;
 
 		private ILZ4Encoder _encoder;
 		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
@@ -50,7 +44,8 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		/// <inheritdoc />
-		public override void Flush() => _inner.Flush();
+		public override void Flush() =>
+			_inner.Flush();
 
 		/// <inheritdoc />
 		public override Task FlushAsync(CancellationToken cancellationToken) =>
@@ -61,7 +56,11 @@ namespace K4os.Compression.LZ4.Streams
 		public void Close() { CloseFrame(); }
 		#else
 		/// <inheritdoc />
-		public override void Close() { CloseFrame(); }
+		public override void Close()
+		{
+			CloseFrame();
+			base.Close();
+		}
 		#endif
 
 		/// <inheritdoc />
@@ -72,33 +71,85 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		/// <inheritdoc />
-		public override void Write(byte[] buffer, int offset, int count)
+		public override void Write(byte[] buffer, int offset, int count) =>
+			WriteImpl(buffer.AsSpan(offset, count));
+
+		/// <inheritdoc />
+		public override async Task WriteAsync(
+			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+			await WriteImplAsync(buffer.AsMemory(offset, count), cancellationToken);
+
+		#if NETSTANDARD2_1
+
+		/// <inheritdoc />
+		public override void Write(ReadOnlySpan<byte> buffer) =>
+			WriteImpl(buffer);
+
+		/// <inheritdoc />
+		public override async ValueTask WriteAsync(
+			ReadOnlyMemory<byte> buffer,
+			CancellationToken cancellationToken = new CancellationToken()) =>
+			await WriteImplAsync(buffer, cancellationToken);
+
+		#endif
+
+		private void WriteImpl(ReadOnlySpan<byte> buffer)
 		{
-			if (_encoder == null)
-				WriteFrame();
+			if (TryStashFrame())
+				FlushStash();
+
+			var offset = 0;
+			var count = buffer.Length;
 
 			while (count > 0)
+				WriteBlock(
+					TopupAndEncode(buffer, ref offset, ref count));
+		}
+
+		private async Task WriteImplAsync(ReadOnlyMemory<byte> buffer, CancellationToken token)
+		{
+			if (TryStashFrame())
+				await FlushStashAsync(token);
+
+			var offset = 0;
+			var count = buffer.Length;
+
+			while (count > 0)
+				await WriteBlockAsync(
+					TopupAndEncode(buffer.Span, ref offset, ref count), token);
+		}
+
+		internal readonly struct BlockInfo
+		{
+			private readonly byte[] _buffer;
+			private readonly int _length;
+
+			public byte[] Buffer => _buffer;
+			public int Offset => 0;
+			public int Length => Math.Abs(_length);
+			public bool Compressed => _length > 0;
+			public bool Ready => _length != 0;
+
+			public BlockInfo(byte[] buffer, EncoderAction action, int length)
 			{
-				var action = _encoder.TopupAndEncode(
-					buffer, offset, count,
-					_buffer, 0, _buffer.Length,
-					false, true,
-					out var loaded,
-					out var encoded);
-				WriteBlock(encoded, action);
-				
-				_position += loaded;
-				
-				offset += loaded;
-				count -= loaded;
+				_buffer = buffer;
+				_length = action switch {
+					EncoderAction.Encoded => length,
+					EncoderAction.Copied => -length,
+					_ => 0,
+				};
 			}
 		}
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
-		private void WriteFrame()
+		private bool TryStashFrame()
 		{
-			Stash32(0x184D2204);
-			FlushStash();
+			if (_encoder != null)
+				return _index16 > 0;
+			
+			Stash4(0x184D2204);
+
+			var headerIndex = _index16;
 
 			const int versionCode = 0x01;
 			var blockChaining = _descriptor.Chaining;
@@ -119,23 +170,26 @@ namespace K4os.Compression.LZ4.Streams
 
 			var BD = MaxBlockSizeCode(blockSize) << 4;
 
-			Stash16((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
+			Stash2((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
 				throw NotImplemented(
-					"ContentSize feature is not implemented"); // Write64(contentSize);
+					"ContentSize feature is not implemented"); // Stash8(contentSize);
 
 			if (hasDictionary)
 				throw NotImplemented(
-					"Predefined dictionaries feature is not implemented"); // Write32(dictionaryId);
+					"Predefined dictionaries feature is not implemented"); // Stash4(dictionaryId);
 
-			var HC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
+			var headerDigest = XXH32.DigestOf(
+				_buffer16, headerIndex, _index16 - headerIndex);
+			var HC = (byte) (headerDigest >> 8);
 
-			Stash8(HC);
-			FlushStash();
+			Stash1(HC);
 
 			_encoder = CreateEncoder();
 			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
+			
+			return _index16 > 0;
 		}
 
 		private ILZ4Encoder CreateEncoder()
@@ -147,65 +201,108 @@ namespace K4os.Compression.LZ4.Streams
 			return encoder;
 		}
 
+		private BlockInfo TopupAndEncode(
+			ReadOnlySpan<byte> buffer, ref int offset, ref int count)
+		{
+			var action = _encoder.TopupAndEncode(
+				buffer.Slice(offset, count),
+				_buffer.AsSpan(),
+				false, true,
+				out var loaded,
+				out var encoded);
+
+			_position += loaded;
+			offset += loaded;
+			count -= loaded;
+
+			return new BlockInfo(_buffer, action, encoded);
+		}
+
+		private BlockInfo FlushAndEncode()
+		{
+			var action = _encoder.FlushAndEncode(
+				_buffer.AsSpan(), true, out var encoded);
+
+			try
+			{
+				_encoder.Dispose();
+
+				return new BlockInfo(_buffer, action, encoded);
+			}
+			finally
+			{
+				_encoder = null;
+				_buffer = null;
+			}
+		}
+
+		private void WriteBlock(BlockInfo block)
+		{
+			if (!block.Ready) return;
+
+			StashBlockLength(block);
+			FlushStash();
+
+			InnerWrite(block);
+
+			StashBlockChecksum(block);
+			FlushStash();
+		}
+
+		private async Task WriteBlockAsync(
+			BlockInfo block, CancellationToken token = default)
+		{
+			if (!block.Ready) return;
+
+			StashBlockLength(block);
+			await FlushStashAsync(token);
+
+			await InnerWriteAsync(block, token);
+
+			StashBlockChecksum(block);
+			await FlushStashAsync(token);
+		}
+
 		private void CloseFrame()
 		{
 			if (_encoder == null)
 				return;
 
-			try
-			{
-				var action = _encoder.FlushAndEncode(
-					_buffer, 0, _buffer.Length, true, out var encoded);
-				WriteBlock(encoded, action);
+			WriteBlock(FlushAndEncode());
 
-				Stash32(0);
-				FlushStash();
-
-				if (_descriptor.ContentChecksum)
-					throw NotImplemented("ContentChecksum");
-
-				_buffer = null;
-
-				_encoder.Dispose();
-			}
-			finally
-			{
-				_encoder = null;
-			}
+			StashStreamEnd();
+			FlushStash();
 		}
 
-		private int MaxBlockSizeCode(int blockSize) =>
-			blockSize <= Mem.K64 ? 4 :
-			blockSize <= Mem.K256 ? 5 :
-			blockSize <= Mem.M1 ? 6 :
-			blockSize <= Mem.M4 ? 7 :
-			throw InvalidBlockSize(blockSize);
-
-		private void WriteBlock(int length, EncoderAction action)
+		private async Task CloseFrameAsync(CancellationToken token = default)
 		{
-			switch (action)
-			{
-				case EncoderAction.Copied:
-					WriteBlock(length, false);
-					break;
-				case EncoderAction.Encoded:
-					WriteBlock(length, true);
-					break;
-			}
-		}
-
-		private void WriteBlock(int length, bool compressed)
-		{
-			if (length <= 0)
+			if (_encoder == null)
 				return;
 
-			Stash32((uint) length | (compressed ? 0 : 0x80000000));
-			FlushStash();
+			await WriteBlockAsync(FlushAndEncode(), token);
 
-			_inner.Write(_buffer, 0, length);
+			StashStreamEnd();
+			await FlushStashAsync(token);
+		}
+
+		private void StashBlockLength(BlockInfo block) =>
+			Stash4((uint) block.Length | (block.Compressed ? 0 : 0x80000000));
+
+		// ReSharper disable once UnusedParameter.Local
+		private void StashBlockChecksum(BlockInfo block)
+		{
+			// NOTE: block will carry checksum one day
 
 			if (_descriptor.BlockChecksum)
 				throw NotImplemented("BlockChecksum");
+		}
+
+		private void StashStreamEnd()
+		{
+			Stash4(0);
+
+			if (_descriptor.ContentChecksum)
+				throw NotImplemented("ContentChecksum");
 		}
 
 		/// <inheritdoc />
@@ -218,54 +315,42 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		protected override void Dispose(bool disposing)
 		{
+			if (disposing)
+			{
+				CloseFrame();
+				if (!_leaveOpen)
+					_inner.Dispose();
+			}
+
 			base.Dispose(disposing);
-			if (!disposing)
-				return;
-
-			CloseFrame();
-			if (!_leaveOpen)
-				_inner.Dispose();
 		}
 
-		private void Stash8(byte value) { _buffer16[_index16++] = value; }
+		#if NETSTANDARD2_1
 
-		private void Stash16(ushort value)
+		/// <inheritdoc />
+		public override async ValueTask DisposeAsync()
 		{
-			_buffer16[_index16 + 0] = (byte) value;
-			_buffer16[_index16 + 1] = (byte) (value >> 8);
-			_index16 += 2;
+			await DisposeAsync(true);
+			await base.DisposeAsync();
 		}
 
-		private void Stash32(uint value)
+		/// <summary>Performs dispose action. When inheriting remember to call base.</summary>
+		/// <param name="disposing"><c>true</c> if it got called because of explicit dispose call
+		/// not garbage collection.</param>
+		/// <returns>Task when finished.</returns>
+		protected async Task DisposeAsync(bool disposing)
 		{
-			_buffer16[_index16 + 0] = (byte) value;
-			_buffer16[_index16 + 1] = (byte) (value >> 8);
-			_buffer16[_index16 + 2] = (byte) (value >> 16);
-			_buffer16[_index16 + 3] = (byte) (value >> 24);
-			_index16 += 4;
+			if (disposing)
+			{
+				await CloseFrameAsync();
+				if (!_leaveOpen)
+					await _inner.DisposeAsync();
+			}
+
+			base.Dispose(disposing);
 		}
 
-		/*
-		private void Stash64(ulong value)
-		{
-		    _buffer16[_index16 + 0] = (byte) value;
-		    _buffer16[_index16 + 1] = (byte) (value >> 8);
-		    _buffer16[_index16 + 2] = (byte) (value >> 16);
-		    _buffer16[_index16 + 3] = (byte) (value >> 24);
-		    _buffer16[_index16 + 4] = (byte) (value >> 32);
-		    _buffer16[_index16 + 5] = (byte) (value >> 40);
-		    _buffer16[_index16 + 6] = (byte) (value >> 48);
-		    _buffer16[_index16 + 7] = (byte) (value >> 56);
-		    _index16 += 8;
-		}
-		*/
-
-		private void FlushStash()
-		{
-			if (_index16 > 0)
-				_inner.Write(_buffer16, 0, _index16);
-			_index16 = 0;
-		}
+		#endif
 
 		/// <inheritdoc />
 		public override bool CanRead => false;
@@ -320,6 +405,15 @@ namespace K4os.Compression.LZ4.Streams
 		public override Task<int> ReadAsync(
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("ReadAsync");
+
+		#if NETSTANDARD2_1
+
+		/// <inheritdoc />
+		public override ValueTask<int> ReadAsync(
+			Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+			throw InvalidOperation("ReadAsync");
+
+		#endif
 
 		/// <inheritdoc />
 		public override int ReadByte() => throw InvalidOperation("ReadByte");

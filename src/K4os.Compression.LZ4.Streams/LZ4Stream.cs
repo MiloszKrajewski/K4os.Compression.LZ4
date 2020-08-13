@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 
@@ -10,6 +11,12 @@ namespace K4os.Compression.LZ4.Streams
 	/// </summary>
 	public static class LZ4Stream
 	{
+		#if NET45
+		internal static readonly Task CompletedTask = Task.FromResult(0);
+		#else
+		internal static readonly Task CompletedTask = Task.CompletedTask;
+		#endif
+
 		/// <summary>Created compression stream on top of inner stream.</summary>
 		/// <param name="stream">Inner stream.</param>
 		/// <param name="settings">Compression settings.</param>
