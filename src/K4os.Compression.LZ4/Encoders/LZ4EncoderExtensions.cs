@@ -263,6 +263,7 @@ namespace K4os.Compression.LZ4.Encoders
 					true, allowCopy, 0, out encoded);
 		}
 
+		#error Span version of Drain
 		/// <summary>Drains decoder by reading all bytes which are ready.</summary>
 		/// <param name="decoder">Decoder.</param>
 		/// <param name="target">Target buffer.</param>
@@ -279,6 +280,8 @@ namespace K4os.Compression.LZ4.Encoders
 				decoder.Drain(targetP + targetOffset, offset, length);
 		}
 
+		#error Span version of DecodeAndDrain
+		
 		/// <summary>Decodes data and immediately drains it into target buffer.</summary>
 		/// <param name="decoder">Decoder.</param>
 		/// <param name="source">Source buffer (with compressed data, to be decoded).</param>

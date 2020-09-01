@@ -74,7 +74,7 @@ Target.create "Preprocess" (fun _ ->
         Sanitizer.replaceExpr "((in\s+)?CancellationToken\\s+)?token" (fun _ -> "") >>
         Sanitizer.replaceText "async" "/*async*/" >>
         Sanitizer.replaceText "await" "/*await*/" >>
-        Sanitizer.replaceExpr "Task[<](?<type>[A-Za-z0-9_]+)[>]" (fun g -> g "type") >>
+        Sanitizer.replaceExpr "Task[<](?<type>[A-Za-z0-9_]+[?]?)[>]" (fun g -> g "type") >>
         Sanitizer.replaceText "Task" "void" >>
         id
     

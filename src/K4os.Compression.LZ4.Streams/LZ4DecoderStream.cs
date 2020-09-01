@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
@@ -14,6 +12,11 @@ namespace K4os.Compression.LZ4.Streams
 	/// </summary>
 	public partial class LZ4DecoderStream: Stream, IDisposable
 	{
+		// ReSharper disable once InconsistentNaming
+		private const int _length16 = 16; // we intend to use only 16 bytes
+		private readonly byte[] _buffer16 = new byte[_length16 + 8];
+		private int _index16;
+
 		private readonly bool _leaveOpen;
 		private readonly bool _interactive;
 
@@ -47,98 +50,14 @@ namespace K4os.Compression.LZ4.Streams
 			_position = 0;
 			_interactive = interactive;
 		}
+		
+		private static int MaxBlockSize(int blockSizeCode) =>
+			blockSizeCode switch {
+				7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64
+			};
 
-		/// <inheritdoc />
-		public override void Flush() =>
-			_inner.Flush();
-
-		/// <inheritdoc />
-		public override Task FlushAsync(CancellationToken cancellationToken) =>
-			_inner.FlushAsync(cancellationToken);
-
-		/// <inheritdoc />
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			if (!EnsureFrame())
-				return 0;
-
-			var read = 0;
-			while (count > 0)
-			{
-				if (_decoded <= 0 && (_decoded = ReadBlock()) == 0)
-					break;
-
-				if (ReadDecoded(buffer, ref offset, ref count, ref read))
-					break;
-			}
-
-			return read;
-		}
-
-		/// <inheritdoc />
-		public override int ReadByte() =>
-			Read(_buffer16, _length16, 1) > 0 ? _buffer16[_length16] : -1;
-
-		private bool EnsureFrame() => _decoder != null || ReadFrame();
-
-		[SuppressMessage("ReSharper", "InconsistentNaming")]
-		private bool ReadFrame()
-		{
-			FlushPeek();
-
-			var magic = TryPeek32();
-			
-			if (!magic.HasValue)
-				return false;
-
-			if (magic != 0x184D2204)
-				throw MagicNumberExpected();
-
-			FlushPeek();
-
-			var FLG_BD = Peek16();
-
-			var FLG = FLG_BD & 0xFF;
-			var BD = (FLG_BD >> 8) & 0xFF;
-
-			var version = (FLG >> 6) & 0x11;
-
-			if (version != 1)
-				throw UnknownFrameVersion(version);
-
-			var blockChaining = ((FLG >> 5) & 0x01) == 0;
-			var blockChecksum = ((FLG >> 4) & 0x01) != 0;
-			var hasContentSize = ((FLG >> 3) & 0x01) != 0;
-			var contentChecksum = ((FLG >> 2) & 0x01) != 0;
-			var hasDictionary = (FLG & 0x01) != 0;
-			var blockSizeCode = (BD >> 4) & 0x07;
-
-			var contentLength = hasContentSize ? (long?) Peek64() : null;
-			var dictionaryId = hasDictionary ? (uint?) Peek32() : null;
-
-			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
-			
-			var expectedHC = Peek8();
-
-			if (actualHC != expectedHC)
-				throw InvalidHeaderChecksum();
-
-			var blockSize = MaxBlockSize(blockSizeCode);
-
-			if (hasDictionary)
-				throw NotImplemented(
-					"Predefined dictionaries feature is not implemented"); // Write32(dictionaryId);
-
-			// ReSharper disable once ExpressionIsAlwaysNull
-			_frameInfo = new LZ4Descriptor(
-				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
-				blockSize);
-			_decoder = _decoderFactory(_frameInfo);
-			_buffer = new byte[blockSize];
-
-			return true;
-		}
-
+		private void FlushPeek() { _index16 = 0; }
+		
 		private void CloseFrame()
 		{
 			if (_decoder == null)
@@ -158,28 +77,9 @@ namespace K4os.Compression.LZ4.Streams
 				_decoder = null;
 			}
 		}
-
-		private unsafe int ReadBlock()
+		
+		private unsafe int InjectOrDecode(int blockLength, bool uncompressed)
 		{
-			FlushPeek();
-
-			var blockLength = (int) Peek32();
-			if (blockLength == 0)
-			{
-				if (_frameInfo.ContentChecksum)
-					Peek32();
-				CloseFrame();
-				return 0;
-			}
-
-			var uncompressed = (blockLength & 0x80000000) != 0;
-			blockLength &= 0x7FFFFFFF;
-
-			PeekN(_buffer, 0, blockLength);
-
-			if (_frameInfo.BlockChecksum)
-				Peek32();
-
 			fixed (byte* bufferP = _buffer)
 				return uncompressed
 					? _decoder.Inject(bufferP, blockLength)
@@ -201,96 +101,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			return _interactive;
 		}
-
-		/// <inheritdoc />
-		public new void Dispose()
-		{
-			Dispose(true);
-			base.Dispose();
-		}
-
-		/// <inheritdoc />
-		protected override void Dispose(bool disposing)
-		{
-			base.Dispose(disposing);
-			if (!disposing)
-				return;
-
-			CloseFrame();
-			if (!_leaveOpen)
-				_inner.Dispose();
-		}
-
-		/// <inheritdoc />
-		public override bool CanRead => _inner.CanRead;
-
-		/// <inheritdoc />
-		public override bool CanSeek => false;
-
-		/// <inheritdoc />
-		public override bool CanWrite => false;
-
-		/// <summary>
-		/// Length of stream. Please note, this will only work if original LZ4 stream has
-		/// <c>ContentLength</c> field set in descriptor. Otherwise returned value will be <c>-1</c>.
-		/// </summary>
-		public override long Length
-		{
-			get
-			{
-				EnsureFrame();
-				return _frameInfo?.ContentLength ?? -1;
-			}
-		}
-
-		/// <summary>
-		/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
-		/// not have <c>Seek</c> capability.
-		/// </summary>
-		public override long Position
-		{
-			get => _position;
-			set => throw InvalidOperation("SetPosition");
-		}
-
-		/// <inheritdoc />
-		public override bool CanTimeout => _inner.CanTimeout;
-
-		/// <inheritdoc />
-		public override int WriteTimeout
-		{
-			get => _inner.WriteTimeout;
-			set => _inner.WriteTimeout = value;
-		}
-
-		/// <inheritdoc />
-		public override int ReadTimeout
-		{
-			get => _inner.ReadTimeout;
-			set => _inner.ReadTimeout = value;
-		}
-
-		/// <inheritdoc />
-		public override long Seek(long offset, SeekOrigin origin) =>
-			throw InvalidOperation("Seek");
-
-		/// <inheritdoc />
-		public override void SetLength(long value) =>
-			throw InvalidOperation("SetLength");
-
-		/// <inheritdoc />
-		public override void Write(byte[] buffer, int offset, int count) =>
-			throw InvalidOperation("Write");
-
-		/// <inheritdoc />
-		public override void WriteByte(byte value) =>
-			throw InvalidOperation("WriteByte");
-
-		/// <inheritdoc />
-		public override Task WriteAsync(
-			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
-			throw InvalidOperation("WriteAsync");
-
+		
 		private NotImplementedException NotImplemented(string operation) =>
 			new NotImplementedException(
 				$"Feature {operation} has not been implemented in {GetType().Name}");

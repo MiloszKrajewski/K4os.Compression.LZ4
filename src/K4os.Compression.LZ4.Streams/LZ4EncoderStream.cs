@@ -216,6 +216,20 @@ namespace K4os.Compression.LZ4.Streams
 			return length;
 		}
 		
+		private NotImplementedException NotImplemented(string operation) =>
+			new NotImplementedException(
+				$"Feature {operation} has not been implemented in {GetType().Name}");
+
+		private InvalidOperationException InvalidOperation(string operation) =>
+			new InvalidOperationException(
+				$"Operation {operation} is not allowed for {GetType().Name}");
+
+		private static ArgumentException InvalidValue(string description) =>
+			new ArgumentException(description);
+
+		private ArgumentException InvalidBlockSize(int blockSize) =>
+			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static ReadOnlySpan<T> ToSpan<T>(ReadOnlySpan<T> span) => span;
 
