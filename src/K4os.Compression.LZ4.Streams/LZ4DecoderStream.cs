@@ -12,18 +12,13 @@ namespace K4os.Compression.LZ4.Streams
 	/// <summary>
 	/// LZ4 Decompression stream handling.
 	/// </summary>
-	public class LZ4DecoderStream: Stream, IDisposable
+	public partial class LZ4DecoderStream: Stream, IDisposable
 	{
 		private readonly bool _leaveOpen;
 		private readonly bool _interactive;
 
 		private readonly Stream _inner;
 		
-		// ReSharper disable once InconsistentNaming
-		private const int _length16 = 16; // we intend to use only 16 bytes
-		private readonly byte[] _buffer16 = new byte[_length16 + 8];  
-		private int _index16;
-
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
 
 		private ILZ4Descriptor _frameInfo;
@@ -122,6 +117,7 @@ namespace K4os.Compression.LZ4.Streams
 			var dictionaryId = hasDictionary ? (uint?) Peek32() : null;
 
 			var actualHC = (byte) (XXH32.DigestOf(_buffer16, 0, _index16) >> 8);
+			
 			var expectedHC = Peek8();
 
 			if (actualHC != expectedHC)
@@ -160,18 +156,6 @@ namespace K4os.Compression.LZ4.Streams
 			finally
 			{
 				_decoder = null;
-			}
-		}
-
-		private static int MaxBlockSize(int blockSizeCode)
-		{
-			switch (blockSizeCode)
-			{
-				case 7: return Mem.M4;
-				case 6: return Mem.M1;
-				case 5: return Mem.K256;
-				case 4: return Mem.K64;
-				default: return Mem.K64;
 			}
 		}
 
@@ -216,71 +200,6 @@ namespace K4os.Compression.LZ4.Streams
 			read += length;
 
 			return _interactive;
-		}
-
-		private int PeekN(byte[] buffer, int offset, int count, bool optional = false)
-		{
-			var index = 0;
-			while (count > 0)
-			{
-				var read = _inner.Read(buffer, index + offset, count);
-				if (read == 0)
-				{
-					if (index == 0 && optional)
-						return 0;
-
-					throw EndOfStream();
-				}
-
-				index += read;
-				count -= read;
-			}
-
-			return index;
-		}
-
-		private bool PeekN(int count, bool optional = false)
-		{
-			if (count == 0) return true;
-
-			var read = PeekN(_buffer16, _index16, count, optional);
-			_index16 += read;
-			return read > 0;
-		}
-
-		private void FlushPeek() { _index16 = 0; }
-
-		// ReSharper disable once UnusedMethodReturnValue.Local
-		private ulong Peek64()
-		{
-			PeekN(sizeof(ulong));
-			return BitConverter.ToUInt64(_buffer16, _index16 - sizeof(ulong));
-		}
-
-		private uint? TryPeek32()
-		{
-			if (!PeekN(sizeof(uint), true))
-				return null;
-
-			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
-		}
-
-		private uint Peek32()
-		{
-			PeekN(sizeof(uint));
-			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
-		}
-
-		private ushort Peek16()
-		{
-			PeekN(sizeof(ushort));
-			return BitConverter.ToUInt16(_buffer16, _index16 - sizeof(ushort));
-		}
-
-		private byte Peek8()
-		{
-			PeekN(sizeof(byte));
-			return _buffer16[_index16 - 1];
 		}
 
 		/// <inheritdoc />

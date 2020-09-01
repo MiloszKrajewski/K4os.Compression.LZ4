@@ -4,7 +4,7 @@ using Xunit;
 
 namespace TestHelpers
 {
-	public class Tools
+	public static class Tools
 	{
 		public static unsafe uint Adler32(byte* data, int length)
 		{
@@ -144,5 +144,11 @@ namespace TestHelpers
 				}
 			}
 		}
+		
+		public static double NormExp(double value, double scale = 1.0) =>
+				((Math.Exp(value * scale) - 1) / (Math.Exp(scale) - 1));
+
+		public static double NextExp(this Random random, double scale = 1.0) =>
+			NormExp(random.NextDouble(), scale);
 	}
 }

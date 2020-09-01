@@ -44,7 +44,7 @@ Target.create "Clean" (fun _ -> clean ())
 Target.create "Restore" (fun _ -> restore ())
 
 Target.create "Preprocess" (fun _ ->
-    let preprocess defines (source, target) =
+    let preprocess defines transforms (source, target) =
         Trace.logfn "%s -> %s" source target
         [
             "//------------------------------------------------------------------------------\r\n//"
@@ -54,17 +54,34 @@ Target.create "Preprocess" (fun _ ->
             ""
             source |> File.loadText
         ]
-        |> Seq.toArray
-        |> File.saveLines target
+        |> String.concat "\r\n"
+        |> transforms
+        |> File.saveText target
 
     let root = "./src/K4os.Compression.LZ4"
     !! (root @@ "**/x64/*64*.cs")
     |> Seq.map (fun fn -> fn, String.replace "64" "32" fn)
-    |> Seq.iter (preprocess ["BIT32"])
+    |> Seq.iter (preprocess ["BIT32"] id)
     
-    !! (root @@ "**/x64/*64*.cs")
+    !! (root @@ "K4os.Compression.LZ4/**/x64/*64*.cs")
     |> Seq.map (fun fn -> fn, String.replace "64" "A7" fn)
-    |> Seq.iter (preprocess ["ARMv7"; "BIT32"])
+    |> Seq.iter (preprocess ["ARMv7"; "BIT32"] id)
+    
+    let deasync =
+        Sanitizer.replaceExpr "(?<name>[A-Za-z0-9_]+)Async" (fun g -> g "name") >> 
+        Sanitizer.replaceExpr "((in\s+)?CancellationToken\\s+)?token(\\s*,\\s*)" (fun _ -> "") >>
+        Sanitizer.replaceExpr "(\\s*,\\s*)((in\s+)?CancellationToken\\s+)?token" (fun _ -> "") >>
+        Sanitizer.replaceExpr "((in\s+)?CancellationToken\\s+)?token" (fun _ -> "") >>
+        Sanitizer.replaceText "async" "/*async*/" >>
+        Sanitizer.replaceText "await" "/*await*/" >>
+        Sanitizer.replaceExpr "Task[<](?<type>[A-Za-z0-9_]+)[>]" (fun g -> g "type") >>
+        Sanitizer.replaceText "Task" "void" >>
+        id
+    
+    let root = "./src/K4os.Compression.LZ4.Streams"
+    !! (root @@ "**/*Stream.async.cs")
+    |> Seq.map (fun fn -> fn, String.replace ".async." ".blocking." fn)
+    |> Seq.iter (preprocess ["BLOCKING"] deasync)
 )
 
 Target.create "Build" (fun _ -> build ())
