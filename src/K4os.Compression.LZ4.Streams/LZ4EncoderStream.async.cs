@@ -1,13 +1,12 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
 #else
 using System.Threading;
 using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
-
 #endif
 
 namespace K4os.Compression.LZ4.Streams
@@ -23,13 +22,10 @@ namespace K4os.Compression.LZ4.Streams
 			in CancellationToken token, byte[] buffer, int offset, int length) =>
 			_inner.WriteAsync(buffer, offset, length, token);
 
-		private async Task InnerWriteAsync(CancellationToken token, BlockInfo block)
-		{
-			Debug.Assert(_index16 == 0); // await FlushStashAsync(token);
-			if (!block.Ready) return;
-
-			await InnerWriteAsync(token, block.Buffer, block.Offset, block.Length);
-		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private Task InnerWriteAsync(
+			in CancellationToken token, BlockInfo block) =>
+			InnerWriteAsync(token, block.Buffer, block.Offset, block.Length);
 
 		private async Task FlushStashAsync(CancellationToken token)
 		{
@@ -52,20 +48,21 @@ namespace K4os.Compression.LZ4.Streams
 			await FlushStashAsync(token);
 		}
 
+		#if BLOCKING || NETSTANDARD2_1
+
 		private async Task CloseFrameAsync(CancellationToken token)
 		{
 			if (_encoder == null)
 				return;
 
-			await WriteBlockAsync(token, FlushAndEncode());
+			var block = FlushAndEncode();
+			if (block.Ready) await WriteBlockAsync(token, block);
 
 			StashStreamEnd();
 			await FlushStashAsync(token);
 		}
 
-		#if BLOCKING || NETSTANDARD2_1
-
-		private async Task InnerDisposeAsync(CancellationToken token)
+		private async Task DisposeImplAsync(CancellationToken token)
 		{
 			await CloseFrameAsync(token);
 			if (!_leaveOpen)

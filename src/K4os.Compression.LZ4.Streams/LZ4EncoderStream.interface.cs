@@ -62,7 +62,7 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		protected override void Dispose(bool disposing)
 		{
-			if (disposing) InnerDispose();
+			if (disposing) DisposeImpl();
 
 			base.Dispose(disposing);
 		}
@@ -72,7 +72,8 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		public override async ValueTask DisposeAsync()
 		{
-			await InnerDisposeAsync(CancellationToken.None);
+			await DisposeImplAsync(CancellationToken.None);
+			
 			await base.DisposeAsync();
 		}
 

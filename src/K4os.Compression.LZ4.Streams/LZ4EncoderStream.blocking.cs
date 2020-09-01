@@ -6,15 +6,14 @@
 #define BLOCKING
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
 #else
 using System.Threading;
 using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
-
 #endif
 
 namespace K4os.Compression.LZ4.Streams
@@ -30,13 +29,10 @@ namespace K4os.Compression.LZ4.Streams
 			byte[] buffer, int offset, int length) =>
 			_inner.Write(buffer, offset, length);
 
-		private /*async*/ void InnerWrite(BlockInfo block)
-		{
-			Debug.Assert(_index16 == 0); // /*await*/ FlushStash();
-			if (!block.Ready) return;
-
-			/*await*/ InnerWrite(block.Buffer, block.Offset, block.Length);
-		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void InnerWrite(
+			BlockInfo block) =>
+			InnerWrite(block.Buffer, block.Offset, block.Length);
 
 		private /*async*/ void FlushStash()
 		{
@@ -59,20 +55,21 @@ namespace K4os.Compression.LZ4.Streams
 			/*await*/ FlushStash();
 		}
 
+		#if BLOCKING || NETSTANDARD2_1
+
 		private /*async*/ void CloseFrame()
 		{
 			if (_encoder == null)
 				return;
 
-			/*await*/ WriteBlock(FlushAndEncode());
+			var block = FlushAndEncode();
+			if (block.Ready) /*await*/ WriteBlock(block);
 
 			StashStreamEnd();
 			/*await*/ FlushStash();
 		}
 
-		#if BLOCKING || NETSTANDARD2_1
-
-		private /*async*/ void InnerDispose()
+		private /*async*/ void DisposeImpl()
 		{
 			/*await*/ CloseFrame();
 			if (!_leaveOpen)
