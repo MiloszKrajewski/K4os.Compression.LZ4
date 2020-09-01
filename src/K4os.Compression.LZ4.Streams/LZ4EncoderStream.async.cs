@@ -85,7 +85,7 @@ namespace K4os.Compression.LZ4.Streams
 			while (count > 0)
 			{
 				var block = TopupAndEncode(ToSpan(buffer), ref offset, ref count);
-				await WriteBlockAsync(token, block);
+				if (block.Ready) await WriteBlockAsync(token, block);
 			}
 		}
 	}
