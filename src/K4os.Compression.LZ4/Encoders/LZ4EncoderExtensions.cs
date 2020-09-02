@@ -263,7 +263,6 @@ namespace K4os.Compression.LZ4.Encoders
 					true, allowCopy, 0, out encoded);
 		}
 
-		#error Span version of Drain
 		/// <summary>Drains decoder by reading all bytes which are ready.</summary>
 		/// <param name="decoder">Decoder.</param>
 		/// <param name="target">Target buffer.</param>
@@ -279,9 +278,22 @@ namespace K4os.Compression.LZ4.Encoders
 			fixed (byte* targetP = target)
 				decoder.Drain(targetP + targetOffset, offset, length);
 		}
-
-		#error Span version of DecodeAndDrain
 		
+		/// <summary>Drains decoder by reading all bytes which are ready.</summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="offset">Offset in decoder relatively to decoder's head.
+		/// Please note, it should be negative value.</param>
+		/// <param name="length">Number of bytes.</param>
+		public static unsafe void Drain(
+			this ILZ4Decoder decoder,
+			Span<byte> target,
+			int offset, int length)
+		{
+			fixed (byte* targetP = target)
+				decoder.Drain(targetP, offset, length);
+		}
+
 		/// <summary>Decodes data and immediately drains it into target buffer.</summary>
 		/// <param name="decoder">Decoder.</param>
 		/// <param name="source">Source buffer (with compressed data, to be decoded).</param>
@@ -335,5 +347,62 @@ namespace K4os.Compression.LZ4.Encoders
 					targetLength,
 					out decoded);
 		}
+		
+		/// <summary>Decodes data and immediately drains it into target buffer.</summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="source">Source buffer (with compressed data, to be decoded).</param>
+		/// <param name="target">Target buffer (to drained into).</param>
+		/// <param name="decoded">Number of bytes actually decoded.</param>
+		/// <returns><c>true</c> decoder was drained, <c>false</c> otherwise.</returns>
+		public static unsafe bool DecodeAndDrain(
+			this ILZ4Decoder decoder,
+			ReadOnlySpan<byte> source,
+			Span<byte> target,
+			out int decoded)
+		{
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
+				return decoder.DecodeAndDrain(
+					sourceP, source.Length,
+					targetP, target.Length,
+					out decoded);
+		}
+
+		/// <summary>
+		/// Inject already decompressed block and caches it in decoder.
+		/// Used with uncompressed-yet-chained blocks and pre-made dictionaries.
+		/// See <see cref="ILZ4Decoder.Inject"/>.
+		/// </summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="buffer">Uncompressed block.</param>
+		/// <param name="offset">Offset in uncompressed block.</param>
+		/// <param name="length">Length of uncompressed block.</param>
+		/// <returns>Number of decoded bytes.</returns>
+		public static unsafe int Inject(
+			this ILZ4Decoder decoder, byte[] buffer, int offset, int length)
+		{
+			fixed (byte* bufferP = buffer)
+				return decoder.Inject(bufferP + offset, length);
+		}
+
+		/// <summary>
+		/// Decodes previously compressed block and caches decompressed block in decoder.
+		/// Returns number of bytes decoded.
+		/// See <see cref="ILZ4Decoder.Decode"/>.
+		/// </summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="buffer">Compressed block.</param>
+		/// <param name="offset">Offset in compressed block.</param>
+		/// <param name="length">Length of compressed block.</param>
+		/// <param name="blockSize">Size of the block. Value <c>0</c> indicates default block size.</param>
+		/// <returns>Number of decoded bytes.</returns>
+		public static unsafe int Decode(
+			this ILZ4Decoder decoder, byte[] buffer, int offset, int length, int blockSize = 0)
+		{
+			fixed (byte* bufferP = buffer)
+				return decoder.Decode(bufferP + offset, length, blockSize);
+		}
+
+	
 	}
 }

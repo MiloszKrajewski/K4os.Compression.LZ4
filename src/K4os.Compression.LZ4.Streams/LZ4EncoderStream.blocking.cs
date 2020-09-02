@@ -6,90 +6,75 @@
 #define BLOCKING
 
 using System;
-using System.Runtime.CompilerServices;
 
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
+using Token = K4os.Compression.LZ4.Streams.EmptyToken;
 #else
-using System.Threading;
 using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
+using Token = System.Threading.CancellationToken;
 #endif
 
 namespace K4os.Compression.LZ4.Streams
 {
 	public partial class LZ4EncoderStream
 	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void InnerFlush() =>
-			_inner.Flush();
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void InnerWrite(
-			byte[] buffer, int offset, int length) =>
-			_inner.Write(buffer, offset, length);
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void InnerWrite(
-			BlockInfo block) =>
-			InnerWrite(block.Buffer, block.Offset, block.Length);
-
-		private /*async*/ void FlushStash()
+		private /*async*/ void FlushStash(Token token)
 		{
 			var length = ClearStash();
 			if (length <= 0) return;
 
-			/*await*/ InnerWrite(_buffer16, 0, length);
+			/*await*/ InnerWrite(token, _buffer16, 0, length);
 		}
 
-		private /*async*/ void WriteBlock(BlockInfo block)
+		private /*async*/ void WriteBlock(Token token, BlockInfo block)
 		{
 			if (!block.Ready) return;
 
 			StashBlockLength(block);
-			/*await*/ FlushStash();
+			/*await*/ FlushStash(token);
 
-			/*await*/ InnerWrite(block);
+			/*await*/ InnerWrite(token, block.Buffer, block.Offset, block.Length);
 
 			StashBlockChecksum(block);
-			/*await*/ FlushStash();
+			/*await*/ FlushStash(token);
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
 
-		private /*async*/ void CloseFrame()
+		private /*async*/ void CloseFrame(Token token)
 		{
 			if (_encoder == null)
 				return;
 
 			var block = FlushAndEncode();
-			if (block.Ready) /*await*/ WriteBlock(block);
+			if (block.Ready) /*await*/ WriteBlock(token, block);
 
 			StashStreamEnd();
-			/*await*/ FlushStash();
+			/*await*/ FlushStash(token);
 		}
 
-		private /*async*/ void DisposeImpl()
+		private /*async*/ void DisposeImpl(Token token)
 		{
-			/*await*/ CloseFrame();
-			if (!_leaveOpen)
-				/*await*/ _inner.Dispose();
+			/*await*/ CloseFrame(token);
+			if (!_leaveOpen) /*await*/ InnerDispose(token);
 		}
 
 		#endif
 
-		private /*async*/ void WriteImpl(ReadableBuffer buffer)
+		private /*async*/ void WriteImpl(Token token, ReadableBuffer buffer)
 		{
 			if (TryStashFrame())
-				/*await*/ FlushStash();
+				/*await*/ FlushStash(token);
 
 			var offset = 0;
 			var count = buffer.Length;
 
 			while (count > 0)
 			{
-				var block = TopupAndEncode(ToSpan(buffer), ref offset, ref count);
-				if (block.Ready) /*await*/ WriteBlock(block);
+				var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
+				if (block.Ready) /*await*/ WriteBlock(token, block);
 			}
 		}
 	}

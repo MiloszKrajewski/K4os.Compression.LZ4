@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
@@ -13,10 +10,8 @@ namespace K4os.Compression.LZ4.Streams
 	/// <summary>
 	/// LZ4 compression stream. 
 	/// </summary>
-	public partial class LZ4EncoderStream: Stream, IDisposable
+	public partial class LZ4EncoderStream: LZ4StreamBase
 	{
-		private readonly Stream _inner;
-
 		private ILZ4Encoder _encoder;
 		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
@@ -42,9 +37,9 @@ namespace K4os.Compression.LZ4.Streams
 			Stream inner,
 			ILZ4Descriptor descriptor,
 			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
-			bool leaveOpen = false)
+			bool leaveOpen = false):
+			base(inner)
 		{
-			_inner = inner;
 			_descriptor = descriptor;
 			_encoderFactory = encoderFactory;
 			_leaveOpen = leaveOpen;
@@ -89,9 +84,7 @@ namespace K4os.Compression.LZ4.Streams
 				throw NotImplemented(
 					"Predefined dictionaries feature is not implemented"); // Stash4(dictionaryId);
 
-			var headerDigest = XXH32.DigestOf(
-				_buffer16, headerIndex, _index16 - headerIndex);
-			var HC = (byte) (headerDigest >> 8);
+			var HC = (byte) (DigestOfStash(headerIndex) >> 8);
 
 			Stash1(HC);
 
@@ -144,6 +137,9 @@ namespace K4os.Compression.LZ4.Streams
 				_buffer = null;
 			}
 		}
+		
+		private protected uint DigestOfStash(int offset = 0) => 
+			XXH32.DigestOf(_buffer16, offset, _index16 - offset);
 
 		private void StashBlockLength(BlockInfo block) =>
 			Stash4((uint) block.Length | (block.Compressed ? 0 : 0x80000000));
@@ -215,27 +211,7 @@ namespace K4os.Compression.LZ4.Streams
 			_index16 = 0;
 			return length;
 		}
-		
-		private NotImplementedException NotImplemented(string operation) =>
-			new NotImplementedException(
-				$"Feature {operation} has not been implemented in {GetType().Name}");
 
-		private InvalidOperationException InvalidOperation(string operation) =>
-			new InvalidOperationException(
-				$"Operation {operation} is not allowed for {GetType().Name}");
-
-		private static ArgumentException InvalidValue(string description) =>
-			new ArgumentException(description);
-
-		private ArgumentException InvalidBlockSize(int blockSize) =>
-			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");
-		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ReadOnlySpan<T> ToSpan<T>(ReadOnlySpan<T> span) => span;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ReadOnlySpan<T> ToSpan<T>(ReadOnlyMemory<T> span) => span.Span;
-		
 		internal readonly struct BlockInfo
 		{
 			private readonly byte[] _buffer;
@@ -257,5 +233,8 @@ namespace K4os.Compression.LZ4.Streams
 				};
 			}
 		}
+		
+		private protected ArgumentException InvalidBlockSize(int blockSize) =>
+			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");
 	}
 }

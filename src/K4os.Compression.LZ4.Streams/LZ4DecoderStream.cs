@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
@@ -10,7 +9,7 @@ namespace K4os.Compression.LZ4.Streams
 	/// <summary>
 	/// LZ4 Decompression stream handling.
 	/// </summary>
-	public partial class LZ4DecoderStream: Stream, IDisposable
+	public partial class LZ4DecoderStream: LZ4StreamBase
 	{
 		// ReSharper disable once InconsistentNaming
 		private const int _length16 = 16; // we intend to use only 16 bytes
@@ -20,8 +19,6 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly bool _leaveOpen;
 		private readonly bool _interactive;
 
-		private readonly Stream _inner;
-		
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
 
 		private ILZ4Descriptor _frameInfo;
@@ -42,9 +39,9 @@ namespace K4os.Compression.LZ4.Streams
 			Stream inner,
 			Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
 			bool leaveOpen = false,
-			bool interactive = false)
+			bool interactive = false):
+			base(inner)
 		{
-			_inner = inner;
 			_decoderFactory = decoderFactory;
 			_leaveOpen = leaveOpen;
 			_position = 0;
@@ -78,21 +75,18 @@ namespace K4os.Compression.LZ4.Streams
 			}
 		}
 		
-		private unsafe int InjectOrDecode(int blockLength, bool uncompressed)
-		{
-			fixed (byte* bufferP = _buffer)
-				return uncompressed
-					? _decoder.Inject(bufferP, blockLength)
-					: _decoder.Decode(bufferP, blockLength);
-		}
+		private int InjectOrDecode(int blockLength, bool uncompressed) =>
+			uncompressed
+				? _decoder.Inject(_buffer, 0, blockLength)
+				: _decoder.Decode(_buffer, 0, blockLength);
 
-		private bool ReadDecoded(byte[] buffer, ref int offset, ref int count, ref int read)
+		private bool Drain(Span<byte> buffer, ref int offset, ref int count, ref int read)
 		{
 			if (_decoded <= 0)
 				return true;
 
 			var length = Math.Min(count, _decoded);
-			_decoder.Drain(buffer, offset, -_decoded, length);
+			_decoder.Drain(buffer.Slice(offset), -_decoded, length);
 			_position += length;
 			_decoded -= length;
 			offset += length;
@@ -102,10 +96,9 @@ namespace K4os.Compression.LZ4.Streams
 			return _interactive;
 		}
 		
-		private NotImplementedException NotImplemented(string operation) =>
-			new NotImplementedException(
-				$"Feature {operation} has not been implemented in {GetType().Name}");
-
+		private protected uint DigestOfStash(int offset = 0) => 
+			XXH32.DigestOf(_buffer16, offset, _index16 - offset);
+		
 		private static InvalidDataException InvalidHeaderChecksum() =>
 			new InvalidDataException("Invalid LZ4 frame header checksum");
 
@@ -114,10 +107,6 @@ namespace K4os.Compression.LZ4.Streams
 
 		private static InvalidDataException UnknownFrameVersion(int version) =>
 			new InvalidDataException($"LZ4 frame version {version} is not supported");
-
-		private InvalidOperationException InvalidOperation(string operation) =>
-			new InvalidOperationException(
-				$"Operation {operation} is not allowed for {GetType().Name}");
 
 		private static EndOfStreamException EndOfStream() =>
 			new EndOfStreamException("Unexpected end of stream. Data might be corrupted.");

@@ -1,88 +1,73 @@
 using System;
-using System.Runtime.CompilerServices;
 
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
+using Token = K4os.Compression.LZ4.Streams.EmptyToken;
 #else
-using System.Threading;
 using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
+using Token = System.Threading.CancellationToken;
 #endif
 
 namespace K4os.Compression.LZ4.Streams
 {
 	public partial class LZ4EncoderStream
 	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private Task InnerFlushAsync(in CancellationToken token) =>
-			_inner.FlushAsync(token);
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private Task InnerWriteAsync(
-			in CancellationToken token, byte[] buffer, int offset, int length) =>
-			_inner.WriteAsync(buffer, offset, length, token);
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private Task InnerWriteAsync(
-			in CancellationToken token, BlockInfo block) =>
-			InnerWriteAsync(token, block.Buffer, block.Offset, block.Length);
-
-		private async Task FlushStashAsync(CancellationToken token)
+		private async Task FlushStash(Token token)
 		{
 			var length = ClearStash();
 			if (length <= 0) return;
 
-			await InnerWriteAsync(token, _buffer16, 0, length);
+			await InnerWrite(token, _buffer16, 0, length);
 		}
 
-		private async Task WriteBlockAsync(CancellationToken token, BlockInfo block)
+		private async Task WriteBlock(Token token, BlockInfo block)
 		{
 			if (!block.Ready) return;
 
 			StashBlockLength(block);
-			await FlushStashAsync(token);
+			await FlushStash(token);
 
-			await InnerWriteAsync(token, block);
+			await InnerWrite(token, block.Buffer, block.Offset, block.Length);
 
 			StashBlockChecksum(block);
-			await FlushStashAsync(token);
+			await FlushStash(token);
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
 
-		private async Task CloseFrameAsync(CancellationToken token)
+		private async Task CloseFrame(Token token)
 		{
 			if (_encoder == null)
 				return;
 
 			var block = FlushAndEncode();
-			if (block.Ready) await WriteBlockAsync(token, block);
+			if (block.Ready) await WriteBlock(token, block);
 
 			StashStreamEnd();
-			await FlushStashAsync(token);
+			await FlushStash(token);
 		}
 
-		private async Task DisposeImplAsync(CancellationToken token)
+		private async Task DisposeImpl(Token token)
 		{
-			await CloseFrameAsync(token);
-			if (!_leaveOpen)
-				await _inner.DisposeAsync();
+			await CloseFrame(token);
+			if (!_leaveOpen) await InnerDispose(token);
 		}
 
 		#endif
 
-		private async Task WriteImplAsync(CancellationToken token, ReadableBuffer buffer)
+		private async Task WriteImpl(Token token, ReadableBuffer buffer)
 		{
 			if (TryStashFrame())
-				await FlushStashAsync(token);
+				await FlushStash(token);
 
 			var offset = 0;
 			var count = buffer.Length;
 
 			while (count > 0)
 			{
-				var block = TopupAndEncode(ToSpan(buffer), ref offset, ref count);
-				if (block.Ready) await WriteBlockAsync(token, block);
+				var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
+				if (block.Ready) await WriteBlock(token, block);
 			}
 		}
 	}
