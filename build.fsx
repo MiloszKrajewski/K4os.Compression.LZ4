@@ -72,6 +72,7 @@ Target.create "Preprocess" (fun _ ->
         Sanitizer.replaceText "await" "/*await*/" >>
         Sanitizer.replaceExpr "Task[<](?<type>[A-Za-z0-9_]+[?]?)[>]" (fun g -> g "type") >>
         Sanitizer.replaceText "Task" "void" >>
+        Sanitizer.replaceRaw "\\s*\\.Weave\\(\\)" "" >>
         id
     
     let root = "./src/K4os.Compression.LZ4.Streams"

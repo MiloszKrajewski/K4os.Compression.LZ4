@@ -18,7 +18,7 @@ namespace K4os.Compression.LZ4.Streams
 			var length = ClearStash();
 			if (length <= 0) return;
 
-			await InnerWrite(token, _buffer16, 0, length);
+			await InnerWrite(token, _buffer16, 0, length).Weave();
 		}
 
 		private async Task WriteBlock(Token token, BlockInfo block)
@@ -26,12 +26,12 @@ namespace K4os.Compression.LZ4.Streams
 			if (!block.Ready) return;
 
 			StashBlockLength(block);
-			await FlushStash(token);
+			await FlushStash(token).Weave();
 
-			await InnerWrite(token, block.Buffer, block.Offset, block.Length);
+			await InnerWrite(token, block.Buffer, block.Offset, block.Length).Weave();
 
 			StashBlockChecksum(block);
-			await FlushStash(token);
+			await FlushStash(token).Weave();
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
@@ -42,16 +42,16 @@ namespace K4os.Compression.LZ4.Streams
 				return;
 
 			var block = FlushAndEncode();
-			if (block.Ready) await WriteBlock(token, block);
+			if (block.Ready) await WriteBlock(token, block).Weave();
 
 			StashStreamEnd();
-			await FlushStash(token);
+			await FlushStash(token).Weave();
 		}
 
 		private async Task DisposeImpl(Token token)
 		{
-			await CloseFrame(token);
-			if (!_leaveOpen) await InnerDispose(token);
+			await CloseFrame(token).Weave();
+			if (!_leaveOpen) await InnerDispose(token).Weave();
 		}
 
 		#endif
@@ -59,7 +59,7 @@ namespace K4os.Compression.LZ4.Streams
 		private async Task WriteImpl(Token token, ReadableBuffer buffer)
 		{
 			if (TryStashFrame())
-				await FlushStash(token);
+				await FlushStash(token).Weave();
 
 			var offset = 0;
 			var count = buffer.Length;
@@ -67,7 +67,7 @@ namespace K4os.Compression.LZ4.Streams
 			while (count > 0)
 			{
 				var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
-				if (block.Ready) await WriteBlock(token, block);
+				if (block.Ready) await WriteBlock(token, block).Weave();
 			}
 		}
 	}

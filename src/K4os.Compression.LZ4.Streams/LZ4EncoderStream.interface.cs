@@ -58,8 +58,8 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		public override async ValueTask DisposeAsync()
 		{
-			await DisposeImpl(CancellationToken.None);
-			await base.DisposeAsync();
+			await DisposeImpl(CancellationToken.None).Weave();
+			await base.DisposeAsync().Weave();
 		}
 
 		#endif

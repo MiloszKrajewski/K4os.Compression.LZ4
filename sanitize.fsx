@@ -9,6 +9,8 @@ module Sanitizer =
     let private b = @"(\b|\s|^|$|[\(\)\[\]])"
     let sanitize source target rules =
         File.WriteAllText (target, rules (File.ReadAllText source))
+    let replaceRaw pattern (value: string) content =
+        Regex.Replace(content, pattern, value)
     let replaceText pattern (value: string) content =
         Regex.Replace(content, sprintf @"(?<=%s)(%s)(?=%s)" b pattern b, value)
     let replaceExpr pattern evaluator content =

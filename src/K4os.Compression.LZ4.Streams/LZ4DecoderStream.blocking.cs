@@ -7,7 +7,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-
 #if BLOCKING
 using WritableBuffer = System.Span<byte>;
 using Token = K4os.Compression.LZ4.Streams.EmptyToken;
@@ -15,6 +14,7 @@ using Token = K4os.Compression.LZ4.Streams.EmptyToken;
 using System.Threading.Tasks;
 using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
+
 #endif
 
 namespace K4os.Compression.LZ4.Streams
@@ -22,8 +22,8 @@ namespace K4os.Compression.LZ4.Streams
 	public partial class LZ4DecoderStream
 	{
 		private /*async*/ int PeekN(
-			Token token, 
-			byte[] buffer, int offset, int count, 
+			Token token,
+			byte[] buffer, int offset, int count,
 			bool optional = false)
 		{
 			var index = 0;
@@ -57,33 +57,33 @@ namespace K4os.Compression.LZ4.Streams
 
 		private /*async*/ ulong Peek8(Token token)
 		{
-			/*await*/ PeekN(token, sizeof(ulong));
+			_ = /*await*/ PeekN(token, sizeof(ulong));
 			return BitConverter.ToUInt64(_buffer16, _index16 - sizeof(ulong));
 		}
 
 		private /*async*/ uint? TryPeek4(Token token)
 		{
-			if (!/*await*/ PeekN(token, sizeof(uint), true))
-				return null;
+			var loaded = /*await*/ PeekN(token, sizeof(uint), true);
+			if (!loaded) return null;
 
 			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
 		}
 
 		private /*async*/ uint Peek4(Token token)
 		{
-			/*await*/ PeekN(token, sizeof(uint));
+			_ = /*await*/ PeekN(token, sizeof(uint));
 			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
 		}
 
 		private /*async*/ ushort Peek2(Token token)
 		{
-			/*await*/ PeekN(token, sizeof(ushort));
+			_ = /*await*/ PeekN(token, sizeof(ushort));
 			return BitConverter.ToUInt16(_buffer16, _index16 - sizeof(ushort));
 		}
 
 		private /*async*/ byte Peek1(Token token)
 		{
-			/*await*/ PeekN(token, sizeof(byte));
+			_ = /*await*/ PeekN(token, sizeof(byte));
 			return _buffer16[_index16 - 1];
 		}
 
@@ -148,11 +148,15 @@ namespace K4os.Compression.LZ4.Streams
 			return true;
 		}
 		
+		#if BLOCKING
+
 		private /*async*/ long GetLength(Token token)
 		{
 			/*await*/ EnsureFrame(token);
 			return _frameInfo?.ContentLength ?? -1;
 		}
+
+		#endif
 
 		private /*async*/ int ReadBlock(Token token)
 		{
@@ -180,8 +184,8 @@ namespace K4os.Compression.LZ4.Streams
 
 		private /*async*/ int ReadImpl(Token token, WritableBuffer buffer)
 		{
-			if (!/*await*/ EnsureFrame(token))
-				return 0;
+			var hasFrame = /*await*/ EnsureFrame(token);
+			if (!hasFrame) return 0;
 
 			var offset = 0;
 			var count = buffer.Length;
@@ -198,7 +202,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			return read;
 		}
-		
+
 		#if BLOCKING || NETSTANDARD2_1
 
 		private /*async*/ void DisposeImpl(Token token)
