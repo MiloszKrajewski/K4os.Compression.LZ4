@@ -19,12 +19,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		private byte[] _buffer;
 		private long _position;
-		
-		// ReSharper disable once InconsistentNaming
-		private const int _length16 = 16;
-		private readonly byte[] _buffer16 = new byte[_length16 + 8];
-		private int _index16;
-		
+
 		/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 		/// <param name="inner">Inner stream.</param>
 		/// <param name="descriptor">LZ4 Descriptor.</param>
@@ -42,16 +37,16 @@ namespace K4os.Compression.LZ4.Streams
 			_descriptor = descriptor;
 			_encoderFactory = encoderFactory;
 		}
-		
+
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private bool TryStashFrame()
 		{
 			if (_encoder != null)
-				return _index16 > 0;
-			
-			Stash4(0x184D2204);
+				return false;
 
-			var headerIndex = _index16;
+			Stash.Stash4(0x184D2204);
+
+			var headerOffset = Stash.Length;
 
 			const int versionCode = 0x01;
 			var blockChaining = _descriptor.Chaining;
@@ -72,7 +67,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			var BD = MaxBlockSizeCode(blockSize) << 4;
 
-			Stash2((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
+			Stash.Stash2((ushort) ((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
 				throw NotImplemented(
@@ -82,14 +77,14 @@ namespace K4os.Compression.LZ4.Streams
 				throw NotImplemented(
 					"Predefined dictionaries feature is not implemented"); // Stash4(dictionaryId);
 
-			var HC = (byte) (DigestOfStash(headerIndex) >> 8);
+			var HC = (byte) (DigestOf(Stash.AsSpan(headerOffset)) >> 8);
 
-			Stash1(HC);
+			Stash.Stash1(HC);
 
 			_encoder = CreateEncoder();
 			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
-			
-			return _index16 > 0;
+
+			return true;
 		}
 
 		private ILZ4Encoder CreateEncoder()
@@ -135,80 +130,37 @@ namespace K4os.Compression.LZ4.Streams
 				_buffer = null;
 			}
 		}
-		
-		private protected uint DigestOfStash(int offset = 0) => 
-			XXH32.DigestOf(_buffer16, offset, _index16 - offset);
 
-		private void StashBlockLength(BlockInfo block) =>
-			Stash4((uint) block.Length | (block.Compressed ? 0 : 0x80000000));
+		private protected uint DigestOf(ReadOnlySpan<byte> buffer) =>
+			XXH32.DigestOf(buffer);
+
+		private static uint BlockLengthCode(in BlockInfo block) =>
+			(uint) block.Length | (block.Compressed ? 0 : 0x80000000);
 
 		// ReSharper disable once UnusedParameter.Local
-		private void StashBlockChecksum(BlockInfo block)
+		// NOTE: block will carry checksum one day
+		private uint? BlockChecksum(BlockInfo block)
 		{
-			// NOTE: block will carry checksum one day
-
 			if (_descriptor.BlockChecksum)
 				throw NotImplemented("BlockChecksum");
+
+			return null;
 		}
 
-		private void StashStreamEnd()
+		private uint? ContentChecksum()
 		{
-			Stash4(0);
-
 			if (_descriptor.ContentChecksum)
 				throw NotImplemented("ContentChecksum");
+
+			return null;
 		}
-		
+
 		private int MaxBlockSizeCode(int blockSize) =>
 			blockSize <= Mem.K64 ? 4 :
 			blockSize <= Mem.K256 ? 5 :
 			blockSize <= Mem.M1 ? 6 :
 			blockSize <= Mem.M4 ? 7 :
 			throw InvalidBlockSize(blockSize);
-
-		private void Stash1(byte value)
-		{
-			_buffer16[_index16 + 0] = value;
-			_index16++;
-		}
-
-		private void Stash2(ushort value)
-		{
-			_buffer16[_index16 + 0] = (byte) (value >> 0);
-			_buffer16[_index16 + 1] = (byte) (value >> 8);
-			_index16 += 2;
-		}
-
-		private void Stash4(uint value)
-		{
-			_buffer16[_index16 + 0] = (byte) (value >> 0);
-			_buffer16[_index16 + 1] = (byte) (value >> 8);
-			_buffer16[_index16 + 2] = (byte) (value >> 16);
-			_buffer16[_index16 + 3] = (byte) (value >> 24);
-			_index16 += 4;
-		}
-
-		/*
-		private void Stash8(ulong value)
-		{
-		    _buffer16[_index16 + 0] = (byte) (value >> 0);
-		    _buffer16[_index16 + 1] = (byte) (value >> 8);
-		    _buffer16[_index16 + 2] = (byte) (value >> 16);
-		    _buffer16[_index16 + 3] = (byte) (value >> 24);
-		    _buffer16[_index16 + 4] = (byte) (value >> 32);
-		    _buffer16[_index16 + 5] = (byte) (value >> 40);
-		    _buffer16[_index16 + 6] = (byte) (value >> 48);
-		    _buffer16[_index16 + 7] = (byte) (value >> 56);
-		    _index16 += 8;
-		}
-		*/
-
-		private int ClearStash()
-		{
-			var length = _index16;
-			_index16 = 0;
-			return length;
-		}
 
 		internal readonly struct BlockInfo
 		{
@@ -231,7 +183,7 @@ namespace K4os.Compression.LZ4.Streams
 				};
 			}
 		}
-		
+
 		private protected ArgumentException InvalidBlockSize(int blockSize) =>
 			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");
 	}

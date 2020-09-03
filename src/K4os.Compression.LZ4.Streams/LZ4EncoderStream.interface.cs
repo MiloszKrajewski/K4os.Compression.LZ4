@@ -18,11 +18,8 @@ namespace K4os.Compression.LZ4.Streams
 			InnerFlush(cancellationToken);
 
 		/// <inheritdoc />
-		public override void WriteByte(byte value)
-		{
-			_buffer16[_length16] = value;
-			WriteImpl(EmptyToken.Value, _buffer16.AsSpan(_length16, 1));
-		}
+		public override void WriteByte(byte value) => 
+			WriteImpl(EmptyToken.Value, Stash.OneByte(value));
 
 		/// <inheritdoc />
 		public override void Write(byte[] buffer, int offset, int count) =>

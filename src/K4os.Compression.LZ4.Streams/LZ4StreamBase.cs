@@ -6,22 +6,6 @@ using System.Threading.Tasks;
 
 namespace K4os.Compression.LZ4.Streams
 {
-	internal struct Stash
-	{
-		public readonly byte[] buffer;
-		public int head;
-		public readonly int size;
-		
-		public Stash(int bufferSize)
-		{
-			size = bufferSize;
-			buffer = new byte[bufferSize + 8];
-			head = 0;
-		}
-	}
-	
-	#warning move stash here
-	
 	/// <summary>
 	/// Base class for LZ4 encoder and decoder streams.
 	/// Cannot be used on its own it just provides some shared functionality.
@@ -30,12 +14,16 @@ namespace K4os.Compression.LZ4.Streams
 	{
 		private readonly Stream _inner;
 		private readonly bool _leaveOpen;
+		private Stash _stash;
 
 		private protected LZ4StreamBase(Stream inner, bool leaveOpen)
 		{
 			_inner = inner;
 			_leaveOpen = leaveOpen;
+			_stash = new Stash(_inner, 16);
 		}
+
+		private protected ref Stash Stash => ref _stash;
 			
 		private protected NotImplementedException NotImplemented(string operation) =>
 			new NotImplementedException(
