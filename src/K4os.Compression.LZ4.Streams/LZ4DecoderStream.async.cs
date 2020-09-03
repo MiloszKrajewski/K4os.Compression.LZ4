@@ -201,7 +201,7 @@ namespace K4os.Compression.LZ4.Streams
 		private async Task DisposeImpl(Token token)
 		{
 			CloseFrame();
-			if (!_leaveOpen) await InnerDispose(token).Weave();
+			await InnerDispose(token, false).Weave();
 		}
 
 		#endif

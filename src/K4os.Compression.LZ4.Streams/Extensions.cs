@@ -14,6 +14,8 @@ namespace K4os.Compression.LZ4.Streams
 		public static ConfiguredTaskAwaitable Weave(this Task task) => 
 			task.ConfigureAwait(false);
 		
+		#if NETSTANDARD2_1
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ConfiguredValueTaskAwaitable<T> Weave<T>(this ValueTask<T> task) => 
 			task.ConfigureAwait(false);
@@ -21,6 +23,8 @@ namespace K4os.Compression.LZ4.Streams
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ConfiguredValueTaskAwaitable Weave(this ValueTask task) => 
 			task.ConfigureAwait(false);
+		
+		#endif
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ReadOnlySpan<byte> ToSpan(this ReadOnlySpan<byte> span) => span;

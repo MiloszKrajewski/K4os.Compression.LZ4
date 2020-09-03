@@ -208,7 +208,7 @@ namespace K4os.Compression.LZ4.Streams
 		private /*async*/ void DisposeImpl(Token token)
 		{
 			CloseFrame();
-			if (!_leaveOpen) /*await*/ InnerDispose(token);
+			/*await*/ InnerDispose(token, false);
 		}
 
 		#endif

@@ -16,7 +16,6 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly byte[] _buffer16 = new byte[_length16 + 8];
 		private int _index16;
 
-		private readonly bool _leaveOpen;
 		private readonly bool _interactive;
 
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
@@ -40,10 +39,9 @@ namespace K4os.Compression.LZ4.Streams
 			Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
 			bool leaveOpen = false,
 			bool interactive = false):
-			base(inner)
+			base(inner, leaveOpen)
 		{
 			_decoderFactory = decoderFactory;
-			_leaveOpen = leaveOpen;
 			_position = 0;
 			_interactive = interactive;
 		}

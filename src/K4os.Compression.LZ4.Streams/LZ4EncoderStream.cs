@@ -16,7 +16,6 @@ namespace K4os.Compression.LZ4.Streams
 		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
 		private readonly ILZ4Descriptor _descriptor;
-		private readonly bool _leaveOpen;
 
 		private byte[] _buffer;
 		private long _position;
@@ -38,11 +37,10 @@ namespace K4os.Compression.LZ4.Streams
 			ILZ4Descriptor descriptor,
 			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 			bool leaveOpen = false):
-			base(inner)
+			base(inner, leaveOpen)
 		{
 			_descriptor = descriptor;
 			_encoderFactory = encoderFactory;
-			_leaveOpen = leaveOpen;
 		}
 		
 		[SuppressMessage("ReSharper", "InconsistentNaming")]

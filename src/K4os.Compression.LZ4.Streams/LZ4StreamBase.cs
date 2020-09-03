@@ -6,6 +6,22 @@ using System.Threading.Tasks;
 
 namespace K4os.Compression.LZ4.Streams
 {
+	internal struct Stash
+	{
+		public readonly byte[] buffer;
+		public int head;
+		public readonly int size;
+		
+		public Stash(int bufferSize)
+		{
+			size = bufferSize;
+			buffer = new byte[bufferSize + 8];
+			head = 0;
+		}
+	}
+	
+	#warning move stash here
+	
 	/// <summary>
 	/// Base class for LZ4 encoder and decoder streams.
 	/// Cannot be used on its own it just provides some shared functionality.
@@ -13,10 +29,12 @@ namespace K4os.Compression.LZ4.Streams
 	public abstract class LZ4StreamBase: Stream
 	{
 		private readonly Stream _inner;
+		private readonly bool _leaveOpen;
 
-		private protected LZ4StreamBase(Stream inner)
+		private protected LZ4StreamBase(Stream inner, bool leaveOpen)
 		{
 			_inner = inner;
+			_leaveOpen = leaveOpen;
 		}
 			
 		private protected NotImplementedException NotImplemented(string operation) =>
@@ -57,16 +75,18 @@ namespace K4os.Compression.LZ4.Streams
 		private protected Task<int> InnerRead(
 			in CancellationToken token, byte[] buffer, int offset, int length) =>
 			_inner.ReadAsync(buffer, offset, length, token);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private protected void InnerDispose(in EmptyToken _) => 
-			_inner.Dispose();
-		
+		private protected void InnerDispose(in EmptyToken _, bool force)
+		{
+			if (force || !_leaveOpen) _inner.Dispose();
+		}
+
 		#if NETSTANDARD2_1
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private protected ValueTask InnerDispose(in CancellationToken _) =>
-			_inner.DisposeAsync();
+		private protected ValueTask InnerDispose(in CancellationToken _, bool force) => 
+			force || !_leaveOpen ? _inner.DisposeAsync() : new ValueTask();
 
 		#endif
 		
