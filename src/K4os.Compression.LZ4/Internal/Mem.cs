@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -107,17 +108,37 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
-			if (target > source && source + length > target)
-				throw new InvalidOperationException("Unexpected memory overlap.");
-			
-#if !NET45
-			Buffer.MemoryCopy(source, target, length, length);
-#else
+#if NET45 || DEBUG
+			EnsureNoCopyOverlap(target, source, length);
+#endif
+
+#if NET45
 			if (length <= 0) return;
-			
+
 			CpBlk(target, source, (uint) length);
+#else
+			Buffer.MemoryCopy(source, target, length, length);
 #endif
 		}
+		
+#if NET45 || DEBUG
+
+		[SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void EnsureNoCopyOverlap(byte* target, byte* source, int length)
+		{
+			// This is early warning: memmove/Move is not available on
+			// NET45 (it would need to be implemented manually with all
+			// handling potential memory misalignment which is not trivial)
+			// ...but it seems it might not be needed at all as we are not
+			// doing copying of overlapping block at all.
+			// This method is here to make sure 
+
+			if (target > source && source + length > target)
+				throw new InvalidOperationException("Unexpected memory overlap.");
+		}
+
+#endif
 
 		/// <summary>Allocated block of memory. It is NOT initialized with zeroes.</summary>
 		/// <param name="size">Size in bytes.</param>

@@ -1,3 +1,9 @@
+## 1.2.5 (2020/09/04)
+* FIXED #34: true async support read and write
+* FIXED #35: full async support for .NET Standard 2.1
+* FIXED #38: stream is now properly disposed on Close()
+* FIXED #40: unaligned memory access moved to 32-bit
+
 ## 1.2.4-alpha (2020/08/02)
 * unaligned memory access methods to address ARMv7/Unity bug   
 
