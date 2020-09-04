@@ -202,13 +202,18 @@ class LZ4EncoderSettings
 }
 ```
 
-Default options are good enough so you don't change anything. Refer to [original documentation](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) for more detailed information.
+Default options are good enough so you don't change anything. 
+Refer to [original documentation](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) 
+for more detailed information.
 
-Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` are not currently supported and trying to use values other than defaults will throw exceptions.
+Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` are not currently 
+supported and trying to use values other than defaults will throw exceptions.
 
 ### Stream compression
 
-The class responsible for compression is `LZ4EncoderStream` but its usage is not obvious. For easy access two [static factory methods](https://stackoverflow.com/questions/194496/static-factory-methods-vs-instance-normal-constructors) has been created:
+The class responsible for compression is `LZ4EncoderStream` but its usage is not obvious. 
+For easy access two [static factory methods](https://stackoverflow.com/questions/194496/static-factory-methods-vs-instance-normal-constructors) 
+has been created:
 
 ```csharp
 static class LZ4Stream
@@ -245,7 +250,8 @@ class LZ4DecoderSettings
 }
 ```
 
-Adding extra memory to decompression process may increase decompression speed. Not significantly, though so there is no reason to stress about it too much.
+Adding extra memory to decompression process may increase decompression speed. Not significantly, 
+though so there is no reason to stress about it too much.
 
 ### Stream decompression
 
@@ -272,7 +278,10 @@ using (var target = File.Create(filename))
 }
 ```
 
-Please note that stream decompression is (at least I hope it is) fully compatible with original specification. Well, it does not handle predefined dictionaries but `lz4.exe` does not either. All the other features which are not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does not cause decompression to fail.
+Please note that stream decompression is (at least I hope it is) fully compatible with original specification. 
+Well, it does not handle predefined dictionaries but `lz4.exe` does not either. All the other features which are 
+not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does 
+not cause decompression to fail.
 
 ### Legacy (lz4net) compatibility
 
@@ -308,7 +317,25 @@ using (var target = LZ4Stream.Encode(File.Create(filename + ".new")))
 Code above will read old (lz4net) format and write to new format 
 ([lz4_Frame_format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md)).
 
+### ARMv7, IL2CPP, Unity
+
+Apparently ARMv7 does not handle unaligned access:
+
+> [...] It looks like the code here will do an unaligned memory access, which is not allowed on armv7, hence 
+> the crash. Mono works in this case because it generates code that is less efficient than IL2CPP, and does 
+> only aligned memory access. With IL2CPP, we have chosen to convert the C# code as-is, so that the generated 
+> code will do unaligned access if the C# code does. [...]
+
+I've adapted 32-bit algorithm to use aligned access only (64-bit version still tries to maximise speed by 
+using unaligned access). Think about 32-bit as "compatibility mode". 
+It case of alignment related problems force 32-bit mode as soon as possible with:
+
+```csharp
+LZ4Codec.Enforce32 = true;
+```
+
 ### Issues
 
-Please use [this template](doc/issue-template.txt) when raising one. Try to be as helpful as possible to help me reproduce it.
+Please use [this template](doc/issue-template.txt) when raising one. 
+Try to be as helpful as possible to help me reproduce it.
 
