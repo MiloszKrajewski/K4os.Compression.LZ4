@@ -1,83 +1,48 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using K4os.Compression.LZ4.Streams.Internal;
+
 #if BLOCKING
 using WritableBuffer = System.Span<byte>;
-using Token = K4os.Compression.LZ4.Streams.EmptyToken;
+using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
 #else
 using System.Threading.Tasks;
 using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
-
 #endif
 
 namespace K4os.Compression.LZ4.Streams
 {
 	public partial class LZ4DecoderStream
 	{
-		private async Task<int> PeekN(
-			Token token,
-			byte[] buffer, int offset, int count,
-			bool optional = false)
-		{
-			var index = 0;
-			while (count > 0)
-			{
-				var read = await InnerRead(token, buffer, index + offset, count).Weave();
-
-				if (read == 0)
-				{
-					if (index == 0 && optional)
-						return 0;
-
-					throw EndOfStream();
-				}
-
-				index += read;
-				count -= read;
-			}
-
-			return index;
-		}
-
-		private async Task<bool> PeekN(Token token, int count, bool optional = false)
-		{
-			if (count == 0) return true;
-
-			var read = await PeekN(token, _buffer16, _index16, count, optional).Weave();
-			_index16 += read;
-			return read > 0;
-		}
-
 		private async Task<ulong> Peek8(Token token)
 		{
-			_ = await PeekN(token, sizeof(ulong)).Weave();
-			return BitConverter.ToUInt64(_buffer16, _index16 - sizeof(ulong));
+			await Stash.Load(token, sizeof(ulong)).Weave();
+			return Stash.Last8();
 		}
 
 		private async Task<uint?> TryPeek4(Token token)
 		{
-			var loaded = await PeekN(token, sizeof(uint), true).Weave();
-			if (!loaded) return null;
-
-			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
+			var loaded = await Stash.Load(token, sizeof(uint), true).Weave();
+			return loaded <= 0 ? default(uint?) : Stash.Last4();
 		}
 
 		private async Task<uint> Peek4(Token token)
 		{
-			_ = await PeekN(token, sizeof(uint)).Weave();
-			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
+			await Stash.Load(token, sizeof(uint)).Weave();
+			return Stash.Last4();
 		}
 
 		private async Task<ushort> Peek2(Token token)
 		{
-			_ = await PeekN(token, sizeof(ushort)).Weave();
-			return BitConverter.ToUInt16(_buffer16, _index16 - sizeof(ushort));
+			await Stash.Load(token, sizeof(ushort)).Weave();
+			return Stash.Last2();
 		}
 
 		private async Task<byte> Peek1(Token token)
 		{
-			_ = await PeekN(token, sizeof(byte)).Weave();
-			return _buffer16[_index16 - 1];
+			await Stash.Load(token, sizeof(byte)).Weave();
+			return Stash.Last1();
 		}
 
 		private async Task<bool> EnsureFrame(Token token) =>
@@ -86,7 +51,7 @@ namespace K4os.Compression.LZ4.Streams
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private async Task<bool> ReadFrame(Token token)
 		{
-			FlushPeek();
+			Stash.Clear();
 
 			var magic = await TryPeek4(token).Weave();
 
@@ -96,7 +61,7 @@ namespace K4os.Compression.LZ4.Streams
 			if (magic != 0x184D2204)
 				throw MagicNumberExpected();
 
-			FlushPeek();
+			var headerOffset = Stash.Length;
 
 			var FLG_BD = await Peek2(token).Weave();
 
@@ -118,7 +83,7 @@ namespace K4os.Compression.LZ4.Streams
 			var contentLength = hasContentSize ? (long?) await Peek8(token).Weave() : null;
 			var dictionaryId = hasDictionary ? (uint?) await Peek4(token).Weave() : null;
 
-			var actualHC = (byte) (DigestOfStash() >> 8);
+			var actualHC = (byte) (DigestOfStash(headerOffset) >> 8);
 
 			var expectedHC = await Peek1(token).Weave();
 
@@ -140,9 +105,9 @@ namespace K4os.Compression.LZ4.Streams
 
 			return true;
 		}
-		
-		#if BLOCKING
 
+		#if BLOCKING
+		
 		private async Task<long> GetLength(Token token)
 		{
 			await EnsureFrame(token).Weave();
@@ -153,7 +118,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		private async Task<int> ReadBlock(Token token)
 		{
-			FlushPeek();
+			Stash.Clear();
 
 			var blockLength = (int) await Peek4(token).Weave();
 			if (blockLength == 0)
@@ -167,7 +132,7 @@ namespace K4os.Compression.LZ4.Streams
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
 
-			await PeekN(token, _buffer, 0, blockLength).Weave();
+			await InnerReadBlock(token, _buffer, 0, blockLength).Weave();
 
 			if (_frameInfo.BlockChecksum)
 				_ = await Peek4(token).Weave();
@@ -197,7 +162,6 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
-
 		private async Task DisposeImpl(Token token)
 		{
 			CloseFrame();

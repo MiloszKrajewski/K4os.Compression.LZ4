@@ -2,7 +2,7 @@
 using System.IO;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
-using K4os.Hash.xxHash;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams
 {
@@ -11,11 +11,6 @@ namespace K4os.Compression.LZ4.Streams
 	/// </summary>
 	public partial class LZ4DecoderStream: LZ4StreamBase
 	{
-		// ReSharper disable once InconsistentNaming
-		private const int _length16 = 16; // we intend to use only 16 bytes
-		private readonly byte[] _buffer16 = new byte[_length16 + 8];
-		private int _index16;
-
 		private readonly bool _interactive;
 
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
@@ -51,8 +46,6 @@ namespace K4os.Compression.LZ4.Streams
 				7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64
 			};
 
-		private void FlushPeek() { _index16 = 0; }
-		
 		private void CloseFrame()
 		{
 			if (_decoder == null)
@@ -93,10 +86,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			return _interactive;
 		}
-		
-		private protected uint DigestOfStash(int offset = 0) => 
-			XXH32.DigestOf(_buffer16, offset, _index16 - offset);
-		
+
 		private static InvalidDataException InvalidHeaderChecksum() =>
 			new InvalidDataException("Invalid LZ4 frame header checksum");
 
@@ -105,8 +95,5 @@ namespace K4os.Compression.LZ4.Streams
 
 		private static InvalidDataException UnknownFrameVersion(int version) =>
 			new InvalidDataException($"LZ4 frame version {version} is not supported");
-
-		private static EndOfStreamException EndOfStream() =>
-			new EndOfStreamException("Unexpected end of stream. Data might be corrupted.");
 	}
 }

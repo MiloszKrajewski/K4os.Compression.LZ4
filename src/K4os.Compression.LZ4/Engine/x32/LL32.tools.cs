@@ -15,10 +15,7 @@ using System.Runtime.CompilerServices;
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
-#if ARMv7
-using reg_t = System.UInt32;
-using Mem = K4os.Compression.LZ4.Internal.MemA7;
-#elif BIT32
+#if BIT32
 using reg_t = System.UInt32;
 using Mem = K4os.Compression.LZ4.Internal.Mem32;
 #else
@@ -32,9 +29,7 @@ using uptr_t = System.UInt64;
 
 namespace K4os.Compression.LZ4.Engine
 {
-	#if ARMv7
-	internal unsafe partial class LLA7: LL
-	#elif BIT32
+	#if BIT32
 	internal unsafe partial class LL32: LL
 	#else
 	internal unsafe partial class LL64: LL

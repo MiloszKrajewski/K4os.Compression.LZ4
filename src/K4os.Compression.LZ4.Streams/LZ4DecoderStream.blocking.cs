@@ -7,84 +7,49 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using K4os.Compression.LZ4.Streams.Internal;
+
 #if BLOCKING
 using WritableBuffer = System.Span<byte>;
-using Token = K4os.Compression.LZ4.Streams.EmptyToken;
+using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
 #else
 using System.Threading.Tasks;
 using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
-
 #endif
 
 namespace K4os.Compression.LZ4.Streams
 {
 	public partial class LZ4DecoderStream
 	{
-		private /*async*/ int PeekN(
-			Token token,
-			byte[] buffer, int offset, int count,
-			bool optional = false)
-		{
-			var index = 0;
-			while (count > 0)
-			{
-				var read = /*await*/ InnerRead(token, buffer, index + offset, count);
-
-				if (read == 0)
-				{
-					if (index == 0 && optional)
-						return 0;
-
-					throw EndOfStream();
-				}
-
-				index += read;
-				count -= read;
-			}
-
-			return index;
-		}
-
-		private /*async*/ bool PeekN(Token token, int count, bool optional = false)
-		{
-			if (count == 0) return true;
-
-			var read = /*await*/ PeekN(token, _buffer16, _index16, count, optional);
-			_index16 += read;
-			return read > 0;
-		}
-
 		private /*async*/ ulong Peek8(Token token)
 		{
-			_ = /*await*/ PeekN(token, sizeof(ulong));
-			return BitConverter.ToUInt64(_buffer16, _index16 - sizeof(ulong));
+			/*await*/ Stash.Load(token, sizeof(ulong));
+			return Stash.Last8();
 		}
 
 		private /*async*/ uint? TryPeek4(Token token)
 		{
-			var loaded = /*await*/ PeekN(token, sizeof(uint), true);
-			if (!loaded) return null;
-
-			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
+			var loaded = /*await*/ Stash.Load(token, sizeof(uint), true);
+			return loaded <= 0 ? default(uint?) : Stash.Last4();
 		}
 
 		private /*async*/ uint Peek4(Token token)
 		{
-			_ = /*await*/ PeekN(token, sizeof(uint));
-			return BitConverter.ToUInt32(_buffer16, _index16 - sizeof(uint));
+			/*await*/ Stash.Load(token, sizeof(uint));
+			return Stash.Last4();
 		}
 
 		private /*async*/ ushort Peek2(Token token)
 		{
-			_ = /*await*/ PeekN(token, sizeof(ushort));
-			return BitConverter.ToUInt16(_buffer16, _index16 - sizeof(ushort));
+			/*await*/ Stash.Load(token, sizeof(ushort));
+			return Stash.Last2();
 		}
 
 		private /*async*/ byte Peek1(Token token)
 		{
-			_ = /*await*/ PeekN(token, sizeof(byte));
-			return _buffer16[_index16 - 1];
+			/*await*/ Stash.Load(token, sizeof(byte));
+			return Stash.Last1();
 		}
 
 		private /*async*/ bool EnsureFrame(Token token) =>
@@ -93,7 +58,7 @@ namespace K4os.Compression.LZ4.Streams
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private /*async*/ bool ReadFrame(Token token)
 		{
-			FlushPeek();
+			Stash.Clear();
 
 			var magic = /*await*/ TryPeek4(token);
 
@@ -103,7 +68,7 @@ namespace K4os.Compression.LZ4.Streams
 			if (magic != 0x184D2204)
 				throw MagicNumberExpected();
 
-			FlushPeek();
+			var headerOffset = Stash.Length;
 
 			var FLG_BD = /*await*/ Peek2(token);
 
@@ -125,7 +90,7 @@ namespace K4os.Compression.LZ4.Streams
 			var contentLength = hasContentSize ? (long?) /*await*/ Peek8(token) : null;
 			var dictionaryId = hasDictionary ? (uint?) /*await*/ Peek4(token) : null;
 
-			var actualHC = (byte) (DigestOfStash() >> 8);
+			var actualHC = (byte) (DigestOfStash(headerOffset) >> 8);
 
 			var expectedHC = /*await*/ Peek1(token);
 
@@ -147,9 +112,9 @@ namespace K4os.Compression.LZ4.Streams
 
 			return true;
 		}
-		
-		#if BLOCKING
 
+		#if BLOCKING
+		
 		private /*async*/ long GetLength(Token token)
 		{
 			/*await*/ EnsureFrame(token);
@@ -160,7 +125,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		private /*async*/ int ReadBlock(Token token)
 		{
-			FlushPeek();
+			Stash.Clear();
 
 			var blockLength = (int) /*await*/ Peek4(token);
 			if (blockLength == 0)
@@ -174,7 +139,7 @@ namespace K4os.Compression.LZ4.Streams
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
 
-			/*await*/ PeekN(token, _buffer, 0, blockLength);
+			/*await*/ InnerReadBlock(token, _buffer, 0, blockLength);
 
 			if (_frameInfo.BlockChecksum)
 				_ = /*await*/ Peek4(token);
@@ -204,7 +169,6 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
-
 		private /*async*/ void DisposeImpl(Token token)
 		{
 			CloseFrame();

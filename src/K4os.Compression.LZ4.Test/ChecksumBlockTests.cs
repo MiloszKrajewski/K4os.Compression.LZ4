@@ -191,7 +191,7 @@ namespace K4os.Compression.LZ4.Test
 			if (architecture > IntPtr.Size)
 				return;
 
-			LZ4Codec.EnforceA7 = LZ4Codec.Enforce32 = architecture < IntPtr.Size;
+			LZ4Codec.Enforce32 = architecture < IntPtr.Size;
 
 			try
 			{
@@ -211,7 +211,7 @@ namespace K4os.Compression.LZ4.Test
 			}
 			finally
 			{
-				LZ4Codec.EnforceA7 = LZ4Codec.Enforce32 = false;
+				LZ4Codec.Enforce32 = false;
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.Internal
 {
 	/// <summary>
 	/// Completely empty class to do nothing.

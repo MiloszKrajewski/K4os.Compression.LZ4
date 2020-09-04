@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams
 {
@@ -16,8 +17,8 @@ namespace K4os.Compression.LZ4.Streams
 		
 		/// <inheritdoc />
 		public override int ReadByte() =>
-			ReadImpl(EmptyToken.Value, _buffer16.AsSpan(_length16, 1)) > 0 
-				? _buffer16[_length16] 
+			ReadImpl(EmptyToken.Value, Stash.OneByteSpan()) > 0 
+				? Stash.OneByteValue() 
 				: -1;
 
 		/// <inheritdoc />

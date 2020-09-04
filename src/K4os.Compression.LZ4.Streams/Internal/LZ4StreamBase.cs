@@ -3,8 +3,9 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using K4os.Hash.xxHash;
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.Internal
 {
 	/// <summary>
 	/// Base class for LZ4 encoder and decoder streams.
@@ -24,7 +25,11 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		private protected ref Stash Stash => ref _stash;
-			
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private protected uint DigestOfStash(int offset = 0) =>
+			XXH32.DigestOf(Stash.AsSpan(offset));
+
 		private protected NotImplementedException NotImplemented(string operation) =>
 			new NotImplementedException(
 				$"Feature {operation} has not been implemented in {GetType().Name}");
@@ -39,30 +44,30 @@ namespace K4os.Compression.LZ4.Streams
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private protected void InnerFlush(in EmptyToken _) =>
 			_inner.Flush();
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private protected Task InnerFlush(in CancellationToken token) =>
 			_inner.FlushAsync(token);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private protected void InnerWrite(
+		private protected void InnerWriteBlock(
 			in EmptyToken _, byte[] buffer, int offset, int length) =>
 			_inner.Write(buffer, offset, length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private protected Task InnerWrite(
+		private protected Task InnerWriteBlock(
 			in CancellationToken token, byte[] buffer, int offset, int length) =>
 			_inner.WriteAsync(buffer, offset, length, token);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private protected int InnerRead(
+		private protected int InnerReadBlock(
 			in EmptyToken _, byte[] buffer, int offset, int length) =>
-			_inner.Read(buffer, offset, length);
-		
+			_inner.TryReadBlock(buffer, offset, length, false);
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private protected Task<int> InnerRead(
+		private protected Task<int> InnerReadBlock(
 			in CancellationToken token, byte[] buffer, int offset, int length) =>
-			_inner.ReadAsync(buffer, offset, length, token);
+			_inner.TryReadBlockAsync(buffer, offset, length, false, token);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private protected void InnerDispose(in EmptyToken _, bool force)
@@ -77,13 +82,13 @@ namespace K4os.Compression.LZ4.Streams
 			force || !_leaveOpen ? _inner.DisposeAsync() : new ValueTask();
 
 		#endif
-		
+
 		/// <inheritdoc />
 		public override bool CanRead => _inner.CanRead;
 
 		/// <inheritdoc />
 		public override bool CanWrite => _inner.CanWrite;
-		
+
 		/// <inheritdoc />
 		public override bool CanTimeout => _inner.CanTimeout;
 
@@ -100,13 +105,16 @@ namespace K4os.Compression.LZ4.Streams
 			get => _inner.WriteTimeout;
 			set => _inner.WriteTimeout = value;
 		}
-		
+
 		/// <inheritdoc />
 		public override bool CanSeek => false;
 
 		/// <summary>Read-only position in the stream. Trying to set it will throw
 		/// <see cref="InvalidOperationException"/>.</summary>
-		public override long Position { set => Seek(value, SeekOrigin.Begin); }
+		public override long Position
+		{
+			set => Seek(value, SeekOrigin.Begin);
+		}
 
 		/// <inheritdoc />
 		public override long Seek(long offset, SeekOrigin origin) =>
@@ -115,11 +123,11 @@ namespace K4os.Compression.LZ4.Streams
 		/// <inheritdoc />
 		public override void SetLength(long value) =>
 			throw InvalidOperation("SetLength");
-		
+
 		/// <inheritdoc />
-		public override int ReadByte() => 
+		public override int ReadByte() =>
 			throw InvalidOperation("ReadByte");
-		
+
 		/// <inheritdoc />
 		public override int Read(byte[] buffer, int offset, int count) =>
 			throw InvalidOperation("Read");
@@ -128,7 +136,7 @@ namespace K4os.Compression.LZ4.Streams
 		public override Task<int> ReadAsync(
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("ReadAsync");
-		
+
 		#if NETSTANDARD2_1
 
 		/// <inheritdoc />
@@ -141,7 +149,7 @@ namespace K4os.Compression.LZ4.Streams
 			throw InvalidOperation("ReadAsync");
 
 		#endif
-		
+
 		/// <inheritdoc />
 		public override void WriteByte(byte value) =>
 			throw InvalidOperation("WriteByte");
@@ -154,7 +162,7 @@ namespace K4os.Compression.LZ4.Streams
 		public override Task WriteAsync(
 			byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
 			throw InvalidOperation("WriteAsync");
-		
+
 		#if NETSTANDARD2_1
 
 		/// <inheritdoc />

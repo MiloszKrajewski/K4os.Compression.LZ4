@@ -6,10 +6,11 @@
 #define BLOCKING
 
 using System;
+using K4os.Compression.LZ4.Streams.Internal;
 
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
-using Token = K4os.Compression.LZ4.Streams.EmptyToken;
+using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
 #else
 using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
@@ -25,12 +26,12 @@ namespace K4os.Compression.LZ4.Streams
 			if (!block.Ready) return;
 
 			Stash.Stash4(BlockLengthCode(block));
-			/*await*/ Stash.FlushWrite(token);
+			/*await*/ Stash.Flush(token);
 
-			/*await*/ InnerWrite(token, block.Buffer, block.Offset, block.Length);
+			/*await*/ InnerWriteBlock(token, block.Buffer, block.Offset, block.Length);
 
 			Stash.TryStash4(BlockChecksum(block));
-			/*await*/ Stash.FlushWrite(token);
+			/*await*/ Stash.Flush(token);
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
@@ -45,7 +46,7 @@ namespace K4os.Compression.LZ4.Streams
 
 			Stash.Stash4(0);
 			Stash.TryStash4(ContentChecksum());
-			/*await*/ Stash.FlushWrite(token);
+			/*await*/ Stash.Flush(token);
 		}
 
 		private /*async*/ void DisposeImpl(Token token)
@@ -59,7 +60,7 @@ namespace K4os.Compression.LZ4.Streams
 		private /*async*/ void WriteImpl(Token token, ReadableBuffer buffer)
 		{
 			if (TryStashFrame())
-				/*await*/ Stash.FlushWrite(token);
+				/*await*/ Stash.Flush(token);
 
 			var offset = 0;
 			var count = buffer.Length;

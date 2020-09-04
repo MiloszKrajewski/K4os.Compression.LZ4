@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
 //------------------------------------------------------------------------------
@@ -14,6 +15,10 @@ namespace K4os.Compression.LZ4.Engine
 {
 	internal static unsafe class LLxx
 	{
+		private static NotImplementedException AlgorithmNotImplemented(string action) =>
+			new NotImplementedException(
+				$"Algorithm {LL.Algorithm} not implemented for {action}");
+
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_decompress_safe(
 			byte* source, byte* target, int sourceLength, int targetLength) =>
@@ -22,8 +27,7 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength),
 				Algorithm.X32 => LL32.LZ4_decompress_safe(
 					source, target, sourceLength, targetLength),
-				_ => LLA7.LZ4_decompress_safe(
-					source, target, sourceLength, targetLength)
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe))
 			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -35,8 +39,7 @@ namespace K4os.Compression.LZ4.Engine
 					context, source, target, sourceLength, targetLength),
 				Algorithm.X32 => LL32.LZ4_decompress_safe_continue(
 					context, source, target, sourceLength, targetLength),
-				_ => LLA7.LZ4_decompress_safe_continue(
-					context, source, target, sourceLength, targetLength)
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe_continue))
 			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -48,8 +51,7 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength, acceleration),
 				Algorithm.X32 => LL32.LZ4_compress_fast(
 					source, target, sourceLength, targetLength, acceleration),
-				_ => LLA7.LZ4_compress_fast(
-					source, target, sourceLength, targetLength, acceleration)
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_compress_fast))
 			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -66,10 +68,7 @@ namespace K4os.Compression.LZ4.Engine
 					context,
 					source, target, sourceLength, targetLength,
 					acceleration),
-				_ => LLA7.LZ4_compress_fast_continue(
-					context,
-					source, target, sourceLength, targetLength,
-					acceleration)
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_compress_fast_continue))
 			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -80,8 +79,7 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength, level),
 				Algorithm.X32 => LL32.LZ4_compress_HC(
 					source, target, sourceLength, targetLength, level),
-				_ => LLA7.LZ4_compress_HC(
-					source, target, sourceLength, targetLength, level)
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_compress_HC))
 			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -93,8 +91,7 @@ namespace K4os.Compression.LZ4.Engine
 					context, source, target, sourceLength, targetLength),
 				Algorithm.X32 => LL32.LZ4_compress_HC_continue(
 					context, source, target, sourceLength, targetLength),
-				_ => LLA7.LZ4_compress_HC_continue(
-					context, source, target, sourceLength, targetLength)
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_compress_HC_continue))
 			};
 	}
 }

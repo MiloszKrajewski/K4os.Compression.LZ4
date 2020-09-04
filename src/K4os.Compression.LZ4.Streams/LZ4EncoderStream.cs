@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
-using K4os.Hash.xxHash;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams
 {
@@ -77,7 +77,7 @@ namespace K4os.Compression.LZ4.Streams
 				throw NotImplemented(
 					"Predefined dictionaries feature is not implemented"); // Stash4(dictionaryId);
 
-			var HC = (byte) (DigestOf(Stash.AsSpan(headerOffset)) >> 8);
+			var HC = (byte) (DigestOfStash(headerOffset) >> 8);
 
 			Stash.Stash1(HC);
 
@@ -131,9 +131,6 @@ namespace K4os.Compression.LZ4.Streams
 			}
 		}
 
-		private protected uint DigestOf(ReadOnlySpan<byte> buffer) =>
-			XXH32.DigestOf(buffer);
-
 		private static uint BlockLengthCode(in BlockInfo block) =>
 			(uint) block.Length | (block.Compressed ? 0 : 0x80000000);
 
@@ -161,28 +158,6 @@ namespace K4os.Compression.LZ4.Streams
 			blockSize <= Mem.M1 ? 6 :
 			blockSize <= Mem.M4 ? 7 :
 			throw InvalidBlockSize(blockSize);
-
-		internal readonly struct BlockInfo
-		{
-			private readonly byte[] _buffer;
-			private readonly int _length;
-
-			public byte[] Buffer => _buffer;
-			public int Offset => 0;
-			public int Length => Math.Abs(_length);
-			public bool Compressed => _length > 0;
-			public bool Ready => _length != 0;
-
-			public BlockInfo(byte[] buffer, EncoderAction action, int length)
-			{
-				_buffer = buffer;
-				_length = action switch {
-					EncoderAction.Encoded => length,
-					EncoderAction.Copied => -length,
-					_ => 0,
-				};
-			}
-		}
 
 		private protected ArgumentException InvalidBlockSize(int blockSize) =>
 			new ArgumentException($"Invalid block size ${blockSize} for {GetType().Name}");

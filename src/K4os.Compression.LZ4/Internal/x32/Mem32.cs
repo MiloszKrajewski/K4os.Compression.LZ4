@@ -11,22 +11,14 @@ using System.Runtime.CompilerServices;
 namespace K4os.Compression.LZ4.Internal
 {
 	/// <summary>Unsafe memory operations.</summary>
-	#if ARMv7
-	public unsafe class MemA7: Mem
-	#elif BIT32
+	#if BIT32
 	public unsafe class Mem32: Mem
 	#else
 	public unsafe class Mem64: Mem
 	#endif
 	{
-		#if ARMv7
+		#if !BIT32
 		
-		// ---- ARMv7
-
-		#else
-
-		// ---- BIT32 & BIT64
-
 		/// <summary>Reads exactly 2 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>2 bytes at given address.</returns>
@@ -72,10 +64,6 @@ namespace K4os.Compression.LZ4.Internal
 		public new static void Copy4(byte* target, byte* source) =>
 			*(uint*) target = *(uint*) source;
 
-		#if !BIT32
-
-		// ---- BIT64
-
 		/// <summary>Reads exactly 8 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>8 bytes at given address.</returns>
@@ -97,9 +85,8 @@ namespace K4os.Compression.LZ4.Internal
 
 		#endif
 
-		#endif
-
-		#if ARMv7 || BIT32
+		#if BIT32
+		
 		/// <summary>Reads 4 bytes from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>4 bytes at given address.</returns>

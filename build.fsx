@@ -63,10 +63,6 @@ Target.create "Preprocess" (fun _ ->
     |> Seq.map (fun fn -> fn, String.replace "64" "32" fn)
     |> Seq.iter (preprocess ["BIT32"] id)
     
-    !! (root @@ "K4os.Compression.LZ4/**/x64/*64*.cs")
-    |> Seq.map (fun fn -> fn, String.replace "64" "A7" fn)
-    |> Seq.iter (preprocess ["ARMv7"; "BIT32"] id)
-    
     let deasync =
         Sanitizer.replaceText "async" "/*async*/" >>
         Sanitizer.replaceText "await" "/*await*/" >>
@@ -76,7 +72,7 @@ Target.create "Preprocess" (fun _ ->
         id
     
     let root = "./src/K4os.Compression.LZ4.Streams"
-    !! (root @@ "**/*Stream.async.cs")
+    !! (root @@ "**/*.async.cs")
     |> Seq.map (fun fn -> fn, String.replace ".async." ".blocking." fn)
     |> Seq.iter (preprocess ["BLOCKING"] deasync)
 )

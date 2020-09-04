@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams
 {
@@ -19,7 +20,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		/// <inheritdoc />
 		public override void WriteByte(byte value) => 
-			WriteImpl(EmptyToken.Value, Stash.OneByte(value));
+			WriteImpl(EmptyToken.Value, Stash.OneByteSpan(value));
 
 		/// <inheritdoc />
 		public override void Write(byte[] buffer, int offset, int count) =>

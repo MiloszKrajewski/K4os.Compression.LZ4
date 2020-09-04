@@ -31,18 +31,10 @@ namespace K4os.Compression.LZ4.Engine
 		}
 
 		public static bool Enforce32 { get; set; } = false;
-		public static bool EnforceA7 { get; set; } = false;
 
-		/// <summary>Checks if process is ran in 32-bit mode (or 32 bit mode has been enforced).</summary>
-		public static bool Algorithm32 => EnforceA7 || Enforce32 || Mem.System32;
-		
-		/// <summary>Checks if ARMv7 mode has been enforced.</summary>
-		public static bool AlgorithmA7 => EnforceA7;
-		
-		public static Algorithm Algorithm =>
-			AlgorithmA7 ? Algorithm.ARMv7 :
-			Algorithm32 ? Algorithm.X32 :
-			Algorithm.X64;
+		/// <summary>Checks what algorithm should be used (32 vs 64 bit).</summary>
+		public static Algorithm Algorithm => 
+			Enforce32 || Mem.System32 ? Algorithm.X32 : Algorithm.X64;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int LZ4_compressBound(int isize) =>
