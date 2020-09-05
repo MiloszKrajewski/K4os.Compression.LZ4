@@ -21,6 +21,10 @@ paket restore
 fake build
 ```
 
+# Changes
+
+Change log can be found [here](CHANGES.md).
+
 # What is 'Fast compression algorithm'?
 
 While compression algorithms you use day-to-day to archive your data work around the speed of 10MB/s giving you quite decent compression ratios, 'fast algorithms' are designed to work 'faster than your hard drive' sacrificing compression ratio.
