@@ -340,6 +340,5 @@ LZ4Codec.Enforce32 = true;
 
 ### Issues
 
-Please use [this template](doc/issue-template.txt) when raising one. 
+Please use [this template](issues/new?template=bug_report.md) when raising one. 
 Try to be as helpful as possible to help me reproduce it.
-
