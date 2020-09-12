@@ -148,6 +148,8 @@ var decoded = LZ4Codec.Decode(
     target, 0, target.Length);
 ```
 
+**NOTE:** If I told you that decompression needs potentially 100 times more memory than original data you would think this is insane. And it is not 100 times, it is 255 times more, so it actually is insane. Please don't do it. This was for demonstration only. What you need is a way to store original size somehow (I'm not opinionated, do whatever you think is right) or... you can use `LZ4Pickler` (see below) or `LZ4Stream`.
+
 ## Pickler
 
 Sometimes all you need is to quickly compress a small chunk of data, let's say serialized message to send it over the network. You can use `LZ4Pickler` in such case. It does encode original length within a message and handles incompressible data (by copying).
