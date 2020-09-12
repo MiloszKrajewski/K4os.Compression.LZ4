@@ -170,9 +170,9 @@ namespace K4os.Compression.LZ4
 
 			var diff = (int) (
 				llen == 0 ? 0 :
-				llen == 1 ? *source :
-				llen == 2 ? *(ushort*) source :
-				llen == 4 ? *(uint*) source :
+				llen == 1 ? Mem.Peek1(source) :
+				llen == 2 ? Mem.Peek2(source) :
+				llen == 4 ? Mem.Peek4(source) :
 				throw CorruptedPickle("Unexpected length descriptor.")
 			);
 			source += llen;

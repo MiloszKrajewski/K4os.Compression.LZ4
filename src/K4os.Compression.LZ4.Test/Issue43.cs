@@ -3,14 +3,11 @@ using System.IO;
 using System.Linq;
 using TestHelpers;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace K4os.Compression.LZ4.Test
 {
 	public class Issue43
 	{
-		public Issue43(ITestOutputHelper output) { }
-
 		[Theory]
 		[InlineData(".corpus/mozilla")]
 		[InlineData(".corpus/webster")]
@@ -20,6 +17,19 @@ namespace K4os.Compression.LZ4.Test
 
 			var compressed = Compress(original);
 			var decompressed = Decompress(compressed, original.Length);
+
+			Tools.SameBytes(original, decompressed);
+		}
+		
+		[Theory]
+		[InlineData(".corpus/mozilla")]
+		[InlineData(".corpus/webster")]
+		public void PickleAndUnpickle(string filename)
+		{
+			var original = File.ReadAllBytes(Tools.FindFile(filename));
+
+			var compressed = LZ4Pickler.Pickle(original);
+			var decompressed = LZ4Pickler.Unpickle(compressed);
 
 			Tools.SameBytes(original, decompressed);
 		}

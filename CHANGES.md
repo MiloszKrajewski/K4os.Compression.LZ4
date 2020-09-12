@@ -1,3 +1,6 @@
+## 1.2.7 (2020/09/13)
+* LZ4Pickler is now memory alignment agnostic
+
 ## 1.2.6 (2020/09/12)
 * FIXED #41: fixed nasty async reader bug (async vs struct)
 
