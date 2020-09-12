@@ -1,3 +1,6 @@
+## 1.2.6 (2020/09/12)
+* FIXED #41: fixed nasty async reader bug (async vs struct)
+
 ## 1.2.5 (2020/09/04)
 * ADDED #34: true async support for read and write
 * ADDED #35: full async support for .NET Standard 2.1

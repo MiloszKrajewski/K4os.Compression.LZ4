@@ -48,21 +48,17 @@ namespace K4os.Compression.LZ4.Streams.Internal
 		}
 
 		public int Load(
-			EmptyToken _, int count, bool optional = false)
-		{
-			var read = _stream.TryReadBlock(_buffer, _head, count, optional);
-			_head += read;
-			return read;
-		}
+			EmptyToken _, int count, bool optional = false) =>
+			_stream.TryReadBlock(_buffer, _head, count, optional);
 
-		public async Task<int> Load(
-			CancellationToken token, int count, bool optional = false)
+		public Task<int> Load(
+			CancellationToken token, int count, bool optional = false) =>
+			_stream.TryReadBlockAsync(_buffer, _head, count, optional, token);
+
+		public int Advance(int loaded)
 		{
-			var read = await _stream
-				.TryReadBlockAsync(_buffer, _head, count, optional, token)
-				.Weave();
-			_head += read;
-			return read;
+			_head += loaded;
+			return loaded;
 		}
 
 		public void Stash1(byte value)
@@ -120,9 +116,16 @@ namespace K4os.Compression.LZ4.Streams.Internal
 			return OneByteSpan();
 		}
 
-		public ulong Last8() => BitConverter.ToUInt64(_buffer, _head - 8);
-		public uint Last4() => BitConverter.ToUInt32(_buffer, _head - 4);
-		public ushort Last2() => BitConverter.ToUInt16(_buffer, _head - 2);
-		public byte Last1() => _buffer[_head - 1];
+		public ulong Last8(int loaded = 0) => 
+			BitConverter.ToUInt64(_buffer, (_head += loaded) - 8);
+
+		public uint Last4(int loaded = 0) => 
+			BitConverter.ToUInt32(_buffer, (_head += loaded) - 4);
+		
+		public ushort Last2(int loaded = 0) => 
+			BitConverter.ToUInt16(_buffer, (_head += loaded) - 2);
+		
+		public byte Last1(int loaded = 0) => 
+			_buffer[(_head += loaded) - 1];
 	}
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using K4os.Compression.LZ4.Streams.Internal;
-
 #if BLOCKING
 using WritableBuffer = System.Span<byte>;
 using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
@@ -17,32 +16,32 @@ namespace K4os.Compression.LZ4.Streams
 	{
 		private async Task<ulong> Peek8(Token token)
 		{
-			await Stash.Load(token, sizeof(ulong)).Weave();
-			return Stash.Last8();
+			var loaded = await Stash.Load(token, sizeof(ulong)).Weave();
+			return Stash.Last8(loaded);
 		}
 
 		private async Task<uint?> TryPeek4(Token token)
 		{
 			var loaded = await Stash.Load(token, sizeof(uint), true).Weave();
-			return loaded <= 0 ? default(uint?) : Stash.Last4();
+			return loaded <= 0 ? default(uint?) : Stash.Last4(loaded);
 		}
 
 		private async Task<uint> Peek4(Token token)
 		{
-			await Stash.Load(token, sizeof(uint)).Weave();
-			return Stash.Last4();
+			var loaded = await Stash.Load(token, sizeof(uint)).Weave();
+			return Stash.Last4(loaded);
 		}
 
 		private async Task<ushort> Peek2(Token token)
 		{
-			await Stash.Load(token, sizeof(ushort)).Weave();
-			return Stash.Last2();
+			var loaded = await Stash.Load(token, sizeof(ushort)).Weave();
+			return Stash.Last2(loaded);
 		}
 
 		private async Task<byte> Peek1(Token token)
 		{
-			await Stash.Load(token, sizeof(byte)).Weave();
-			return Stash.Last1();
+			var loaded = await Stash.Load(token, sizeof(byte)).Weave();
+			return Stash.Last1(loaded);
 		}
 
 		private async Task<bool> EnsureFrame(Token token) =>
@@ -107,7 +106,6 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		#if BLOCKING
-		
 		private async Task<long> GetLength(Token token)
 		{
 			await EnsureFrame(token).Weave();
