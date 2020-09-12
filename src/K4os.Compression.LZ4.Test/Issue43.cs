@@ -9,9 +9,7 @@ namespace K4os.Compression.LZ4.Test
 {
 	public class Issue43
 	{
-		private ITestOutputHelper _output;
-
-		public Issue43(ITestOutputHelper output) { _output = output; }
+		public Issue43(ITestOutputHelper output) { }
 
 		[Theory]
 		[InlineData(".corpus/mozilla")]
@@ -19,7 +17,7 @@ namespace K4os.Compression.LZ4.Test
 		public void LoadWhileFileAndCompress(string filename)
 		{
 			var original = File.ReadAllBytes(Tools.FindFile(filename));
-			
+
 			var compressed = Compress(original);
 			var decompressed = Decompress(compressed, original.Length);
 
