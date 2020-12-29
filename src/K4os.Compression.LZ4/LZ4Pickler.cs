@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -23,6 +24,13 @@ namespace K4os.Compression.LZ4
 
 		/// <summary>Compresses input buffer into self-contained package.</summary>
 		/// <param name="source">Input buffer.</param>
+		/// <param name="level">Compression level.</param>
+		/// <param name="writer">Where the compressed data is written.</param>
+		public static void Pickle(byte[] source, IBufferWriter<byte> writer, LZ4Level level = LZ4Level.L00_FAST) =>
+			Pickle(source, 0, source.Length, writer, level);
+
+		/// <summary>Compresses input buffer into self-contained package.</summary>
+		/// <param name="source">Input buffer.</param>
 		/// <param name="sourceOffset">Input buffer offset.</param>
 		/// <param name="sourceLength">Input buffer length.</param>
 		/// <param name="level">Compression level.</param>
@@ -38,6 +46,21 @@ namespace K4os.Compression.LZ4
 
 		/// <summary>Compresses input buffer into self-contained package.</summary>
 		/// <param name="source">Input buffer.</param>
+		/// <param name="sourceOffset">Input buffer offset.</param>
+		/// <param name="sourceLength">Input buffer length.</param>
+		/// <param name="level">Compression level.</param>
+		/// <param name="writer">Where the compressed data is written</param>
+		public static unsafe void Pickle(
+			byte[] source, int sourceOffset, int sourceLength, IBufferWriter<byte> writer,
+			LZ4Level level = LZ4Level.L00_FAST)
+		{
+			source.Validate(sourceOffset, sourceLength);
+			fixed (byte* sourceP = source)
+				Pickle(sourceP + sourceOffset, sourceLength, writer, level);
+		}
+
+		/// <summary>Compresses input buffer into self-contained package.</summary>
+		/// <param name="source">Input buffer.</param>
 		/// <param name="level">Compression level.</param>
 		/// <returns>Output buffer.</returns>
 		public static unsafe byte[] Pickle(
@@ -49,6 +72,22 @@ namespace K4os.Compression.LZ4
 
 			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
 				return Pickle(sourceP, sourceLength, level);
+		}
+
+		/// <summary>Compresses input buffer into self-contained package.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="level">Compression level.</param>
+		/// <param name="writer">Where the compressed data is written.</param>
+		/// <returns>Output buffer.</returns>
+		public static unsafe void Pickle(
+			ReadOnlySpan<byte> source, IBufferWriter<byte> writer, LZ4Level level = LZ4Level.L00_FAST)
+		{
+			var sourceLength = source.Length;
+			if (sourceLength <= 0)
+				return;
+
+			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
+				Pickle(sourceP, sourceLength, writer, level);
 		}
 
 		/// <summary>Compresses input buffer into self-contained package.</summary>
@@ -79,11 +118,46 @@ namespace K4os.Compression.LZ4
 			}
 		}
 
+		/// <summary>Compresses input buffer into self-contained package.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="sourceLength">Length of input data.</param>
+		/// <param name="level">Compression level.</param>
+		/// <param name="writer">Where the compressed data is written.</param>
+		public static unsafe void Pickle(
+			byte* source, int sourceLength, IBufferWriter<byte> writer, LZ4Level level = LZ4Level.L00_FAST)
+		{
+			if (sourceLength <= 0)
+				return;
+
+			var targetLength = sourceLength - 1;
+			var target = (byte*)Mem.Alloc(sourceLength);
+			try
+			{
+				var encodedLength = LZ4Codec.Encode(
+					source, sourceLength, target, targetLength, level);
+
+				if (encodedLength <= 0)
+					PickleV0(source, sourceLength, sourceLength, writer);
+				else
+					PickleV0(target, encodedLength, sourceLength, writer);
+			}
+			finally
+			{
+				Mem.Free(target);
+			}
+		}
+
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
 		/// <param name="source">Input buffer.</param>
 		/// <returns>Output buffer.</returns>
 		public static byte[] Unpickle(byte[] source) =>
 			Unpickle(source, 0, source.Length);
+
+		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="writer">Where the decompressed data is written.</param>
+		public static void Unpickle(byte[] source, IBufferWriter<byte> writer) =>
+			Unpickle(source, 0, source.Length, writer);
 
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
 		/// <param name="source">Input buffer.</param>
@@ -104,6 +178,23 @@ namespace K4os.Compression.LZ4
 
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
 		/// <param name="source">Input buffer.</param>
+		/// <param name="sourceOffset">Input buffer offset.</param>
+		/// <param name="sourceLength">Input buffer length.</param>
+		/// <param name="writer">Where the decompressed data is wrtten.</param>
+		public static unsafe void Unpickle(
+			byte[] source, int sourceOffset, int sourceLength, IBufferWriter<byte> writer)
+		{
+			source.Validate(sourceOffset, sourceLength);
+
+			if (sourceLength <= 0)
+				return;
+
+			fixed (byte* sourceP = source)
+				Unpickle(sourceP + sourceOffset, sourceLength, writer);
+		}
+
+		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
+		/// <param name="source">Input buffer.</param>
 		/// <returns>Output buffer.</returns>
 		public static unsafe byte[] Unpickle(ReadOnlySpan<byte> source)
 		{
@@ -113,6 +204,19 @@ namespace K4os.Compression.LZ4
 
 			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
 				return Unpickle(sourceP, source.Length);
+		}
+
+		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="writer">Where the decompressed data is written.</param>
+		public static unsafe void Unpickle(ReadOnlySpan<byte> source, IBufferWriter<byte> writer)
+		{
+			var sourceLength = source.Length;
+			if (sourceLength <= 0)
+				return;
+
+			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
+				Unpickle(sourceP, source.Length, writer);
 		}
 
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
@@ -129,6 +233,27 @@ namespace K4os.Compression.LZ4
 
 			if (version == 0)
 				return UnpickleV0(flags, source + 1, sourceLength - 1);
+
+			throw new InvalidDataException($"Pickle version {version} is not supported");
+		}
+
+		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="sourceLength">Input buffer length.</param>
+		/// <param name="writer">Where the decompressed data is written.</param>
+		public static unsafe void Unpickle(byte* source, int sourceLength, IBufferWriter<byte> writer)
+		{
+			if (sourceLength <= 0)
+				return;
+
+			var flags = *source;
+			var version = flags & VersionMask; // 3 bits
+
+			if (version == 0)
+			{
+				UnpickleV0(flags, source + 1, sourceLength - 1, writer);
+				return;
+			}
 
 			throw new InvalidDataException($"Pickle version {version} is not supported");
 		}
@@ -156,6 +281,27 @@ namespace K4os.Compression.LZ4
 			}
 
 			return result;
+		}
+
+		[SuppressMessage("ReSharper", "IdentifierTypo")]
+		private static unsafe void PickleV0(
+			byte* target, int targetLength, int sourceLength, IBufferWriter<byte> writer)
+		{
+			var diff = sourceLength - targetLength;
+			var llen = diff == 0 ? 0 : diff < 0x100 ? 1 : diff < 0x10000 ? 2 : 4;
+			var result = writer.GetSpan(targetLength + 1 + llen);
+
+			fixed (byte* resultP = result)
+			{
+				var llenFlags = llen == 4 ? 3 : llen; // 2 bits
+				var flags = (byte)((llenFlags << 6) | CurrentVersion);
+				Mem.Poke1(resultP + 0, flags);
+				if (llen == 1) Mem.Poke1(resultP + 1, (byte)diff);
+				else if (llen == 2) Mem.Poke2(resultP + 1, (ushort)diff);
+				else if (llen == 4) Mem.Poke4(resultP + 1, (uint)diff);
+				Mem.Move(resultP + llen + 1, target, targetLength);
+			}
+			writer.Advance(targetLength + 1 + llen);
 		}
 
 		private static unsafe byte[] UnpickleV0(
@@ -191,12 +337,53 @@ namespace K4os.Compression.LZ4
 					var decodedLength = LZ4Codec.Decode(
 						source, sourceLength, targetP, targetLength);
 					if (decodedLength != targetLength)
-						throw new ArgumentException(
+						throw CorruptedPickle(
 							$"Expected {targetLength} bytes but {decodedLength} has been decoded");
 				}
 			}
 
 			return target;
+		}
+
+		private static unsafe void UnpickleV0(
+			byte flags, byte* source, int sourceLength, IBufferWriter<byte> writer)
+		{
+			// ReSharper disable once IdentifierTypo
+			var llen = (flags >> 6) & 0x03; // 2 bits
+			if (llen == 3) llen = 4;
+
+			if (sourceLength < llen)
+				throw CorruptedPickle("Source buffer is too small.");
+
+			var diff = (int)(
+				llen == 0 ? 0 :
+				llen == 1 ? Mem.Peek1(source) :
+				llen == 2 ? Mem.Peek2(source) :
+				llen == 4 ? Mem.Peek4(source) :
+				throw CorruptedPickle("Unexpected length descriptor.")
+			);
+			source += llen;
+			sourceLength -= llen;
+			var targetLength = sourceLength + diff;
+
+			var target = writer.GetSpan(targetLength);
+			fixed (byte* targetP = target)
+			{
+				if (diff == 0)
+				{
+					Mem.Copy(targetP, source, targetLength);
+				}
+				else
+				{
+					var decodedLength = LZ4Codec.Decode(
+						source, sourceLength, targetP, targetLength);
+					if (decodedLength != targetLength)
+						throw CorruptedPickle(
+							$"Expected {targetLength} bytes but {decodedLength} has been decoded");
+				}
+			}
+
+			writer.Advance(targetLength);
 		}
 	}
 }
