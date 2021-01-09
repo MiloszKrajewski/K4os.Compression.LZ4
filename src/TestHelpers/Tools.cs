@@ -70,7 +70,7 @@ namespace TestHelpers
 		public static Stream Slow(Stream stream, int threshold = 1) =>
 			new FakeNetworkStream(stream, threshold);
 
-		public static void SameBytes(ReadOnlySpan<byte> source, ReadOnlySpan<byte> target)
+		public static void SameBytes(byte[] source, byte[] target)
 		{
 			if (source.Length != target.Length)
 				throw new ArgumentException(
