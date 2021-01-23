@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.IO;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4
 {
-    /// <summary>
-    /// Pickling support with LZ4 compression.
-    /// </summary>
-    public static class LZ4PicklerV2
+	/// <summary>
+	/// Pickling support with LZ4 compression.
+	/// </summary>
+	public static class LZ4PicklerV2
 	{
+		private const int MAX_STACKALLOC = 1024;
+
 		/// <summary>Compresses input buffer into self-contained package.</summary>
 		/// <param name="source">Input buffer.</param>
 		/// <param name="level">Compression level.</param>
@@ -24,7 +27,7 @@ namespace K4os.Compression.LZ4
 		/// <param name="level">Compression level.</param>
 		/// <returns>Output buffer.</returns>
 		public static byte[] Pickle(
-			byte[] source, int sourceIndex, int sourceLength, 
+			byte[] source, int sourceIndex, int sourceLength,
 			LZ4Level level = LZ4Level.L00_FAST) =>
 			Pickle(source.AsSpan(sourceIndex, sourceLength), level);
 
@@ -45,35 +48,51 @@ namespace K4os.Compression.LZ4
 			ReadOnlySpan<byte> source, LZ4Level level = LZ4Level.L00_FAST)
 		{
 			var sourceLength = source.Length;
-			if (sourceLength == 0)
-				return Array.Empty<byte>();
+			if (sourceLength == 0) return Mem.Empty;
 
-			var tmp = Mem.Alloc(sourceLength);
-			try
+			if (sourceLength < MAX_STACKALLOC)
 			{
-				var encodedLength = LZ4Codec.Encode(source, new Span<byte>(tmp, sourceLength), level);
-				if (encodedLength <= 0)
+				var buffer = stackalloc byte[MAX_STACKALLOC];
+				return PickleWithBuffer(source, level, new Span<byte>(buffer, sourceLength));
+			}
+			else
+			{
+				var buffer = Mem.Alloc(sourceLength);
+				try
 				{
-					var result = new byte[sourceLength + 1];
-					EmitUncompressedPreamble(result);
-					source.CopyTo(result.AsSpan(1));
-					return result;
+					return PickleWithBuffer(source, level, new Span<byte>(buffer, sourceLength));
 				}
-				else
+				finally
 				{
-					var diffBytes = CalcDiffBytes(sourceLength - encodedLength);
-					var result = new byte[1 + diffBytes + encodedLength];
-					var dst = result.AsSpan();
-					var src = new Span<byte>(tmp, encodedLength);
-					EmitCompressedPreamble(dst, sourceLength - encodedLength, diffBytes);
-					src.CopyTo(dst[(1 + diffBytes)..]);
-
-					return result;
+					Mem.Free(buffer);
 				}
 			}
-			finally
+		}
+
+		private static byte[] PickleWithBuffer(
+			ReadOnlySpan<byte> source, LZ4Level level, Span<byte> buffer)
+		{
+			var sourceLength = source.Length;
+
+			Debug.Assert(buffer.Length >= sourceLength);
+			var encodedLength = LZ4Codec.Encode(source, buffer, level);
+
+			if (encodedLength <= 0 || encodedLength > sourceLength)
 			{
-				Mem.Free(tmp);
+				var result = new byte[sourceLength + 1];
+				var offset = EmitUncompressedPreamble(result);
+				source.CopyTo(result.AsSpan(offset));
+				return result;
+			}
+			else
+			{
+				var diffBytes = CalcDiffBytes(sourceLength - encodedLength);
+				var result = new byte[1 + diffBytes + encodedLength];
+				var target = result.AsSpan();
+				var offset = EmitCompressedPreamble(
+					target, sourceLength - encodedLength, diffBytes);
+				buffer.Slice(0, encodedLength).CopyTo(target.Slice(offset));
+				return result;
 			}
 		}
 
@@ -83,28 +102,31 @@ namespace K4os.Compression.LZ4
 		/// <param name="level">Compression level.</param>
 		/// <returns>Output buffer.</returns>
 		public static void Pickle(
-			ReadOnlySpan<byte> source, IBufferWriter<byte> writer, 
+			ReadOnlySpan<byte> source, IBufferWriter<byte> writer,
 			LZ4Level level = LZ4Level.L00_FAST)
 		{
 			var sourceLength = source.Length;
 			if (sourceLength == 0) return;
 
+			// number of bytes is not decided on diff but rather of full length
+			// although, diff would never be greater than full length
 			var diffBytes = CalcDiffBytes(sourceLength);
-			var dst = writer.GetSpan(1 + diffBytes + sourceLength);
+			var target = writer.GetSpan(1 + diffBytes + sourceLength);
 
 			var encodedLength = LZ4Codec.Encode(
-				source, dst.Slice(1 + diffBytes, sourceLength), level);
-			
+				source, target.Slice(1 + diffBytes, sourceLength), level);
+
 			if (encodedLength <= 0)
 			{
-				EmitUncompressedPreamble(dst);
-				source.CopyTo(dst[1..]);
-				writer.Advance(1 + sourceLength);
+				var offset = EmitUncompressedPreamble(target);
+				source.CopyTo(target.Slice(offset));
+				writer.Advance(offset + sourceLength);
 			}
 			else
 			{
-				EmitCompressedPreamble(dst, sourceLength - encodedLength, diffBytes);
-				writer.Advance(1 + diffBytes + encodedLength);
+				var offset = EmitCompressedPreamble(
+					target, sourceLength - encodedLength, diffBytes);
+				writer.Advance(offset + encodedLength);
 			}
 		}
 
@@ -122,7 +144,7 @@ namespace K4os.Compression.LZ4
 		/// <param name="index">Input buffer offset.</param>
 		/// <param name="count">Input buffer length.</param>
 		/// <returns>Output buffer.</returns>
-		public static unsafe byte[] Unpickle(byte[] source, int index, int count) =>
+		public static byte[] Unpickle(byte[] source, int index, int count) =>
 			Unpickle(source.AsSpan(index, count));
 
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
@@ -138,7 +160,7 @@ namespace K4os.Compression.LZ4
 		public static byte[] Unpickle(ReadOnlySpan<byte> source)
 		{
 			var size = UnpickledSize(source);
-			if (size == 0) return Array.Empty<byte>();
+			if (size == 0) return Mem.Empty;
 
 			var output = new byte[size];
 			UnpickleCore(source, output, size);
@@ -168,7 +190,9 @@ namespace K4os.Compression.LZ4
 			var sourceLength = source.Length;
 			if (sourceLength == 0) return 0;
 
-			var (version, diffBytes) = DecodeHeader(source[0]);
+			var header = DecodeHeader(source[0]);
+			var version = header.Version;
+			var diffBytes = header.SizeOfDiff;
 			if (version != 0)
 				throw new InvalidDataException($"Pickle format {version} is not supported");
 
@@ -189,28 +213,31 @@ namespace K4os.Compression.LZ4
 			var sourceLength = source.Length;
 			if (sourceLength == 0) return;
 
-			var (version, diffBytes) = DecodeHeader(source[0]);
+			var header = DecodeHeader(source[0]);
+			var version = header.Version;
+			var diffBytes = header.SizeOfDiff;
 			if (version != 0)
 				throw new InvalidDataException($"Pickling format {version} is not supported");
 
 			if (sourceLength <= diffBytes)
 				throw CorruptedPickle("Source buffer is too small.");
 
-			UnpickleCore(source, output, sourceLength - 1 - diffBytes + ExtractDiff(source, diffBytes));
+			UnpickleCore(
+				source, output, sourceLength - 1 - diffBytes + ExtractDiff(source, diffBytes));
 		}
 
 		private static void UnpickleCore(
 			ReadOnlySpan<byte> source, Span<byte> target, int expectedLength)
 		{
-			var (_, diffBytes) = DecodeHeader(source[0]);
+			var header = DecodeHeader(source[0]);
+			var data = source.Slice(1 + header.SizeOfDiff);
 			if (source.Length == expectedLength)
 			{
-				source[(1 + diffBytes)..].CopyTo(target);
+				data.CopyTo(target);
 				return;
 			}
 
-			var src = source[(1 + diffBytes)..];
-			var decodedLength = LZ4Codec.Decode(src, target);
+			var decodedLength = LZ4Codec.Decode(data, target);
 			if (decodedLength != expectedLength)
 				throw CorruptedPickle(
 					$"Expected to decode {expectedLength} bytes but {decodedLength} has been decoded");
@@ -218,8 +245,7 @@ namespace K4os.Compression.LZ4
 
 		private static int ExtractDiff(ReadOnlySpan<byte> source, int diffBytes)
 		{
-			return diffBytes switch
-			{
+			return diffBytes switch {
 				1 => source[1],
 				2 => source[1] + (source[2] << 8),
 				4 => source[1] + (source[2] << 8) + (source[3] << 16) + (source[4] << 24),
@@ -227,33 +253,34 @@ namespace K4os.Compression.LZ4
 			};
 		}
 
-		private static void EmitUncompressedPreamble(Span<byte> result)
+		private static int EmitUncompressedPreamble(Span<byte> result)
 		{
 			result[0] = EncodeHeader(0, 0);
+			return 1;
 		}
 
-		private static void EmitCompressedPreamble(Span<byte> result, int length, int diffBytes)
+		private static int EmitCompressedPreamble(Span<byte> result, int length, int diffBytes)
 		{
 			switch (diffBytes)
 			{
 				case 1:
 					result[0] = EncodeHeader(0, 1);
-					result[1] = (byte)length;
-					break;
-
+					result[1] = (byte) length;
+					return 2;
 				case 2:
 					result[0] = EncodeHeader(0, 2);
-					result[1] = (byte)(length & 0xff);
-					result[2] = (byte)(length >> 8);
-					break;
-
+					result[1] = (byte) (length & 0xff);
+					result[2] = (byte) (length >> 8);
+					return 3;
 				case 4:
 					result[0] = EncodeHeader(0, 4);
-					result[1] = (byte)(length & 0xff);
-					result[2] = (byte)((length >> 8) & 0xff);
-					result[3] = (byte)((length >> 16) & 0xff);
-					result[4] = (byte)(length >> 24);
-					break;
+					result[1] = (byte) (length & 0xff);
+					result[2] = (byte) ((length >> 8) & 0xff);
+					result[3] = (byte) ((length >> 16) & 0xff);
+					result[4] = (byte) (length >> 24);
+					return 5;
+				default:
+					throw new ArgumentException($"Invalid diffBytes: {diffBytes}");
 			}
 		}
 
@@ -261,15 +288,25 @@ namespace K4os.Compression.LZ4
 		{
 			if (diffBytes == 4) diffBytes = 3;
 
-			return (byte)((version & 0x07) | ((diffBytes & 0x3) << 6));
+			return (byte) ((version & 0x07) | ((diffBytes & 0x3) << 6));
 		}
 
-		private static (int version, byte lengthBtes) DecodeHeader(byte header)
+		private readonly struct Header
+		{
+			public int Version { get; }
+			public int SizeOfDiff { get; }
+
+			public Header(int version, int length)
+			{
+				Version = version;
+				SizeOfDiff = length;
+			}
+		}
+
+		private static Header DecodeHeader(byte header)
 		{
 			var len = (header >> 6) & 0x3;
-			if (len == 3) len++;
-
-			return (header & 0x7, (byte)len);
+			return new Header(header & 0x7, len == 3 ? 4 : len);
 		}
 
 		private static Exception CorruptedPickle(string message) =>
