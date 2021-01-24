@@ -234,7 +234,7 @@ namespace K4os.Compression.LZ4
 		private static void UnpickleCore(ReadOnlySpan<byte> source, Span<byte> output, int expectedLength)
 		{
 			var (_, diffBytes) = DecodeHeader(source[0]);
-			if (source.Length == expectedLength)
+			if (source.Length == expectedLength + 1)
 			{
 				source[(1 + diffBytes)..].CopyTo(output);
 				return;
