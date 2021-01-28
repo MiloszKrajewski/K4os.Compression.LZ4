@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+using System;
 using System.Buffers;
 using System.IO;
 using K4os.Compression.LZ4.Internal;
@@ -65,7 +64,7 @@ namespace K4os.Compression.LZ4
 					var dst = result.AsSpan();
 					var src = new Span<byte>(tmp, encodedLength);
 					EmitCompressedPreamble(dst, sourceLength - encodedLength, diffBytes);
-					src.CopyTo(dst[(1 + diffBytes)..]);
+					src.CopyTo(dst.Slice(1 + diffBytes));
 
 					return result;
 				}
@@ -80,9 +79,10 @@ namespace K4os.Compression.LZ4
 		/// <param name="source">Input buffer.</param>
 		/// <param name="writer">Where the compressed data is written.</param>
 		/// <param name="level">Compression level.</param>
-		/// <returns>Output buffer.</returns>
 		public static void Pickle(ReadOnlySpan<byte> source, IBufferWriter<byte> writer, LZ4Level level = LZ4Level.L00_FAST)
 		{
+			_ = writer ?? throw new ArgumentNullException(nameof(writer));
+
 			var sourceLength = source.Length;
 			if (sourceLength == 0)
 			{
@@ -96,7 +96,7 @@ namespace K4os.Compression.LZ4
 			if (encodedLength <= 0)
 			{
 				EmitUncompressedPreamble(dst);
-				source.CopyTo(dst[1..]);
+				source.CopyTo(dst.Slice(1));
 				writer.Advance(1 + sourceLength);
 			}
 			else
@@ -131,7 +131,7 @@ namespace K4os.Compression.LZ4
 		/// <param name="index">Input buffer offset.</param>
 		/// <param name="count">Input buffer length.</param>
 		/// <returns>Output buffer.</returns>
-		public static unsafe byte[] Unpickle(byte[] source, int index, int count) =>
+		public static byte[] Unpickle(byte[] source, int index, int count) =>
 			Unpickle(source.AsSpan(index, count));
 
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
@@ -162,6 +162,8 @@ namespace K4os.Compression.LZ4
 		/// <param name="writer">Where the decompressed data is written.</param>
 		public static void Unpickle(ReadOnlySpan<byte> source, IBufferWriter<byte> writer)
 		{
+			_ = writer ?? throw new ArgumentNullException(nameof(writer));
+
 			if (source.Length == 0)
 			{
 				return;
@@ -231,13 +233,13 @@ namespace K4os.Compression.LZ4
 		private static void UnpickleCore(ReadOnlySpan<byte> source, Span<byte> output, int expectedLength)
 		{
 			var (_, diffBytes) = DecodeHeader(source[0]);
-			if (source.Length == expectedLength)
+			if (source.Length == expectedLength + 1)
 			{
-				source[(1 + diffBytes)..].CopyTo(output);
+				source.Slice(1 + diffBytes).CopyTo(output);
 				return;
 			}
 
-			var src = source[(1 + diffBytes)..];
+			var src = source.Slice(1 + diffBytes);
 			var decodedLength = LZ4Codec.Decode(src, output);
 			if (decodedLength != expectedLength)
 			{
