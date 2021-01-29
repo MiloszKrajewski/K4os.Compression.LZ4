@@ -1,4 +1,7 @@
-## 1.2.8-beta (2020/009/26)
+## 1.2.10-beta (2021/01/29)
+* ADDED #14: support for ReadOnlySequence<byte> and IBufferWriter<byte> (pickle only)
+
+## 1.2.8-beta (2020/09/26)
 * Implicit reference to System.Runtime.CompilerServices.Unsafe
 
 ## 1.2.7 (2020/09/13)

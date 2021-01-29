@@ -70,7 +70,7 @@ namespace TestHelpers
 		public static Stream Slow(Stream stream, int threshold = 1) =>
 			new FakeNetworkStream(stream, threshold);
 
-		public static void SameBytes(byte[] source, byte[] target)
+		public static void SameBytes(ReadOnlySpan<byte> source, ReadOnlySpan<byte> target)
 		{
 			if (source.Length != target.Length)
 				throw new ArgumentException(
@@ -87,17 +87,7 @@ namespace TestHelpers
 
 		public static void SameBytes(byte[] source, byte[] target, int length)
 		{
-			if (source.Length < length)
-				throw new ArgumentException($"Source array is too small: {source.Length}");
-			if (target.Length < length)
-				throw new ArgumentException($"Target array is too small: {target.Length}");
-
-			for (var i = 0; i < length; i++)
-			{
-				if (source[i] != target[i])
-					throw new ArgumentException(
-						$"Arrays differ at index {i}: {source[i]} vs {target[i]}");
-			}
+			SameBytes(source.AsSpan(0, length), target.AsSpan(0, length));
 		}
 
 		public static readonly string[] CorpusNames = {
