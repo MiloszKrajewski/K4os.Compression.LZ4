@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using K4os.Compression.LZ4.Internal;
 using TestHelpers;
 using Xunit;
@@ -48,8 +47,8 @@ namespace K4os.Compression.LZ4.Test
 			var original = new byte[length];
 			Lorem.Fill(original, 0, length);
 
-			var pickledWriter = new ArrayBufferWriter<byte>();
-			var unpickledWriter = new ArrayBufferWriter<byte>();
+			var pickledWriter = BufferWriter.New();
+			var unpickledWriter = BufferWriter.New();
 
 			LZ4Pickler.Pickle(original, pickledWriter, level);
 			var pickled = pickledWriter.WrittenSpan;
@@ -85,13 +84,14 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(3, 1337, LZ4Level.L12_MAX)]
 		[InlineData(4, Mem.K64, LZ4Level.L12_MAX)]
 		[InlineData(5, Mem.M4, LZ4Level.L12_MAX)]
-		public void PickleEntropyWithBufferWriter(int seed, int length, LZ4Level level = LZ4Level.L00_FAST)
+		public void PickleEntropyWithBufferWriter(
+			int seed, int length, LZ4Level level = LZ4Level.L00_FAST)
 		{
 			var original = new byte[length];
 			new Random(seed).NextBytes(original);
 
-			var pickledWriter = new ArrayBufferWriter<byte>();
-			var unpickledWriter = new ArrayBufferWriter<byte>();
+			var pickledWriter = BufferWriter.New();
+			var unpickledWriter = BufferWriter.New();
 
 			LZ4Pickler.Pickle(original, pickledWriter, level);
 			var pickled = pickledWriter.WrittenSpan;
