@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
 
@@ -53,8 +54,12 @@ namespace K4os.Compression.LZ4
 		/// <param name="writer">Where the decompressed data is written.</param>
 		public static void Unpickle(ReadOnlySpan<byte> source, IBufferWriter<byte> writer)
 		{
-			if (source.Length == 0) return;
+			if (writer is null) 
+				throw new ArgumentNullException(nameof(writer));
 
+			var sourceLength = source.Length;
+			if (sourceLength == 0) return;
+			
 			var header = DecodeHeader(source);
 			var size = UnpickledSize(header);
 			var output = writer.GetSpan(size).Slice(0, size);
@@ -126,21 +131,24 @@ namespace K4os.Compression.LZ4
 			var header = source[0];
 			var sizeOfDiff = ((header >> 6) & 0x3) switch { 3 => 4, var x => x };
 			var dataOffset = (ushort) (1 + sizeOfDiff);
-			var resultDiff = sizeOfDiff == 0 ? 0 : PeekN(source.Slice(1, sizeOfDiff));
 			var dataLength = source.Length - dataOffset;
+			if (dataLength < 0)
+				throw CorruptedPickle($"Unexpected data length: {dataLength}");
+			var resultDiff = sizeOfDiff == 0 ? 0 : PeekN(source.Slice(1), sizeOfDiff);
 			var resultLength = dataLength + resultDiff;
 			return new PickleHeader(dataOffset, resultLength, resultDiff != 0);
 		}
 
-		private static int PeekN(ReadOnlySpan<byte> bytes) =>
-			bytes.Length switch {
-				0 => 0,
-				1 => bytes[0],
-				2 => bytes[0] | (bytes[1] << 8),
-				4 => bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24),
-				var l => throw CorruptedPickle($"{l} is not valid int size")
-			};
-
+		private static unsafe int PeekN(ReadOnlySpan<byte> bytes, int size)
+		{
+			int result = default; // just to make sure it is int 0
+			if (size < 0 || size > sizeof(int) || size > bytes.Length)
+				throw CorruptedPickle($"Unexpected field size: {size}");
+			fixed (byte* bytesP = bytes) 
+				Unsafe.CopyBlockUnaligned(&result, bytesP, (uint) size);
+			return result;
+		}
+		
 		private static Exception CorruptedPickle(string message) =>
 			new InvalidDataException($"Pickle is corrupted: {message}");
 	}

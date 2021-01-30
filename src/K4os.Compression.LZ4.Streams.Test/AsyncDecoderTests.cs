@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Test.Internal;
-using K4os.Compression.LZ4.Test.Adapters;
 using TestHelpers;
 using Xunit;
 

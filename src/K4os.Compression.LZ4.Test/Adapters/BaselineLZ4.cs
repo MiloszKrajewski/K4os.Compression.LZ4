@@ -1,5 +1,4 @@
 using System;
-using Xunit;
 
 namespace K4os.Compression.LZ4.Test.Adapters
 {

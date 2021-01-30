@@ -246,7 +246,7 @@ namespace K4os.Compression.LZ4.Internal
 			CpBlk(&result, p, sizeof(uint));
 			return result;
 		}
-
+		
 		/// <summary>Writes exactly 4 bytes to given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <param name="v">Value.</param>

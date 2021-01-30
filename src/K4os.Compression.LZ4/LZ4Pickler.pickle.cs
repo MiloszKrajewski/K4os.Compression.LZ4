@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4
@@ -54,14 +55,16 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= MAX_STACKALLOC)
 			{
 				var buffer = stackalloc byte[MAX_STACKALLOC];
-				return PickleWithBuffer(source, level, new Span<byte>(buffer, MAX_STACKALLOC));
+				var target = new Span<byte>(buffer, MAX_STACKALLOC);
+				return PickleWithBuffer(source, level, target);
 			}
 			else
 			{
 				var buffer = Mem.Alloc(sourceLength);
 				try
 				{
-					return PickleWithBuffer(source, level, new Span<byte>(buffer, sourceLength));
+					var target = new Span<byte>(buffer, sourceLength);
+					return PickleWithBuffer(source, level, target);
 				}
 				finally
 				{
@@ -83,9 +86,10 @@ namespace K4os.Compression.LZ4
 			{
 				var headerSize = GetUncompressedHeaderSize(version, sourceLength);
 				var result = new byte[headerSize + sourceLength];
-				var offset = EncodeUncompressedHeader(result.AsSpan(), version, sourceLength);
+				var target = result.AsSpan();
+				var offset = EncodeUncompressedHeader(target, version, sourceLength);
 				Debug.Assert(headerSize == offset, "Unexpected header size");
-				source.CopyTo(result.AsSpan(offset));
+				source.CopyTo(target.Slice(offset));
 				return result;
 			}
 			else
@@ -110,6 +114,9 @@ namespace K4os.Compression.LZ4
 			ReadOnlySpan<byte> source, IBufferWriter<byte> writer,
 			LZ4Level level = LZ4Level.L00_FAST)
 		{
+			if (writer is null) 
+				throw new ArgumentNullException(nameof(writer));
+
 			var sourceLength = source.Length;
 			if (sourceLength == 0) return;
 
@@ -193,28 +200,11 @@ namespace K4os.Compression.LZ4
 			return 1 + sizeOfDiff;
 		}
 
-		private static void PokeN(Span<byte> target, int value, int size)
+		private static unsafe void PokeN(Span<byte> target, int value, int size)
 		{
-			switch (size)
-			{
-				case 0:
-					break;
-				case 1:
-					target[0] = (byte) value;
-					break;
-				case 2:
-					target[0] = (byte) value;
-					target[1] = (byte) (value >> 8);
-					break;
-				case 4:
-					target[0] = (byte) value;
-					target[1] = (byte) (value >> 8);
-					target[2] = (byte) (value >> 16);
-					target[3] = (byte) (value >> 24);
-					break;
-				default:
-					throw new ArgumentException($"Unexpected int size: {size}");
-			}
+			if (size < 0 || size > sizeof(int) || target.Length < size)
+				throw new ArgumentException($"Unexpected size: {size}");
+			Unsafe.CopyBlockUnaligned(ref target[0], ref *(byte*)&value, (uint) size);
 		}
 
 		private static byte EncodeHeaderByteV0(int sizeOfDiff) =>
