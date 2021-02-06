@@ -15,6 +15,11 @@ using Mem = K4os.Compression.LZ4.Internal.Mem32;
 using reg_t = System.UInt64;
 using Mem = K4os.Compression.LZ4.Internal.Mem64;
 #endif
+
+#if NET5_0 && !BIT32
+using System.Numerics;
+#endif
+
 using size_t = System.UInt32;
 using uptr_t = System.UInt64;
 
@@ -29,21 +34,34 @@ namespace K4os.Compression.LZ4.Engine
 	#endif
 	{
 		#if BIT32
+		
 		protected const int ALGORITHM_ARCH = 4;
 
 		private static readonly uint[] _DeBruijnBytePos = {
 			0, 0, 3, 0, 3, 1, 3, 0,
 			3, 2, 2, 1, 3, 2, 0, 1,
 			3, 3, 1, 2, 2, 2, 2, 0,
-			3, 1, 2, 0, 1, 0, 1, 1
+			3, 1, 2, 0, 1, 0, 1, 1,
 		};
+
+		private static readonly uint* DeBruijnBytePos = Mem.CloneArray(_DeBruijnBytePos);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(uint val) =>
 			DeBruijnBytePos[
 				unchecked((uint) ((int) val & -(int) val) * 0x077CB531U >> 27)];
-		#else
+
+		#else // BIT32
+		
 		protected const int ALGORITHM_ARCH = 8;
+		
+		#if NET5_0
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected static uint LZ4_NbCommonBytes(ulong val) =>
+			((uint) BitOperations.TrailingZeroCount(val) >> 3) & 0x07;
+		
+		#else // NET5_0
 
 		private static readonly uint[] _DeBruijnBytePos = {
 			0, 0, 0, 0, 0, 1, 1, 2,
@@ -53,17 +71,20 @@ namespace K4os.Compression.LZ4.Engine
 			7, 0, 1, 2, 3, 3, 4, 6,
 			2, 6, 5, 5, 3, 4, 5, 6,
 			7, 1, 2, 4, 6, 4, 4, 5,
-			7, 2, 6, 5, 7, 6, 7, 7
+			7, 2, 6, 5, 7, 6, 7, 7,
 		};
+
+		private static readonly uint* DeBruijnBytePos = Mem.CloneArray(_DeBruijnBytePos);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(ulong val) =>
 			DeBruijnBytePos[
 				unchecked((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
-		#endif
-
-		private static readonly uint* DeBruijnBytePos = Mem.CloneArray(_DeBruijnBytePos);
-
+		
+		#endif // NET5_0
+		
+		#endif // BIT32
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
 		{
