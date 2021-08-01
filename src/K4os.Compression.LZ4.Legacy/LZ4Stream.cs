@@ -169,7 +169,7 @@ namespace K4os.Compression.LZ4.Legacy
 		}
 
 		/// <summary>Reads the block of bytes. 
-		/// Contrary to <see cref="Stream.Read"/> does not read partial data if possible. 
+		/// Contrary to <see cref="Stream.Read(byte[],int,int)"/> does not read partial data if possible. 
 		/// If there is no data (yet) it waits.</summary>
 		/// <param name="buffer">The buffer.</param>
 		/// <param name="offset">The offset.</param>

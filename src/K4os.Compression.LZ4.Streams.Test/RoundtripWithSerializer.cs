@@ -1,8 +1,6 @@
 using System.IO;
-using System.IO.Compression;
 using System.Runtime.Serialization;
 using System.Xml;
-
 using Xunit;
 
 namespace K4os.Compression.LZ4.Streams.Test
@@ -37,7 +35,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 				{
 					var o = serializer.ReadObject(decompressionStream) as TestClass;
 
-					Assert.Equal(obj.Test1, o.Test1);
+					Assert.Equal(obj.Test1, o!.Test1);
 				}
 			}
 		}
@@ -67,18 +65,8 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				var o = serializer.ReadObject(reader) as TestClass;
 
-				Assert.Equal(obj.Test1, o.Test1);
+				Assert.Equal(obj.Test1, o!.Test1);
 			}
-		}
-
-		private static GZipStream UnGzip(MemoryStream ms)
-		{
-			return new GZipStream(ms, CompressionMode.Decompress);
-		}
-
-		private static GZipStream Gzip(MemoryStream ms)
-		{
-			return new GZipStream(ms, CompressionMode.Compress);
 		}
 	}
 }

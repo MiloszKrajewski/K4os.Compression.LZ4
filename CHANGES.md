@@ -1,3 +1,6 @@
+## 1.2.12 (2021/08/01)
+* Added some testing with Tar*Stream from SharpZipLib
+
 ## 1.2.10-beta (2021/01/29)
 * ADDED #14 (partial): support for IBufferWriter in LZ4Pickler
 

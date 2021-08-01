@@ -9,7 +9,7 @@ using LZ4PrevCodec = K4os.Compression.LZ4.vPrev.LZ4Codec;
 namespace K4os.Compression.LZ4.Benchmarks
 {
 	[SimpleJob(RuntimeMoniker.NetCoreApp31)]
-	[SimpleJob(RuntimeMoniker.NetCoreApp50)]
+	[SimpleJob(RuntimeMoniker.Net50)]
 	public class FastBlockCompression
 	{
 		private byte[] _source;

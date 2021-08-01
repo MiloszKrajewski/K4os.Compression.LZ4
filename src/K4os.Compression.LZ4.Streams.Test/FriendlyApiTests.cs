@@ -35,16 +35,16 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 		private static void Encode(string original, string encoded)
 		{
-			using (var input = File.OpenRead(original))
-			using (var output = LZ4Stream.Encode(File.Create(encoded)))
-				input.CopyTo(output);
+			using var input = File.OpenRead(original);
+			using var output = LZ4Stream.Encode(File.Create(encoded));
+			input.CopyTo(output);
 		}
 		
 		private static void Decode(string encoded, string decoded)
 		{
-			using (var input = LZ4Stream.Decode(File.OpenRead(encoded)))
-			using (var output = File.Create(decoded))
-				input.CopyTo(output);
+			using var input = LZ4Stream.Decode(File.OpenRead(encoded));
+			using var output = File.Create(decoded);
+			input.CopyTo(output);
 		}
 	}
 }

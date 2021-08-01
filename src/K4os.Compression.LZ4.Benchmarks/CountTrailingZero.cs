@@ -5,7 +5,7 @@ using BenchmarkDotNet.Jobs;
 namespace K4os.Compression.LZ4.Benchmarks
 {
 	// [SimpleJob(RuntimeMoniker.NetCoreApp31)]
-	[SimpleJob(RuntimeMoniker.NetCoreApp50)]
+	[SimpleJob(RuntimeMoniker.Net50)]
 	[DisassemblyDiagnoser]
 	public class CountTrailingZero
 	{
