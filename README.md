@@ -12,7 +12,7 @@ LZ4 is lossless compression algorithm, sacrificing compression ratio for compres
 
 This library brings LZ4 to .NET Standard compatible platforms: .NET Core, .NET Framework, Mono, Xamarin, and UWP. Well... theoretically. It is .NET Standard 1.6 so all this platforms should be supported although I did not test it on all this platforms.
 
-Original LZ4 has been written by Yann Collet and original C sources can be found [here](https://github.com/Cyan4973/lz4)
+LZ4 has been written by Yann Collet and original C sources can be found [here](https://github.com/Cyan4973/lz4)
 
 # Build
 
