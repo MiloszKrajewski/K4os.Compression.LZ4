@@ -1,4 +1,3 @@
-open System.Text.RegularExpressions
 open Tools
 
 #r "paket:
@@ -10,6 +9,7 @@ open Tools
 	nuget Fake.DotNet.MSBuild
 	nuget Fake.DotNet.Cli
 	nuget Fake.DotNet.Testing.XUnit2
+	nuget Octokit 0.48
 //"
 
 #load "build.imports.fsx"

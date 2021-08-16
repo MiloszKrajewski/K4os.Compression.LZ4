@@ -39,24 +39,23 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				ReferenceLZ4.Encode(options, original, encoded);
 
-				using (var stream = LZ4Stream.Decode(File.OpenRead(encoded)))
+				using var stream = LZ4Stream.Decode(File.OpenRead(encoded));
+				
+				var random = new Random(0);
+				Assert.Equal(expectedLength, stream.Length);
+
+				var buffer = new byte[chunkSize];
+				while (true)
 				{
-					var random = new Random(0);
-					Assert.Equal(expectedLength, stream.Length);
+					var read = stream.Read(buffer, 0, random.Next(1, chunkSize));
+					if (read == 0)
+						break;
 
-					var buffer = new byte[chunkSize];
-					while (true)
-					{
-						var read = stream.Read(buffer, 0, random.Next(1, chunkSize));
-						if (read == 0)
-							break;
-
-						expectedPosition += read;
-						Assert.Equal(expectedPosition, stream.Position);
-					}
-
-					Assert.Equal(expectedLength, stream.Position);
+					expectedPosition += read;
+					Assert.Equal(expectedPosition, stream.Position);
 				}
+
+				Assert.Equal(expectedLength, stream.Position);
 			}
 			finally
 			{
@@ -75,13 +74,12 @@ namespace K4os.Compression.LZ4.Streams.Test
 			{
 				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
 				// We need this to work even if the stream gives us only a single byte at a time
-				using (var input = LZ4Stream.Decode(
-					Tools.Slow(File.OpenRead(encoded)), Mem.M1, interactive: true))
-				{
-					var buffer = new byte[0x80000];
-					Assert.Equal(5000, input.Read(buffer, 0, 5000));
-					Assert.Equal(0x10000 - 5000, input.Read(buffer, 0, 0x10000));
-				}
+				using var input = LZ4Stream.Decode(
+					Tools.Slow(File.OpenRead(encoded)), Mem.M1, interactive: true);
+				
+				var buffer = new byte[0x80000];
+				Assert.Equal(5000, input.Read(buffer, 0, 5000));
+				Assert.Equal(0x10000 - 5000, input.Read(buffer, 0, 0x10000));
 			}
 			finally
 			{
@@ -99,13 +97,12 @@ namespace K4os.Compression.LZ4.Streams.Test
 
 			{
 				ReferenceLZ4.Encode("-1 -BD -B4", original, encoded);
-				using (var input = LZ4Stream.Decode(
-					File.OpenRead(encoded), Mem.M1, interactive: true))
-				{
-					var buffer = new byte[0x80000];
-					Assert.Equal(5000, input.Read(buffer, 0, 5000));
-					Assert.Equal(0x10000 - 5000, input.Read(buffer, 0, 0x10000));
-				}
+				using var input = LZ4Stream.Decode(
+					File.OpenRead(encoded), Mem.M1, interactive: true);
+				
+				var buffer = new byte[0x80000];
+				Assert.Equal(5000, input.Read(buffer, 0, 5000));
+				Assert.Equal(0x10000 - 5000, input.Read(buffer, 0, 0x10000));
 			}
 			finally
 			{
@@ -198,6 +195,8 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[Theory]
 		[InlineData("reymont", "-1 -BD -B4 -BX")]
 		[InlineData("reymont", "-9 -B7")]
+		[InlineData("xml", "-1 -BD -B7")]
+		[InlineData("webster", "-1 -BD -B5")]
 		public void ReadingFileByteByByteYieldsSameResults(string filename, string options)
 		{
 			var original = Tools.FindFile($".corpus/{filename}");
@@ -239,12 +238,11 @@ namespace K4os.Compression.LZ4.Streams.Test
 				97, 5, 0, 0, 128, 104, 101,
 				108, 108, 111, 0, 0, 0, 0
 			};
-			using (var input = LZ4Stream.Decode(new MemoryStream(raw)))
-			using (var reader = new StreamReader(input))
-			{
-				var text = reader.ReadLine();
-				Assert.Equal("hello", text);
-			}
+			using var input = LZ4Stream.Decode(new MemoryStream(raw));
+			using var reader = new StreamReader(input);
+			
+			var text = reader.ReadLine();
+			Assert.Equal("hello", text);
 		}
 
 		private static void TestDecoder(string original, string options, int chunkSize)
