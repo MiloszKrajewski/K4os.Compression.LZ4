@@ -138,7 +138,7 @@ static class LZ4Codec
 }
 ```
 
-You have to know upfront how much memory you need to decompress, as there is almost no way to guess it. I did not investigate theoretical maximum compression ration, yet all-zero buffer gets compressed 245 times, therefore when decompressing output buffer would need to be 245 times bigger than input buffer. Yet, encoding itself does not store that information anywhere therefore it is your job.
+You have to know upfront how much memory you need to decompress, as there is almost no way to guess it. I did not investigate theoretical maximum compression ratio, yet all-zero buffer gets compressed 245 times, therefore when decompressing output buffer would need to be 245 times bigger than input buffer. Yet, encoding itself does not store that information anywhere therefore it is your job.
 
 ```csharp
 var source = new byte[1000];
