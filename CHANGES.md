@@ -1,3 +1,7 @@
+## 1.2.13 (2021/10/12)
+* Removed reference to System.Runtime.CompilerServices.Unsafe (which is transitive)
+* Added explicit release for netstandard 2.1
+
 ## 1.2.12 (2021/08/01)
 * Added some testing with Tar*Stream from SharpZipLib
 
