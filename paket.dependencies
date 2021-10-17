@@ -9,7 +9,6 @@ nuget System.Runtime.CompilerServices.Unsafe
 nuget lz4net
 nuget SharpZipLib
 nuget BenchmarkDotNet
-# nuget Iced 1.4 # Benchmark.NET is not yet compatible with newer versions
 
 nuget xunit
 nuget xunit.runner.visualstudio
