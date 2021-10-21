@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 //------------------------------------------------------------------------------
@@ -27,6 +28,18 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength),
 				Algorithm.X32 => LL32.LZ4_decompress_safe(
 					source, target, sourceLength, targetLength),
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe))
+			};
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public static int LZ4_decompress_safe_usingDict(
+			byte* source, byte* target, int sourceLength, int targetLength,
+			byte* dictionary, int dictionaryLength) =>
+			LL.Algorithm switch {
+				Algorithm.X64 => LL64.LZ4_decompress_safe_usingDict(
+					source, target, sourceLength, targetLength, dictionary, dictionaryLength),
+				Algorithm.X32 => LL32.LZ4_decompress_safe_usingDict(
+					source, target, sourceLength, targetLength, dictionary, dictionaryLength),
 				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe))
 			};
 

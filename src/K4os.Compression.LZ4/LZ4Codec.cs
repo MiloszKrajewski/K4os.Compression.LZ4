@@ -23,7 +23,7 @@ namespace K4os.Compression.LZ4
 			get => LL.Enforce32;
 			set => LL.Enforce32 = value;
 		}
-		
+
 		/// <summary>Maximum size after compression.</summary>
 		/// <param name="length">Length of input buffer.</param>
 		/// <returns>Maximum length after compression.</returns>
@@ -45,10 +45,9 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var encoded =
-				level < LZ4Level.L03_HC
-					? LLxx.LZ4_compress_fast(source, target, sourceLength, targetLength, 1)
-					: LLxx.LZ4_compress_HC(source, target, sourceLength, targetLength, (int) level);
+			var encoded = level < LZ4Level.L03_HC
+				? LLxx.LZ4_compress_fast(source, target, sourceLength, targetLength, 1)
+				: LLxx.LZ4_compress_HC(source, target, sourceLength, targetLength, (int)level);
 			return encoded <= 0 ? -1 : encoded;
 		}
 
@@ -114,6 +113,33 @@ namespace K4os.Compression.LZ4
 
 		/// <summary>Decompresses data from given buffer.</summary>
 		/// <param name="source">Input buffer.</param>
+		/// <param name="sourceLength">Input buffer length.</param>
+		/// <param name="target">Output buffer.</param>
+		/// <param name="targetLength">Output buffer length.</param>
+		/// <param name="dictionary">Dictionary buffer.</param>
+		/// <param name="dictionaryLength">Dictionary buffer length.</param>
+		/// <returns>Number of bytes written, or negative value if output buffer is too small.</returns>
+		public static unsafe int Decode(
+			byte* source, int sourceLength,
+			byte* target, int targetLength,
+			byte* dictionary, int dictionaryLength)
+		{
+			if (sourceLength <= 0)
+				return 0;
+
+			var noDictionary = dictionary == null || dictionaryLength <= 0;
+			var decoded = noDictionary
+				? LLxx.LZ4_decompress_safe(
+					source, target, sourceLength, targetLength)
+				: LLxx.LZ4_decompress_safe_usingDict(
+					source, target, sourceLength, targetLength,
+					dictionary, dictionaryLength);
+
+			return decoded <= 0 ? -1 : decoded;
+		}
+
+		/// <summary>Decompresses data from given buffer.</summary>
+		/// <param name="source">Input buffer.</param>
 		/// <param name="target">Output buffer.</param>
 		/// <returns>Number of bytes written, or negative value if output buffer is too small.</returns>
 		public static unsafe int Decode(
@@ -124,9 +150,34 @@ namespace K4os.Compression.LZ4
 				return 0;
 
 			var targetLength = target.Length;
-			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
-			fixed (byte* targetP = &MemoryMarshal.GetReference(target))
+
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
 				return Decode(sourceP, sourceLength, targetP, targetLength);
+		}
+
+		/// <summary>Decompresses data from given buffer.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="target">Output buffer.</param>
+		/// <param name="dictionary">Dictionary buffer.</param>
+		/// <returns>Number of bytes written, or negative value if output buffer is too small.</returns>
+		public static unsafe int Decode(
+			ReadOnlySpan<byte> source, Span<byte> target, ReadOnlySpan<byte> dictionary)
+		{
+			var sourceLength = source.Length;
+			if (sourceLength <= 0)
+				return 0;
+
+			var targetLength = target.Length;
+			var dictionaryLength = dictionary.Length;
+
+			fixed (byte* sourceP = target)
+			fixed (byte* targetP = target)
+			fixed (byte* dictionaryP = dictionary)
+				return Decode(
+					sourceP, sourceLength,
+					targetP, targetLength,
+					dictionaryP, dictionaryLength);
 		}
 
 		/// <summary>Decompresses data from given buffer.</summary>
@@ -143,11 +194,41 @@ namespace K4os.Compression.LZ4
 		{
 			source.Validate(sourceOffset, sourceLength);
 			target.Validate(targetOffset, targetLength);
+
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
 				return Decode(
 					sourceP + sourceOffset, sourceLength,
 					targetP + targetOffset, targetLength);
+		}
+
+		/// <summary>Decompresses data from given buffer.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="sourceOffset">Input buffer offset.</param>
+		/// <param name="sourceLength">Input buffer length.</param>
+		/// <param name="target">Output buffer.</param>
+		/// <param name="targetOffset">Output buffer offset.</param>
+		/// <param name="targetLength">Output buffer length.</param>
+		/// <param name="dictionary">Dictionary buffer.</param>
+		/// <param name="dictionaryOffset">Dictionary buffer offset.</param>
+		/// <param name="dictionaryLength">Dictionary buffer length.</param>
+		/// <returns>Number of bytes written, or negative value if output buffer is too small.</returns>
+		public static unsafe int Decode(
+			byte[] source, int sourceOffset, int sourceLength,
+			byte[] target, int targetOffset, int targetLength,
+			byte[] dictionary, int dictionaryOffset, int dictionaryLength)
+		{
+			source.Validate(sourceOffset, sourceLength);
+			target.Validate(targetOffset, targetLength);
+			dictionary.Validate(dictionaryOffset, dictionaryLength);
+
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
+			fixed (byte* dictionaryP = dictionary)
+				return Decode(
+					sourceP + sourceOffset, sourceLength,
+					targetP + targetOffset, targetLength,
+					dictionaryP + dictionaryOffset, dictionaryLength);
 		}
 	}
 }

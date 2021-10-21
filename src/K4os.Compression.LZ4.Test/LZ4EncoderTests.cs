@@ -89,25 +89,24 @@ namespace K4os.Compression.LZ4.Test
 
 			Lorem.Fill(source, 0, source.Length);
 
-			using (var encoder = new LZ4FastChainEncoder(blockLength, extraBlocks))
+			using var encoder = new LZ4FastChainEncoder(blockLength, extraBlocks);
+			
+			var sourceP = 0;
+			var targetP = 0;
+
+			while (sourceP < sourceLength && targetP < targetLength)
 			{
-				var sourceP = 0;
-				var targetP = 0;
-
-				while (sourceP < sourceLength && targetP < targetLength)
-				{
-					encoder.TopupAndEncode(
-						source, sourceP, Math.Min(blockLength, sourceLength - sourceP),
-						target, targetP, targetLength - targetP,
-						true, false,
-						out var loaded,
-						out var encoded);
-					sourceP += loaded;
-					targetP += encoded;
-				}
-
-				return Tools.Adler32(target, 0, targetP);
+				encoder.TopupAndEncode(
+					source, sourceP, Math.Min(blockLength, sourceLength - sourceP),
+					target, targetP, targetLength - targetP,
+					true, false,
+					out var loaded,
+					out var encoded);
+				sourceP += loaded;
+				targetP += encoded;
 			}
+
+			return Tools.Adler32(target, 0, targetP);
 		}
 
 		public uint FastStreamManual(int blockLength, int sourceLength)
@@ -115,7 +114,7 @@ namespace K4os.Compression.LZ4.Test
 			sourceLength = Mem.RoundUp(sourceLength, blockLength);
 			var targetLength = 2 * sourceLength;
 
-			var context = new Pubternal.FastContext();
+			using var context = new Pubternal.FastContext();
 			var source = (byte*) Mem.Alloc(sourceLength);
 			var target = (byte*) Mem.Alloc(targetLength);
 
@@ -142,7 +141,6 @@ namespace K4os.Compression.LZ4.Test
 			}
 			finally
 			{
-				context.Dispose();
 				Mem.Free(source);
 				Mem.Free(target);
 			}
