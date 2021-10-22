@@ -1,3 +1,6 @@
+## 1.2.14 (2021/10/22)
+* Added block decompression with external dictionary (#64)
+
 ## 1.2.13 (2021/10/12)
 * Removed reference to System.Runtime.CompilerServices.Unsafe (which is transitive)
 * Added explicit release for netstandard 2.1
