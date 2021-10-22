@@ -9,5 +9,4 @@
     <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
   <Import Project="..\..\Common.targets" />
-  <Import Project="..\..\Signing.targets" />
 </Project>

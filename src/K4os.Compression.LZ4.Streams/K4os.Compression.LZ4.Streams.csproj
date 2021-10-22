@@ -13,4 +13,5 @@
     <PackageReference Include="K4os.Hash.xxHash" Version="1.0.6" />
   </ItemGroup>
   <Import Project="..\..\Common.targets" />
+  <Import Project="..\..\Signing.targets" />
 </Project>
