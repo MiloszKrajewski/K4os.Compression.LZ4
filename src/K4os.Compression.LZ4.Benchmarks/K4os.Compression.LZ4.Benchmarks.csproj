@@ -19,4 +19,7 @@
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+  </ItemGroup>
 </Project>
