@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Engine;
 using K4os.Compression.LZ4.Internal;
@@ -12,9 +13,21 @@ namespace K4os.Compression.LZ4.Test
 {
 	public unsafe class LZ4EncoderTests
 	{
-		// ReSharper disable once UnusedParameter.Local
-		public LZ4EncoderTests(ITestOutputHelper output) { }
+		private readonly ITestOutputHelper _output;
+		private static int _testId = -1;
 
+		static LZ4EncoderTests()
+		{
+			_ = LZ4Pickler.Pickle(Lorem.Bytes);
+		}
+
+		public LZ4EncoderTests(ITestOutputHelper output)
+		{
+			_output = output;
+			output.WriteLine($"Test:{Interlocked.Increment(ref _testId)}");
+			LZ4Codec.Enforce32 = false;
+		}
+		
 		[Theory]
 		[InlineData(1024, 50, 0)]
 		[InlineData(1024, 1024, 0)]
@@ -24,21 +37,27 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(1024, 0x20000, 100)]
 		public void SmallBlocksWithNoShift(int blockSize, int totalSize, int extraBlocks)
 		{
-			Assert.Equal(
-				FastStreamManual(blockSize, totalSize),
-				FastStreamEncoder(blockSize, totalSize, extraBlocks));
+			var expected = FastStreamManual(blockSize, totalSize);
+			var actual = FastStreamEncoder(blockSize, totalSize, extraBlocks);
+			_output.WriteLine($"Expected:{expected},Actual:{actual}");
+			Assert.Equal(expected, actual);
 		}
 
 		[Theory]
 		[InlineData(0x10000, 50, 0)]
 		[InlineData(0x10000, 0x10000, 0)]
+		[InlineData(0x10000, 0x20000, 0)]
 		[InlineData(0x10000, 0x20000, 5)]
+		[InlineData(0x10000, 0x20000, 1)]
+		[InlineData(0x10000, 0x20000, 10)]
+		[InlineData(0x10000, 0x50000, 0)]
 		[InlineData(0x10000, 0x50000, 5)]
 		public void MediumBlocksWithNoShift(int blockSize, int totalSize, int extraBlocks)
 		{
-			Assert.Equal(
-				FastStreamManual(blockSize, totalSize),
-				FastStreamEncoder(blockSize, totalSize, extraBlocks));
+			var expected = FastStreamManual(blockSize, totalSize);
+			var actual = FastStreamEncoder(blockSize, totalSize, extraBlocks);
+			_output.WriteLine($"Expected:{expected},Actual:{actual}");
+			Assert.Equal(expected, actual);
 		}
 
 		[Theory]
@@ -46,9 +65,10 @@ namespace K4os.Compression.LZ4.Test
 		[InlineData(0x20000, 0x100000, 1)]
 		public void LargeBlocksWithDictShifting(int blockSize, int totalSize, int extraBlocks)
 		{
-			Assert.Equal(
-				FastStreamManual(blockSize, totalSize),
-				FastStreamEncoder(blockSize, totalSize, extraBlocks));
+			var expected = FastStreamManual(blockSize, totalSize);
+			var actual = FastStreamEncoder(blockSize, totalSize, extraBlocks);
+			_output.WriteLine($"Expected:{expected},Actual:{actual}");
+			Assert.Equal(expected, actual);
 		}
 
 		[Fact]
@@ -57,12 +77,12 @@ namespace K4os.Compression.LZ4.Test
 			var input = new byte[0x10000];
 			var output = new byte[0x10000];
 			var encoded = LZ4Codec.Encode(
-				input, 0, input.Length, 
-				output, 0, output.Length, 
+				input, 0, input.Length,
+				output, 0, output.Length,
 				LZ4Level.L12_MAX);
 			Assert.True(encoded < input.Length / 200);
 		}
-		
+
 		[Fact]
 		public void HighEntropyRepeated()
 		{
@@ -71,10 +91,10 @@ namespace K4os.Compression.LZ4.Test
 			var source = new byte[256];
 			random.NextBytes(source);
 			var target = new byte[1024];
-			
+
 			Assert.Equal(256, encoder.Topup(source, 0, 256));
 			Assert.Equal(-256, encoder.Encode(target, 0, 1024, true));
-			
+
 			Assert.Equal(256, encoder.Topup(source, 0, 256));
 			Assert.True(encoder.Encode(target, 0, 1024, true) < 32);
 		}
@@ -88,20 +108,22 @@ namespace K4os.Compression.LZ4.Test
 			var target = new byte[targetLength];
 
 			Lorem.Fill(source, 0, source.Length);
+			_output.WriteLine("Source(Encoder):{0}", Tools.Adler32(source));
 
 			using var encoder = new LZ4FastChainEncoder(blockLength, extraBlocks);
-			
+
 			var sourceP = 0;
 			var targetP = 0;
 
 			while (sourceP < sourceLength && targetP < targetLength)
 			{
-				encoder.TopupAndEncode(
+				var action = encoder.TopupAndEncode(
 					source, sourceP, Math.Min(blockLength, sourceLength - sourceP),
 					target, targetP, targetLength - targetP,
 					true, false,
 					out var loaded,
 					out var encoded);
+				Assert.Equal(EncoderAction.Encoded, action);
 				sourceP += loaded;
 				targetP += encoded;
 			}
@@ -115,12 +137,13 @@ namespace K4os.Compression.LZ4.Test
 			var targetLength = 2 * sourceLength;
 
 			using var context = new Pubternal.FastContext();
-			var source = (byte*) Mem.Alloc(sourceLength);
-			var target = (byte*) Mem.Alloc(targetLength);
+			var source = (byte*)Mem.Alloc(sourceLength);
+			var target = (byte*)Mem.Alloc(targetLength);
 
 			try
 			{
 				Lorem.Fill(source, sourceLength);
+				_output.WriteLine("Source(Manual):{0}", Tools.Adler32(source, sourceLength));
 
 				var sourceP = 0;
 				var targetP = 0;

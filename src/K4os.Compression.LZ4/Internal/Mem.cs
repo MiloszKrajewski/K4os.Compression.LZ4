@@ -179,32 +179,34 @@ namespace K4os.Compression.LZ4.Internal
 		/// <param name="ptr"></param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Free(void* ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
-
-		/// <summary>Clones managed array to unmanaged one. Allows quicker yet less safe unchecked access.</summary>
+		
+		/// <summary>Clones managed array to unmanaged one.
+		/// Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
-		public static int* CloneArray(int[] array)
+		public static void* CloneAnyArray<T>(T[] array)
 		{
-			var length = sizeof(int) * array.Length;
+			var length = Unsafe.SizeOf<T>() * array.Length;
 			var target = Alloc(length);
-			fixed (void* source = &array[0])
+			ref var source0 = ref Unsafe.As<T, byte>(ref array[0]);
+			
+			fixed (void* source = &source0)
 				Copy((byte*) target, (byte*) source, length);
 
 			return (int*) target;
 		}
 
-		/// <summary>Clones managed array to unmanaged one. Allows quicker yet less safe unchecked access.</summary>
+		/// <summary>Clones managed array to unmanaged one.
+		/// Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
-		public static uint* CloneArray(uint[] array)
-		{
-			var length = sizeof(uint) * array.Length;
-			var target = Alloc(length);
-			fixed (void* source = &array[0])
-				Copy((byte*) target, (byte*) source, length);
+		public static int* CloneArray(int[] array) => (int*)CloneAnyArray(array);
 
-			return (uint*) target;
-		}
+		/// <summary>Clones managed array to unmanaged one.
+		/// Allows quicker yet less safe unchecked access.</summary>
+		/// <param name="array">Input array.</param>
+		/// <returns>Cloned array.</returns>
+		public static uint* CloneArray(uint[] array) => (uint*)CloneAnyArray(array);
 		
 		/// <summary>Reads exactly 1 byte from given address.</summary>
 		/// <param name="p">Address.</param>

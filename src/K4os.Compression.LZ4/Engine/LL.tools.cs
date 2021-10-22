@@ -33,8 +33,11 @@ namespace K4os.Compression.LZ4.Engine
 		public static bool Enforce32 { get; set; } = false;
 
 		/// <summary>Checks what algorithm should be used (32 vs 64 bit).</summary>
-		public static Algorithm Algorithm => 
-			Enforce32 || Mem.System32 ? Algorithm.X32 : Algorithm.X64;
+		public static Algorithm Algorithm
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => Enforce32 || Mem.System32 ? Algorithm.X32 : Algorithm.X64;
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int LZ4_compressBound(int isize) =>
@@ -244,7 +247,7 @@ namespace K4os.Compression.LZ4.Engine
 			lz4sd->externalDict = null;
 			lz4sd->extDictSize = 0;
 		}
-
+		
 		private static readonly uint[] _inc32table = { 0, 1, 2, 1, 0, 4, 4, 4 };
 		private static readonly int[] _dec64table = { 0, 0, 0, -1, -4, 1, 2, 3 };
 

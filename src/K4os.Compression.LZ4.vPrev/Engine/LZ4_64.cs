@@ -32,6 +32,7 @@ namespace K4os.Compression.LZ4.vPrev.Engine
 			sizeof(byte*) == sizeof(uint) ? tableType_t.byPtr :
 			tableType_t.byU32;
 #else
+	
 	internal unsafe class LZ4_64: LZ4_xx
 	{
 		protected const int ARCH_SIZE = 8;

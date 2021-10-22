@@ -7,6 +7,6 @@ namespace K4os.Compression.LZ4.Engine
 		X32,
 
 		/// <summary>Intel version of 64 bit algorithm.</summary>
-		X64
+		X64,
 	}
 }

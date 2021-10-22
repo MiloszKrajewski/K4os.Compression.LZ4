@@ -23,7 +23,7 @@ using reg_t = System.UInt64;
 using Mem = K4os.Compression.LZ4.Internal.Mem64;
 #endif
 
-#if NET5_0 && !BIT32
+#if NET5_0_OR_GREATER && !BIT32
 using System.Numerics;
 #endif
 
@@ -56,19 +56,20 @@ namespace K4os.Compression.LZ4.Engine
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(uint val) =>
 			DeBruijnBytePos[
-				unchecked((uint) ((int) val & -(int) val) * 0x077CB531U >> 27)];
+				(uint)unchecked(((uint)((int)val & -(int)val) * 0x077CB531u) >> 27)
+			];
 
 		#else // BIT32
-		
+
 		protected const int ALGORITHM_ARCH = 8;
-		
-		#if NET5_0
+
+		#if NET5_0_OR_GREATER
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(ulong val) =>
 			((uint) BitOperations.TrailingZeroCount(val) >> 3) & 0x07;
-		
-		#else // NET5_0
+
+		#else // NET5_0_OR_GREATER
 
 		private static readonly uint[] _DeBruijnBytePos = {
 			0, 0, 0, 0, 0, 1, 1, 2,
@@ -80,18 +81,19 @@ namespace K4os.Compression.LZ4.Engine
 			7, 1, 2, 4, 6, 4, 4, 5,
 			7, 2, 6, 5, 7, 6, 7, 7,
 		};
-
+		
 		private static readonly uint* DeBruijnBytePos = Mem.CloneArray(_DeBruijnBytePos);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(ulong val) =>
 			DeBruijnBytePos[
-				unchecked((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
-		
-		#endif // NET5_0
-		
+				(uint)unchecked(((ulong)((long)val & -(long)val) * 0x0218A392CDABBD3Ful) >> 58)
+			];
+
+		#endif // NET5_0_OR_GREATER
+
 		#endif // BIT32
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_count(byte* pIn, byte* pMatch, byte* pInLimit)
 		{
@@ -113,7 +115,7 @@ namespace K4os.Compression.LZ4.Engine
 			{
 				var diff = Mem.PeekW(pMatch) ^ Mem.PeekW(pIn);
 				if (diff != 0)
-					return (uint) (pIn + LZ4_NbCommonBytes(diff) - pStart);
+					return (uint)(pIn + LZ4_NbCommonBytes(diff) - pStart);
 
 				pIn += STEPSIZE;
 				pMatch += STEPSIZE;
@@ -138,7 +140,7 @@ namespace K4os.Compression.LZ4.Engine
 			if (pIn < pInLimit && *pMatch == *pIn)
 				pIn++;
 
-			return (uint) (pIn - pStart);
+			return (uint)(pIn - pStart);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -166,7 +168,7 @@ namespace K4os.Compression.LZ4.Engine
 		protected static void LZ4_renormDictT(LZ4_stream_t* LZ4_dict, int nextSize)
 		{
 			Assert(nextSize >= 0);
-			if (LZ4_dict->currentOffset + (uint) nextSize <= 0x80000000) return;
+			if (LZ4_dict->currentOffset + (uint)nextSize <= 0x80000000) return;
 
 			var delta = LZ4_dict->currentOffset - 64 * KB;
 			var dictEnd = LZ4_dict->dictionary + LZ4_dict->dictSize;
@@ -202,7 +204,7 @@ namespace K4os.Compression.LZ4.Engine
 			var @base = dictEnd - dict->currentOffset;
 
 			dict->dictionary = p;
-			dict->dictSize = (uint) (dictEnd - p);
+			dict->dictSize = (uint)(dictEnd - p);
 			dict->tableType = tableType;
 
 			while (p <= dictEnd - HASH_UNIT)
@@ -211,7 +213,7 @@ namespace K4os.Compression.LZ4.Engine
 				p += 3;
 			}
 
-			return (int) dict->dictSize;
+			return (int)dict->dictSize;
 		}
 
 		#endregion
