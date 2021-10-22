@@ -9,7 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="K4os.Hash.xxHash" Version="1.0.6" />
+  </ItemGroup>
   <Import Project="..\..\Common.targets" />
-  <Import Project="..\..\Signing.targets" />
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
