@@ -1,5 +1,6 @@
-## 1.2.14 (2021/10/22)
+## 1.2.15 (2021/10/22)
 * Added block decompression with external dictionary (#64)
+* Minor fixed to unit tests
 
 ## 1.2.13 (2021/10/12)
 * Removed reference to System.Runtime.CompilerServices.Unsafe (which is transitive)

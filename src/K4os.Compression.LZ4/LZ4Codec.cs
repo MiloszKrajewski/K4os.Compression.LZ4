@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Engine;
 
 namespace K4os.Compression.LZ4
@@ -65,8 +64,8 @@ namespace K4os.Compression.LZ4
 				return 0;
 
 			var targetLength = target.Length;
-			fixed (byte* sourceP = &MemoryMarshal.GetReference(source))
-			fixed (byte* targetP = &MemoryMarshal.GetReference(target))
+			fixed (byte* sourceP = source)
+			fixed (byte* targetP = target)
 				return Encode(sourceP, sourceLength, targetP, targetLength, level);
 		}
 
@@ -86,6 +85,7 @@ namespace K4os.Compression.LZ4
 		{
 			source.Validate(sourceOffset, sourceLength);
 			target.Validate(targetOffset, targetLength);
+
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
 				return Encode(
@@ -107,7 +107,9 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var decoded = LLxx.LZ4_decompress_safe(source, target, sourceLength, targetLength);
+			var decoded = LLxx.LZ4_decompress_safe(
+				source, target, sourceLength, targetLength);
+			
 			return decoded <= 0 ? -1 : decoded;
 		}
 
@@ -127,13 +129,9 @@ namespace K4os.Compression.LZ4
 			if (sourceLength <= 0)
 				return 0;
 
-			var noDictionary = dictionary == null || dictionaryLength <= 0;
-			var decoded = noDictionary
-				? LLxx.LZ4_decompress_safe(
-					source, target, sourceLength, targetLength)
-				: LLxx.LZ4_decompress_safe_usingDict(
-					source, target, sourceLength, targetLength,
-					dictionary, dictionaryLength);
+			var decoded = LLxx.LZ4_decompress_safe_usingDict(
+				source, target, sourceLength, targetLength,
+				dictionary, dictionaryLength);
 
 			return decoded <= 0 ? -1 : decoded;
 		}
@@ -171,7 +169,7 @@ namespace K4os.Compression.LZ4
 			var targetLength = target.Length;
 			var dictionaryLength = dictionary.Length;
 
-			fixed (byte* sourceP = target)
+			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)
 			fixed (byte* dictionaryP = dictionary)
 				return Decode(
@@ -220,7 +218,7 @@ namespace K4os.Compression.LZ4
 		{
 			source.Validate(sourceOffset, sourceLength);
 			target.Validate(targetOffset, targetLength);
-			dictionary.Validate(dictionaryOffset, dictionaryLength);
+			dictionary.Validate(dictionaryOffset, dictionaryLength, true);
 
 			fixed (byte* sourceP = source)
 			fixed (byte* targetP = target)

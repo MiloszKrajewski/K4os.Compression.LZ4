@@ -1,12 +1,18 @@
+#nullable enable
 // ReSharper disable once CheckNamespace
 
 namespace System
 {
 	internal static class Extensions
 	{
-		internal static void Validate<T>(this T[] buffer, int offset, int length)
+		internal static void Validate<T>(
+			this T[]? buffer, int offset, int length,
+			bool allowNullIfEmpty = false)
 		{
-			if (buffer == null)
+			if (allowNullIfEmpty && buffer is null && offset == 0 && length == 0)
+				return;
+
+			if (buffer is null)
 				throw new ArgumentNullException(
 					nameof(buffer), "cannot be null");
 
