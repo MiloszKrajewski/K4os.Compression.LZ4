@@ -28,7 +28,9 @@ Change log can be found [here](CHANGES.md).
 # Support
 
 Maintaining this library is outside of work completely. My company is not using it, so I do this completely in my own free time.
+
 So, if you think my work is worth something, you could support me by funding my daily caffeine dose:
+
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/miloszkrajewski)
 
 # What is 'Fast compression algorithm'?
