@@ -33,7 +33,7 @@ So, if you think my work is worth something, you could support me by funding my 
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/miloszkrajewski)
 
-(or use just [PayPal](https://www.paypal.com/donate?hosted_button_id=P3MJXJHG7NFE2))
+(or just use [PayPal](https://www.paypal.com/donate?hosted_button_id=P3MJXJHG7NFE2))
 
 # What is 'Fast compression algorithm'?
 
