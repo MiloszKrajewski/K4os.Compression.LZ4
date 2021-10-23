@@ -32,7 +32,7 @@ Maintaining this library is outside of my daily job completely. Company I work f
 So, if you think my work is worth something, you could support me by funding my daily caffeine dose:
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/miloszkrajewski)
-[!["Support via PayPal"](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://paypal.me/miloszkrajewski)
+[!["Support via PayPal"](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.com/donate?hosted_button_id=P3MJXJHG7NFE2)
 
 # What is 'Fast compression algorithm'?
 
