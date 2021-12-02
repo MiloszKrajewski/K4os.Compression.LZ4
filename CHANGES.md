@@ -1,3 +1,6 @@
+## 1.2.16 (2021/12/01)
+* Removed System.Memory as dependency for net standard 2.1 and net 5
+
 ## 1.2.15 (2021/10/22)
 * Added block decompression with external dictionary (#64)
 * Minor fixed to unit tests
