@@ -2,7 +2,7 @@ storage none
 framework net45,net46,netstandard1.6,netstandard2.0,netstandard2.1,netcoreapp3.1,net5.0
 source https://www.nuget.org/api/v2
 
-nuget K4os.Hash.xxHash
+nuget K4os.Hash.xxHash >= 1.0.7
 nuget System.Memory framework: net45,net46,netstandard1.6,netstandard2.0
 
 nuget lz4net
