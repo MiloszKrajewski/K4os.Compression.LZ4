@@ -8,6 +8,6 @@ namespace K4os.Compression.LZ4.Streams.Internal
 	/// </summary>
 	internal readonly struct EmptyToken
 	{
-		public static readonly EmptyToken Value = new EmptyToken();
+		public static readonly EmptyToken Value = default;
 	}
 }

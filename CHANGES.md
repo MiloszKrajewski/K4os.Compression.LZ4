@@ -1,3 +1,6 @@
+## 1.2.17 (2021/12/07)
+* Forced K4os.Hash.xxHash 1.0.7
+
 ## 1.2.16 (2021/12/01)
 * Removed System.Memory as dependency for net standard 2.1 and net 5
 
