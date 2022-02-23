@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 
@@ -8,10 +9,9 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 	/// <summary>
 	/// LZ4 Decompression stream handling.
 	/// </summary>
-	public partial class StreamDecoder<TStream> 
-		where TStream: IStreamReader
+	public partial class StreamDecoder<TStream> where TStream: IStreamReader
 	{
-		private readonly ReaderTools<TStream> _tools;
+		private ReaderTools<TStream> _reader;
 		private readonly bool _interactive;
 
 		private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
@@ -22,6 +22,8 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		private byte[] _buffer;
 
 		private long _position;
+
+		private ref ReaderTools<TStream> Reader => ref _reader;
 
 		/// <summary>Creates new instance <see cref="LZ4DecoderStream"/>.</summary>
 		/// <param name="inner">Inner stream.</param>
@@ -35,7 +37,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
 			bool interactive = false)
 		{
-			_tools = new ReaderTools<TStream>(inner, 16);
+			_reader = new ReaderTools<TStream>(inner, 16);
 			_decoderFactory = decoderFactory;
 			_position = 0;
 			_interactive = interactive;
