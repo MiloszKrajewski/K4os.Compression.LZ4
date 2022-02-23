@@ -1,5 +1,3 @@
-open Tools
-
 #r "paket:
 	nuget Fake.Core.Target
 	nuget Fake.Core.ReleaseNotes

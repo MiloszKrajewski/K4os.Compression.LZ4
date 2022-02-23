@@ -24,4 +24,4 @@ Release/
 
 .secrets.cfg
 
-BenchmarkDotNet.Artifacts/
+**/BenchmarkDotNet.Artifacts/
