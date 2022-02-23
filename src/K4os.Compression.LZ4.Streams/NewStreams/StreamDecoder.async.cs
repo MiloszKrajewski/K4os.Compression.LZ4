@@ -10,38 +10,38 @@ using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.NewStreams
 {
-	public partial class StreamDecoder
+	public partial class StreamDecoder<TStream>
 	{
 		private async Task<ulong> Peek8(Token token)
 		{
-			var loaded = await Stash.Load(token, sizeof(ulong)).Weave();
-			return Stash.Last8(loaded);
+			var loaded = await Reader.Load(token, sizeof(ulong)).Weave();
+			return Reader.Last8(loaded);
 		}
 
 		private async Task<uint?> TryPeek4(Token token)
 		{
-			var loaded = await Stash.Load(token, sizeof(uint), true).Weave();
-			return loaded <= 0 ? default(uint?) : Stash.Last4(loaded);
+			var loaded = await Reader.Load(token, sizeof(uint), true).Weave();
+			return loaded <= 0 ? default(uint?) : Reader.Last4(loaded);
 		}
 
 		private async Task<uint> Peek4(Token token)
 		{
-			var loaded = await Stash.Load(token, sizeof(uint)).Weave();
-			return Stash.Last4(loaded);
+			var loaded = await Reader.Load(token, sizeof(uint)).Weave();
+			return Reader.Last4(loaded);
 		}
 
 		private async Task<ushort> Peek2(Token token)
 		{
-			var loaded = await Stash.Load(token, sizeof(ushort)).Weave();
-			return Stash.Last2(loaded);
+			var loaded = await Reader.Load(token, sizeof(ushort)).Weave();
+			return Reader.Last2(loaded);
 		}
 
 		private async Task<byte> Peek1(Token token)
 		{
-			var loaded = await Stash.Load(token, sizeof(byte)).Weave();
-			return Stash.Last1(loaded);
+			var loaded = await Reader.Load(token, sizeof(byte)).Weave();
+			return Reader.Last1(loaded);
 		}
 
 		private async Task<bool> EnsureFrame(Token token) =>
@@ -50,7 +50,7 @@ namespace K4os.Compression.LZ4.Streams
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private async Task<bool> ReadFrame(Token token)
 		{
-			Stash.Clear();
+			Reader.Clear();
 
 			var magic = await TryPeek4(token).Weave();
 
@@ -60,7 +60,7 @@ namespace K4os.Compression.LZ4.Streams
 			if (magic != 0x184D2204)
 				throw MagicNumberExpected();
 
-			var headerOffset = Stash.Length;
+			var headerOffset = Reader.Length;
 
 			var FLG_BD = await Peek2(token).Weave();
 
@@ -82,7 +82,7 @@ namespace K4os.Compression.LZ4.Streams
 			var contentLength = hasContentSize ? (long?) await Peek8(token).Weave() : null;
 			var dictionaryId = hasDictionary ? (uint?) await Peek4(token).Weave() : null;
 
-			var actualHC = (byte) (DigestOfStash(headerOffset) >> 8);
+			var actualHC = (byte) (Reader.Digest(headerOffset) >> 8);
 
 			var expectedHC = await Peek1(token).Weave();
 
@@ -106,6 +106,7 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		#if BLOCKING
+		
 		private async Task<long> GetLength(Token token)
 		{
 			await EnsureFrame(token).Weave();
@@ -116,7 +117,7 @@ namespace K4os.Compression.LZ4.Streams
 
 		private async Task<int> ReadBlock(Token token)
 		{
-			Stash.Clear();
+			Reader.Clear();
 
 			var blockLength = (int) await Peek4(token).Weave();
 			if (blockLength == 0)
