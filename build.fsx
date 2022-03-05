@@ -1,4 +1,5 @@
 #r "paket:
+    nuget FSharp.Core ~> 5
 	nuget Fake.Core.Target
 	nuget Fake.Core.ReleaseNotes
 	nuget Fake.IO.FileSystem
@@ -7,7 +8,6 @@
 	nuget Fake.DotNet.MSBuild
 	nuget Fake.DotNet.Cli
 	nuget Fake.DotNet.Testing.XUnit2
-	nuget Octokit 0.48
 //"
 
 #load "build.imports.fsx"
@@ -18,7 +18,6 @@ open Fake.IO
 open Fake.IO.Globbing.Operators
 open Fake.IO.FileSystemOperators
 open Fake.Core
-open Fake.Api
 
 open Tools
 
