@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Streams.Internal;
 #if BLOCKING
 using WritableBuffer = System.Span<byte>;
@@ -12,43 +13,52 @@ using Token = System.Threading.CancellationToken;
 
 namespace K4os.Compression.LZ4.Streams.NewStreams
 {
-	public partial class StreamDecoder<TStream>
+	public partial class FrameDecoder<TStream>
 	{
+		#region Inner stream
+		
 		private async Task<ulong> Peek8(Token token)
 		{
-			var loaded = await Reader.Load(token, sizeof(ulong)).Weave();
+			var loaded = await Reader.Read(token, sizeof(ulong)).Weave();
 			return Reader.Last8(loaded);
 		}
 
 		private async Task<uint?> TryPeek4(Token token)
 		{
-			var loaded = await Reader.Load(token, sizeof(uint), true).Weave();
+			var loaded = await Reader.Read(token, sizeof(uint), true).Weave();
 			return loaded <= 0 ? default(uint?) : Reader.Last4(loaded);
 		}
 
 		private async Task<uint> Peek4(Token token)
 		{
-			var loaded = await Reader.Load(token, sizeof(uint)).Weave();
+			var loaded = await Reader.Read(token, sizeof(uint)).Weave();
 			return Reader.Last4(loaded);
 		}
 
 		private async Task<ushort> Peek2(Token token)
 		{
-			var loaded = await Reader.Load(token, sizeof(ushort)).Weave();
+			var loaded = await Reader.Read(token, sizeof(ushort)).Weave();
 			return Reader.Last2(loaded);
 		}
 
 		private async Task<byte> Peek1(Token token)
 		{
-			var loaded = await Reader.Load(token, sizeof(byte)).Weave();
+			var loaded = await Reader.Read(token, sizeof(byte)).Weave();
 			return Reader.Last1(loaded);
 		}
 
-		private async Task<bool> EnsureFrame(Token token) =>
-			_decoder != null || await ReadFrame(token).Weave();
+		private Task ReadN(Token token, byte[] buffer, int offset, int length) => 
+			Reader.Read(token, buffer, offset, length);
+		
+		#endregion
+		
+		#region The juice!
+
+		private async Task<bool> EnsureHeader(Token token) =>
+			_decoder != null || await ReadHeader(token).Weave();
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
-		private async Task<bool> ReadFrame(Token token)
+		private async Task<bool> ReadHeader(Token token)
 		{
 			Reader.Clear();
 
@@ -96,24 +106,14 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 					"Predefined dictionaries feature is not implemented"); // Peek4(dictionaryId);
 
 			// ReSharper disable once ExpressionIsAlwaysNull
-			_frameInfo = new LZ4Descriptor(
+			_descriptor = new LZ4Descriptor(
 				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
 				blockSize);
-			_decoder = _decoderFactory(_frameInfo);
+			_decoder = CreateDecoder(_descriptor);
 			_buffer = new byte[blockSize];
 
 			return true;
 		}
-
-		#if BLOCKING
-		
-		private async Task<long> GetLength(Token token)
-		{
-			await EnsureFrame(token).Weave();
-			return _frameInfo?.ContentLength ?? -1;
-		}
-
-		#endif
 
 		private async Task<int> ReadBlock(Token token)
 		{
@@ -122,7 +122,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			var blockLength = (int) await Peek4(token).Weave();
 			if (blockLength == 0)
 			{
-				if (_frameInfo.ContentChecksum)
+				if (_descriptor.ContentChecksum)
 					_ = await Peek4(token).Weave();
 				CloseFrame();
 				return 0;
@@ -130,18 +130,40 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
+			
+			await ReadN(token, _buffer, 0, blockLength).Weave();
 
-			await InnerReadBlock(token, _buffer, 0, blockLength).Weave();
-
-			if (_frameInfo.BlockChecksum)
+			if (_descriptor.BlockChecksum)
 				_ = await Peek4(token).Weave();
 
 			return InjectOrDecode(blockLength, uncompressed);
 		}
 
-		private async Task<int> ReadImpl(Token token, WritableBuffer buffer)
+		#endregion
+		
+		#region Interface
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		// ReSharper disable once UnusedParameter.Local
+		private WritableBuffer OneByteBuffer(in Token _) =>
+			#if BLOCKING
+			Reader.OneByteSpan();
+			#else
+			Reader.OneByteMemory();
+			#endif
+		
+		private async Task<long> GetFrameLength(Token token)
 		{
-			var hasFrame = await EnsureFrame(token).Weave();
+			await EnsureHeader(token).Weave();
+			return _descriptor?.ContentLength ?? -1;
+		}
+		
+		private async Task<int> ReadOneByte(Token token) =>
+			await ReadManyBytes(token, OneByteBuffer(token)) > 0 ? Reader.OneByteValue() : -1;
+		
+		private async Task<int> ReadManyBytes(Token token, WritableBuffer buffer)
+		{
+			var hasFrame = await EnsureHeader(token).Weave();
 			if (!hasFrame) return 0;
 
 			var offset = 0;
@@ -159,14 +181,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			return read;
 		}
-
-		#if BLOCKING || NETSTANDARD2_1
-		private async Task DisposeImpl(Token token)
-		{
-			CloseFrame();
-			await InnerDispose(token, false).Weave();
-		}
-
-		#endif
+		
+		#endregion
 	}
 }

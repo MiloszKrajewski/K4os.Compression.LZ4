@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Internal;
@@ -6,19 +7,23 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.NewStreams
 {
-	internal struct WriterTools<TStream> 
-		where TStream: IStreamWriter
+	internal struct WriterTools<TStream> where TStream: IStreamWriter
 	{
 		private readonly TStream _stream;
 		private readonly byte[] _buffer;
-		private int _head;
 		private readonly int _size;
+		
+		private int _head;
 
-		public WriterTools(TStream stream, int bufferSize)
+		public WriterTools(TStream stream): this(stream, 32) { }
+
+		public WriterTools(TStream stream, int size)
 		{
+			Debug.Assert(size >= 16, "Buffer is too small");
+
 			_stream = stream;
-			_size = bufferSize;
-			_buffer = new byte[bufferSize + 8];
+			_buffer = new byte[size];
+			_size = size - 8;
 			_head = 0;
 		}
 
@@ -42,7 +47,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		public Task Write(
 			CancellationToken token, byte[] blockBuffer, int blockOffset, int blockLength) =>
 			_stream.WriteAsync(blockBuffer, blockOffset, blockLength, token);
-
+		
 		public void Flush(EmptyToken token)
 		{
 			var length = Clear();
@@ -58,13 +63,32 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 				? LZ4Stream.CompletedTask
 				: Write(token, _buffer, 0, length);
 		}
-
+		
 		public int Advance(int loaded)
 		{
 			_head += loaded;
 			return loaded;
 		}
+		
+		public Span<byte> AsSpan(int offset = 0) =>
+			_buffer.AsSpan(offset, Math.Max(0, _head - offset));
 
+		public byte OneByteValue() => _buffer[_size];
+
+		public Span<byte> OneByteSpan() => _buffer.AsSpan(_size, 1);
+		
+		public Memory<byte> OneByteMemory() => _buffer.AsMemory(_size, 1);
+
+		public Span<byte> OneByteSpan(byte value)
+		{
+			var result = OneByteSpan();
+			result[0] = value;
+			return result;
+		}
+
+		public uint Digest(int offset = 0) =>
+			XXH32.DigestOf(AsSpan(offset));
+		
 		public void Stash1(byte value)
 		{
 			#warning can be better
@@ -110,21 +134,5 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			_buffer[_head + 7] = (byte) (value >> 56);
 			_head += 8;
 		}
-
-		public Span<byte> AsSpan(int offset = 0) =>
-			_buffer.AsSpan(offset, Math.Max(0, _head - offset));
-
-		public byte OneByteValue() => _buffer[_size];
-
-		public Span<byte> OneByteSpan() => _buffer.AsSpan(_size, 1);
-
-		public Span<byte> OneByteSpan(byte value)
-		{
-			_buffer[_size] = value;
-			return OneByteSpan();
-		}
-		
-		public uint Digest(int offset = 0) =>
-			XXH32.DigestOf(AsSpan(offset));
 	}
 }

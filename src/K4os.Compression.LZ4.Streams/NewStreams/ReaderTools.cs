@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Internal;
@@ -6,19 +8,23 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.NewStreams
 {
-	internal struct ReaderTools<TStream> 
-		where TStream: IStreamReader
+	internal struct ReaderTools<TStream> where TStream: IStreamReader
 	{
 		private readonly TStream _stream;
 		private readonly byte[] _buffer;
-		private int _head;
 		private readonly int _size;
+		
+		private int _head;
+		
+		public ReaderTools(TStream stream): this(stream, 32) { }
 
-		public ReaderTools(TStream stream, int bufferSize)
+		public ReaderTools(TStream stream, int size)
 		{
+			Debug.Assert(size >= 16, "Buffer is too small");
+			
 			_stream = stream;
-			_size = bufferSize;
-			_buffer = new byte[bufferSize + 8];
+			_buffer = new byte[size];
+			_size = size - 8;
 			_head = 0;
 		}
 		
@@ -35,13 +41,25 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			return result;
 		}
 
-		public int Load(
+		public int Read(
 			EmptyToken _, int count, bool optional = false) =>
 			_stream.TryReadBlock(_buffer, _head, count, optional);
 
-		public Task<int> Load(
+		public Task<int> Read(
 			CancellationToken token, int count, bool optional = false) =>
 			_stream.TryReadBlockAsync(_buffer, _head, count, optional, token);
+		
+		public int Read(
+			EmptyToken _, 
+			byte[] buffer, int offset, int count, 
+			bool optional = false) =>
+			_stream.TryReadBlock(buffer, offset, count, optional);
+		
+		public Task<int> Read(
+			CancellationToken token, 
+			byte[] buffer, int offset, int count, 
+			bool optional = false) =>
+			_stream.TryReadBlockAsync(buffer, offset, count, optional, token);
 
 		public int Advance(int loaded)
 		{
@@ -55,11 +73,15 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		public byte OneByteValue() => _buffer[_size];
 
 		public Span<byte> OneByteSpan() => _buffer.AsSpan(_size, 1);
+		
+		public Memory<byte> OneByteMemory() => _buffer.AsMemory(_size, 1);
 
+		[Obsolete]
 		public Span<byte> OneByteSpan(byte value)
 		{
-			_buffer[_size] = value;
-			return OneByteSpan();
+			var result = OneByteSpan();
+			result[0] = value;
+			return result;
 		}
 
 		public ulong Last8(int loaded = 0) => 

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,7 +71,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 	{
 		private readonly Stream _stream;
 
-		public StreamAdapter(Stream stream) { _stream = stream; }
+		public StreamAdapter(Stream stream) => _stream = stream;
 
 		public int Read(
 			byte[] buffer, int offset, int length) =>
