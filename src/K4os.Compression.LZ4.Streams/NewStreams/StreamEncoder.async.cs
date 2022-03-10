@@ -18,19 +18,19 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		{
 			if (!block.Ready) return;
 
-			Tools.Stash4(BlockLengthCode(block));
-			await Tools.Flush(token).Weave();
+			Writer.Stash4(BlockLengthCode(block));
+			await Writer.Flush(token).Weave();
 
 			await InnerWriteBlock(token, block.Buffer, block.Offset, block.Length).Weave();
 
-			Tools.TryStash4(BlockChecksum(block));
-			await Tools.Flush(token).Weave();
+			Writer.TryStash4(BlockChecksum(block));
+			await Writer.Flush(token).Weave();
 		}
 
 		private async Task WriteBytesImpl(Token token, ReadableBuffer buffer)
 		{
 			if (TryStashFrame())
-				await Tools.Flush(token).Weave();
+				await Writer.Flush(token).Weave();
 
 			var offset = 0;
 			var count = buffer.Length;
@@ -50,9 +50,9 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			var block = FlushAndEncode();
 			if (block.Ready) await WriteBlockImpl(token, block).Weave();
 
-			Tools.Stash4(0);
-			Tools.TryStash4(ContentChecksum());
-			await Tools.Flush(token).Weave();
+			Writer.Stash4(0);
+			Writer.TryStash4(ContentChecksum());
+			await Writer.Flush(token).Weave();
 		}
 	}
 }

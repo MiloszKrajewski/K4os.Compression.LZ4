@@ -42,10 +42,10 @@ module Log =
     let error = Trace.traceErrorfn
 
 module Path =
-    let corenameOf path = Path.GetFileNameWithoutExtension(path)
-    let filenameOf path = Path.GetFileName(path)
-    let fullnameOf path = Path.GetFullPath(path)
-    let dirnameOf path = Path.GetDirectoryName(path)
+    let corenameOf (path: string) = Path.GetFileNameWithoutExtension(path)
+    let filenameOf (path: string) = Path.GetFileName(path)
+    let fullnameOf (path: string) = Path.GetFullPath(path)
+    let dirnameOf (path: string) = Path.GetDirectoryName(path)
 
 module File =
     ServicePointManager.SecurityProtocol <-

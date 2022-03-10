@@ -160,6 +160,7 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		#if BLOCKING || NETSTANDARD2_1
+		
 		private async Task DisposeImpl(Token token)
 		{
 			CloseFrame();

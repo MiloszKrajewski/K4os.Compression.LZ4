@@ -11,36 +11,30 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 	/// <summary>
 	/// LZ4 stream encoder. 
 	/// </summary>
-	public partial class StreamEncoder<TStream> 
-		where TStream: IStreamWriter
+	public abstract partial class StreamEncoder<TStream> where TStream: IStreamWriter
 	{
-		private WriterTools<TStream> _tools;
+		private WriterTools<TStream> _writer;
 
 		private ILZ4Encoder _encoder;
-		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
 		private readonly ILZ4Descriptor _descriptor;
 
 		private byte[] _buffer;
 		private long _bytesWritten;
 
-		private ref WriterTools<TStream> Tools => ref _tools;
+		private ref WriterTools<TStream> Writer => ref _writer;
 
 		/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 		/// <param name="inner">Inner stream.</param>
 		/// <param name="descriptor">LZ4 Descriptor.</param>
-		/// <param name="encoderFactory">Function which will take descriptor and return
-		/// appropriate encoder.</param>
-		public StreamEncoder(
-			TStream inner,
-			ILZ4Descriptor descriptor,
-			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory)
+		protected StreamEncoder(TStream inner, ILZ4Descriptor descriptor)
 		{
-			_tools = new WriterTools<TStream>(inner, 16);
+			_writer = new WriterTools<TStream>(inner);
 			_descriptor = descriptor;
-			_encoderFactory = encoderFactory;
 			_bytesWritten = 0;
 		}
+
+		protected abstract ILZ4Encoder CreateEncoder(ILZ4Descriptor descriptor);
 		
 		public long BytesWritten => _bytesWritten;
 
@@ -56,9 +50,9 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			if (_encoder != null)
 				return false;
 
-			Tools.Stash4(0x184D2204);
+			Writer.Stash4(0x184D2204);
 
-			var headerOffset = Tools.Length;
+			var headerOffset = Writer.Length;
 
 			const int versionCode = 0x01;
 			var blockChaining = _descriptor.Chaining;
@@ -79,7 +73,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			var BD = MaxBlockSizeCode(blockSize) << 4;
 
-			Tools.Stash2((ushort)((FLG & 0xFF) | (BD & 0xFF) << 8));
+			Writer.Stash2((ushort)((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
 				throw NotImplemented(
@@ -89,9 +83,9 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 				throw NotImplemented(
 					"Predefined dictionaries feature is not implemented"); // Stash4(dictionaryId);
 
-			var HC = (byte)(Tools.Digest(headerOffset) >> 8);
+			var HC = (byte)(Writer.Digest(headerOffset) >> 8);
 
-			Tools.Stash1(HC);
+			Writer.Stash1(HC);
 
 			_encoder = CreateEncoder();
 			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
