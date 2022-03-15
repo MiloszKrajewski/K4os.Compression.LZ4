@@ -19,22 +19,25 @@ using Token = System.Threading.CancellationToken;
 
 namespace K4os.Compression.LZ4.Streams.NewStreams
 {
-	public partial class StreamEncoder<TStream> where TStream: IStreamWriter
+	public partial class FrameEncoder<TStream> where TStream: IStreamWriter
 	{
-		private /*async*/ void WriteBlockImpl(Token token, BlockInfo block)
+		private /*async*/ void WriteBlock(Token token, BlockInfo block)
 		{
 			if (!block.Ready) return;
 
-			Writer.Stash4(BlockLengthCode(block));
+			Writer.Poke4(BlockLengthCode(block));
 			/*await*/ Writer.Flush(token);
+			
+			Writer.Write(token, block.Buffer, block.Offset, block.Length);
 
-			/*await*/ InnerWriteBlock(token, block.Buffer, block.Offset, block.Length);
-
-			Writer.TryStash4(BlockChecksum(block));
+			Writer.TryPoke4(BlockChecksum(block));
 			/*await*/ Writer.Flush(token);
 		}
+		
+		private void WriteOneByte(Token token, byte value) => 
+			WriteManyBytes(token, Writer.OneByteBuffer(token, value));
 
-		private /*async*/ void WriteBytesImpl(Token token, ReadableBuffer buffer)
+		private /*async*/ void WriteManyBytes(Token token, ReadableBuffer buffer)
 		{
 			if (TryStashFrame())
 				/*await*/ Writer.Flush(token);
@@ -45,20 +48,21 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			while (count > 0)
 			{
 				var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
-				if (block.Ready) /*await*/ WriteBlockImpl(token, block);
+				if (block.Ready) /*await*/ WriteBlock(token, block);
 			}
 		}
 		
-		private /*async*/ void CloseFrameImpl(Token token)
+		private /*async*/ void CloseFrame(Token token)
 		{
 			if (_encoder == null)
 				return;
 
 			var block = FlushAndEncode();
-			if (block.Ready) /*await*/ WriteBlockImpl(token, block);
+			if (block.Ready) 
+				/*await*/ WriteBlock(token, block);
 
-			Writer.Stash4(0);
-			Writer.TryStash4(ContentChecksum());
+			Writer.Poke4(0);
+			Writer.TryPoke4(ContentChecksum());
 			/*await*/ Writer.Flush(token);
 		}
 	}

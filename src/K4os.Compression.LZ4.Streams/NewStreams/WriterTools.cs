@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Internal;
@@ -40,10 +41,12 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			return result;
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Write(
 			EmptyToken _, byte[] blockBuffer, int blockOffset, int blockLength) =>
 			_stream.Write(blockBuffer, blockOffset, blockLength);
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Task Write(
 			CancellationToken token, byte[] blockBuffer, int blockOffset, int blockLength) =>
 			_stream.WriteAsync(blockBuffer, blockOffset, blockLength, token);
@@ -70,13 +73,14 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			return loaded;
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Span<byte> AsSpan(int offset = 0) =>
 			_buffer.AsSpan(offset, Math.Max(0, _head - offset));
 
-		public byte OneByteValue() => _buffer[_size];
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Span<byte> OneByteSpan() => _buffer.AsSpan(_size, 1);
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Memory<byte> OneByteMemory() => _buffer.AsMemory(_size, 1);
 
 		public Span<byte> OneByteSpan(byte value)
@@ -85,18 +89,35 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			result[0] = value;
 			return result;
 		}
+		
+		public Memory<byte> OneByteMemory(byte value)
+		{
+			var result = OneByteMemory();
+			result.Span[0] = value;
+			return result;
+		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		// ReSharper disable once UnusedParameter.Local
+		public Span<byte> OneByteBuffer(in EmptyToken _, byte value) => 
+			OneByteSpan(value);
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		// ReSharper disable once UnusedParameter.Local
+		public Memory<byte> OneByteBuffer(in CancellationToken _, byte value) => 
+			OneByteMemory(value);
 
 		public uint Digest(int offset = 0) =>
 			XXH32.DigestOf(AsSpan(offset));
 		
-		public void Stash1(byte value)
+		public void Poke1(byte value)
 		{
 			#warning can be better
 			_buffer[_head + 0] = value;
 			_head++;
 		}
 
-		public void Stash2(ushort value)
+		public void Poke2(ushort value)
 		{
 			#warning can be better
 			_buffer[_head + 0] = (byte) (value >> 0);
@@ -104,7 +125,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			_head += 2;
 		}
 
-		public void Stash4(uint value)
+		public void Poke4(uint value)
 		{
 			#warning can be better
 			_buffer[_head + 0] = (byte) (value >> 0);
@@ -114,14 +135,14 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			_head += 4;
 		}
 
-		public void TryStash4(uint? value)
+		public void TryPoke4(uint? value)
 		{
 			if (!value.HasValue) return;
 
-			Stash4(value.Value);
+			Poke4(value.Value);
 		}
 
-		public void Stash8(ulong value)
+		public void Poke8(ulong value)
 		{
 			#warning can be better
 			_buffer[_head + 0] = (byte) (value >> 0);
