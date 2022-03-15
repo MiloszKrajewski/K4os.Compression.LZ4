@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.OldStreams
 {
 	public partial class LZ4DecoderStream
 	{

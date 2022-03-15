@@ -24,14 +24,6 @@ public class LZ4DecoderStream: LZ4StreamEssentials
 	}
 
 	/// <inheritdoc />
-	protected override long GetPosition() => 
-		_decoder.GetBytesRead();
-	
-	/// <inheritdoc />
-	protected override long GetLength() => 
-		_decoder.GetFrameLength();
-	
-	/// <inheritdoc />
 	public override int ReadByte() => 
 		_decoder.ReadOneByte();
 
@@ -52,13 +44,13 @@ public class LZ4DecoderStream: LZ4StreamEssentials
 	/// <c>ContentLength</c> field set in descriptor. Otherwise returned value will be <c>-1</c>.
 	/// It will also require synchronous stream access, so it wont work if AllowSynchronousIO is false.
 	/// </summary>
-	public override long Length => GetLength();
+	public override long Length => _decoder.GetFrameLength();
 
 	/// <summary>
 	/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
 	/// not have <c>Seek</c> capability.
 	/// </summary>
-	public override long Position => GetPosition();
+	public override long Position => _decoder.GetBytesRead();
 	
 	/// <inheritdoc />
 	protected override void Dispose(bool disposing)

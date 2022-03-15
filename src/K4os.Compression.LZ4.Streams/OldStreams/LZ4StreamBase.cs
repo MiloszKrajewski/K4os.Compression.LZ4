@@ -3,9 +3,10 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using K4os.Compression.LZ4.Streams.Internal;
 using K4os.Hash.xxHash;
 
-namespace K4os.Compression.LZ4.Streams.Internal
+namespace K4os.Compression.LZ4.Streams.OldStreams
 {
 	/// <summary>
 	/// Base class for LZ4 encoder and decoder streams.

@@ -9,12 +9,12 @@
 using WritableBuffer = System.Span<byte>;
 using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
 #else
+using System.Threading.Tasks;
 using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.NewStreams;
@@ -107,7 +107,7 @@ public partial class FrameDecoder<TStream> where TStream: IStreamReader
 				contentLength, contentChecksum, blockChaining, blockChecksum, dictionaryId,
 				blockSize);
 			_decoder = CreateDecoder(_descriptor);
-			_buffer = new byte[blockSize];
+			_buffer = AllocBuffer(blockSize);
 
 			return true;
 		}
@@ -148,7 +148,7 @@ public partial class FrameDecoder<TStream> where TStream: IStreamReader
 				: -1;
 
 		private /*async*/ int ReadManyBytes(
-			Token token, WritableBuffer buffer, bool interactive)
+			Token token, WritableBuffer buffer, bool interactive = false)
 		{
 			var hasFrame = /*await*/ EnsureHeader(token);
 			if (!hasFrame) return 0;

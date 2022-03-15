@@ -5,7 +5,7 @@ using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.OldStreams
 {
 	/// <summary>
 	/// LZ4 compression stream. 
