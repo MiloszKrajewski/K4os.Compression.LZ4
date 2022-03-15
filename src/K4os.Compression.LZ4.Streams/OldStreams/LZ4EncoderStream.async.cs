@@ -1,6 +1,3 @@
-using System;
-using K4os.Compression.LZ4.Streams.Internal;
-
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
 using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
@@ -9,8 +6,10 @@ using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
+using System;
+using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.OldStreams
 {
 	public partial class LZ4EncoderStream
 	{

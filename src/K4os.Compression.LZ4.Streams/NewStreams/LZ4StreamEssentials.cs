@@ -54,21 +54,14 @@ public abstract class LZ4StreamEssentials: Stream
 	/// <inheritdoc />
 	public override long Position
 	{
-		get => GetPosition();
+		get => throw NotImplemented("GetPosition");
 		set => Seek(value, SeekOrigin.Begin);
 	}
 
 	/// <inheritdoc />
-	public override long Length => GetLength();
+	public override long Length => 
+		throw NotImplemented("GetLength");
 
-	/// <summary>Gets current stream position.</summary>
-	/// <returns>Current stream position.</returns>
-	protected abstract long GetPosition();
-	
-	/// <summary>Gets current stream length. Returns <c>-1</c> is length is unknown.</summary>
-	/// <returns>Current stream length.</returns>
-	protected abstract long GetLength();
-	
 	/// <inheritdoc />
 	public override void Flush() => 
 		_inner.Flush();

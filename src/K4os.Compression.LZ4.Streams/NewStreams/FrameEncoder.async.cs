@@ -20,14 +20,14 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			Writer.Poke4(BlockLengthCode(block));
 			await Writer.Flush(token).Weave();
-			
+
 			Writer.Write(token, block.Buffer, block.Offset, block.Length).Weave();
 
 			Writer.TryPoke4(BlockChecksum(block));
 			await Writer.Flush(token).Weave();
 		}
-		
-		private Task WriteOneByte(Token token, byte value) => 
+
+		private Task WriteOneByte(Token token, byte value) =>
 			WriteManyBytes(token, Writer.OneByteBuffer(token, value));
 
 		private async Task WriteManyBytes(Token token, ReadableBuffer buffer)
@@ -44,14 +44,32 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 				if (block.Ready) await WriteBlock(token, block).Weave();
 			}
 		}
-		
+
 		private async Task CloseFrame(Token token)
 		{
 			if (_encoder == null)
 				return;
 
+			try
+			{
+				await WriteFrameTail(token);
+
+				if (_buffer is not null)
+					ReleaseBuffer(_buffer);
+				_encoder.Dispose();
+			}
+			finally
+			{
+				_encoder = null;
+				_descriptor = null;
+				_buffer = null;
+			}
+		}
+
+		private async Task WriteFrameTail(Token token)
+		{
 			var block = FlushAndEncode();
-			if (block.Ready) 
+			if (block.Ready)
 				await WriteBlock(token, block).Weave();
 
 			Writer.Poke4(0);

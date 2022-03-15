@@ -12,16 +12,19 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 	/// <summary>
 	/// LZ4 stream encoder. 
 	/// </summary>
-	public partial class FrameEncoder<TStream> where TStream: IStreamWriter
+	public partial class FrameEncoder<TStream>:
+		IAsyncDisposable,
+		IDisposable
+		where TStream: IStreamWriter
 	{
 		private WriterTools<TStream> _writer;
 		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
-		private readonly ILZ4Descriptor _descriptor;
+		private ILZ4Descriptor _descriptor;
 		private ILZ4Encoder _encoder;
 
 		private byte[] _buffer;
-		
+
 		private long _bytesWritten;
 
 		private ref WriterTools<TStream> Writer => ref _writer;
@@ -43,8 +46,6 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 		protected ILZ4Encoder CreateEncoder(ILZ4Descriptor descriptor) =>
 			_encoderFactory(descriptor);
-		
-		public long BytesWritten => _bytesWritten;
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private bool TryStashFrame()
@@ -90,10 +91,15 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			Writer.Poke1(HC);
 
 			_encoder = CreateEncoder();
-			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
+			_buffer = AllocateBuffer(LZ4Codec.MaximumOutputSize(blockSize));
 
 			return true;
 		}
+
+		protected virtual byte[] AllocateBuffer(int size) => 
+			new byte[size];
+
+		protected virtual void ReleaseBuffer(byte[] buffer) { }
 
 		private ILZ4Encoder CreateEncoder()
 		{
@@ -166,27 +172,34 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			blockSize <= Mem.M1 ? 6 :
 			blockSize <= Mem.M4 ? 7 :
 			throw InvalidBlockSize(blockSize);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected long GetBytesWritten() => _bytesWritten;
-	
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected void WriteOneByte(byte value) =>
 			WriteOneByte(EmptyToken.Value, value);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected Task WriteOneByteAsync(byte value, CancellationToken token = default) =>
 			WriteOneByte(token, value);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected void WriteManyBytes(Span<byte> buffer) =>
+		protected void WriteManyBytes(ReadOnlySpan<byte> buffer) =>
 			WriteManyBytes(EmptyToken.Value, buffer);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected Task WriteManyBytesAsync(
-			Memory<byte> buffer, CancellationToken token = default) =>
+			ReadOnlyMemory<byte> buffer, CancellationToken token = default) =>
 			WriteManyBytes(token, buffer);
-		
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected void CloseFrame() => CloseFrame(EmptyToken.Value);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected Task CloseFrameAsync(CancellationToken token = default) =>
+			CloseFrame(token);
+
 		private NotImplementedException NotImplemented(string operation) =>
 			new($"Feature {operation} has not been implemented in {GetType().Name}");
 
@@ -195,5 +208,23 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 		private protected ArgumentException InvalidBlockSize(int blockSize) =>
 			InvalidValue($"Invalid block size ${blockSize} for {GetType().Name}");
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing)
+				CloseFrame();
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			await CloseFrameAsync();
+			GC.SuppressFinalize(this);
+		}
 	}
 }

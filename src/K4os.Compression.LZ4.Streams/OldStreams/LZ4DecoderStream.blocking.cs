@@ -17,7 +17,7 @@ using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams.OldStreams
 {
 	public partial class LZ4DecoderStream
 	{
