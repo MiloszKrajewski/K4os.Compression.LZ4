@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
@@ -11,38 +12,39 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 	/// <summary>
 	/// LZ4 stream encoder. 
 	/// </summary>
-	public abstract partial class StreamEncoder<TStream> where TStream: IStreamWriter
+	public partial class FrameEncoder<TStream> where TStream: IStreamWriter
 	{
 		private WriterTools<TStream> _writer;
-
-		private ILZ4Encoder _encoder;
+		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
 		private readonly ILZ4Descriptor _descriptor;
+		private ILZ4Encoder _encoder;
 
 		private byte[] _buffer;
+		
 		private long _bytesWritten;
 
 		private ref WriterTools<TStream> Writer => ref _writer;
 
 		/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 		/// <param name="inner">Inner stream.</param>
+		/// <param name="encoderFactory">LZ4 Encoder factory.</param>
 		/// <param name="descriptor">LZ4 Descriptor.</param>
-		protected StreamEncoder(TStream inner, ILZ4Descriptor descriptor)
+		protected FrameEncoder(
+			TStream inner,
+			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
+			ILZ4Descriptor descriptor)
 		{
 			_writer = new WriterTools<TStream>(inner);
+			_encoderFactory = encoderFactory;
 			_descriptor = descriptor;
 			_bytesWritten = 0;
 		}
 
-		protected abstract ILZ4Encoder CreateEncoder(ILZ4Descriptor descriptor);
+		protected ILZ4Encoder CreateEncoder(ILZ4Descriptor descriptor) =>
+			_encoderFactory(descriptor);
 		
 		public long BytesWritten => _bytesWritten;
-
-		public void Write(ReadOnlySpan<byte> buffer) => 
-			WriteBytesImpl(EmptyToken.Value, buffer);
-		
-		public Task Write(ReadOnlyMemory<byte> buffer, CancellationToken token) => 
-			WriteBytesImpl(token, buffer);
 
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private bool TryStashFrame()
@@ -50,7 +52,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			if (_encoder != null)
 				return false;
 
-			Writer.Stash4(0x184D2204);
+			Writer.Poke4(0x184D2204);
 
 			var headerOffset = Writer.Length;
 
@@ -73,7 +75,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			var BD = MaxBlockSizeCode(blockSize) << 4;
 
-			Writer.Stash2((ushort)((FLG & 0xFF) | (BD & 0xFF) << 8));
+			Writer.Poke2((ushort)((FLG & 0xFF) | (BD & 0xFF) << 8));
 
 			if (hasContentSize)
 				throw NotImplemented(
@@ -85,7 +87,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			var HC = (byte)(Writer.Digest(headerOffset) >> 8);
 
-			Writer.Stash1(HC);
+			Writer.Poke1(HC);
 
 			_encoder = CreateEncoder();
 			_buffer = new byte[LZ4Codec.MaximumOutputSize(blockSize)];
@@ -95,7 +97,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 		private ILZ4Encoder CreateEncoder()
 		{
-			var encoder = _encoderFactory(_descriptor);
+			var encoder = CreateEncoder(_descriptor);
 			if (encoder.BlockSize > _descriptor.BlockSize)
 				throw InvalidValue("BlockSize is greater than declared");
 
@@ -165,15 +167,26 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			blockSize <= Mem.M4 ? 7 :
 			throw InvalidBlockSize(blockSize);
 		
-		[SuppressMessage("ReSharper", "UnusedParameter.Local")]
-		private void InnerWriteBlock(
-			EmptyToken _, byte[] blockBuffer, int blockOffset, int blockLength) =>
-			Stream.Write(blockBuffer, blockOffset, blockLength);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected long GetBytesWritten() => _bytesWritten;
+	
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected void WriteOneByte(byte value) =>
+			WriteOneByte(EmptyToken.Value, value);
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected Task WriteOneByteAsync(byte value, CancellationToken token = default) =>
+			WriteOneByte(token, value);
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected void WriteManyBytes(Span<byte> buffer) =>
+			WriteManyBytes(EmptyToken.Value, buffer);
 
-		private Task InnerWriteBlock(
-			CancellationToken token, byte[] blockBuffer, int blockOffset, int blockLength) =>
-			Stream.WriteAsync(blockBuffer, blockOffset, blockLength, token);
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected Task WriteManyBytesAsync(
+			Memory<byte> buffer, CancellationToken token = default) =>
+			WriteManyBytes(token, buffer);
+		
 		private NotImplementedException NotImplemented(string operation) =>
 			new($"Feature {operation} has not been implemented in {GetType().Name}");
 

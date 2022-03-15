@@ -58,7 +58,7 @@ namespace K4os.Compression.LZ4.Streams
 				ChainBlocks = true,
 				ExtraMemory = extraMemory,
 				BlockSize = Mem.K64,
-				CompressionLevel = level
+				CompressionLevel = level,
 			};
 			return Encode(stream, settings, leaveOpen);
 		}

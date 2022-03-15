@@ -7,7 +7,7 @@ namespace K4os.Compression.LZ4.Streams
 	/// </summary>
 	public class LZ4EncoderSettings
 	{
-		internal static LZ4EncoderSettings Default { get; } = new LZ4EncoderSettings();
+		internal static LZ4EncoderSettings Default { get; } = new();
 
 		/// <summary>
 		/// Content length. It is not enforced, it can be set to any value, but it will be

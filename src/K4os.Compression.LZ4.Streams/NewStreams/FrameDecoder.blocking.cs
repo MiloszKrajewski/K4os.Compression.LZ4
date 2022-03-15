@@ -5,25 +5,22 @@
 //------------------------------------------------------------------------------
 #define BLOCKING
 
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Streams.Internal;
 #if BLOCKING
 using WritableBuffer = System.Span<byte>;
 using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
 #else
-using System.Threading.Tasks;
 using WritableBuffer = System.Memory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
+using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams
+namespace K4os.Compression.LZ4.Streams.NewStreams;
+
+public partial class FrameDecoder<TStream> where TStream: IStreamReader
 {
-	public partial class FrameDecoder<TStream>
-	{
-		#region Inner stream
-		
 		private /*async*/ ulong Peek8(Token token)
 		{
 			var loaded = /*await*/ Reader.Read(token, sizeof(ulong));
@@ -53,13 +50,6 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			var loaded = /*await*/ Reader.Read(token, sizeof(byte));
 			return Reader.Last1(loaded);
 		}
-
-		private void ReadN(Token token, byte[] buffer, int offset, int length) => 
-			Reader.Read(token, buffer, offset, length);
-		
-		#endregion
-		
-		#region The juice!
 
 		private /*async*/ bool EnsureHeader(Token token) =>
 			_decoder != null || /*await*/ ReadHeader(token);
@@ -96,10 +86,10 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			var hasDictionary = (FLG & 0x01) != 0;
 			var blockSizeCode = (BD >> 4) & 0x07;
 
-			var contentLength = hasContentSize ? (long?) /*await*/ Peek8(token) : null;
-			var dictionaryId = hasDictionary ? (uint?) /*await*/ Peek4(token) : null;
+			var contentLength = hasContentSize ? (long?)/*await*/ Peek8(token) : null;
+			var dictionaryId = hasDictionary ? (uint?)/*await*/ Peek4(token) : null;
 
-			var actualHC = (byte) (Reader.Digest(headerOffset) >> 8);
+			var actualHC = (byte)(Reader.Digest(headerOffset) >> 8);
 
 			var expectedHC = /*await*/ Peek1(token);
 
@@ -126,7 +116,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		{
 			Reader.Clear();
 
-			var blockLength = (int) /*await*/ Peek4(token);
+			var blockLength = (int)/*await*/ Peek4(token);
 			if (blockLength == 0)
 			{
 				if (_descriptor.ContentChecksum)
@@ -137,8 +127,8 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 
 			var uncompressed = (blockLength & 0x80000000) != 0;
 			blockLength &= 0x7FFFFFFF;
-			
-			/*await*/ ReadN(token, _buffer, 0, blockLength);
+
+			/*await*/ Reader.Read(token, _buffer, 0, blockLength);
 
 			if (_descriptor.BlockChecksum)
 				_ = /*await*/ Peek4(token);
@@ -146,29 +136,19 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			return InjectOrDecode(blockLength, uncompressed);
 		}
 
-		#endregion
-		
-		#region Interface
-		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		// ReSharper disable once UnusedParameter.Local
-		private WritableBuffer OneByteBuffer(in Token _) =>
-			#if BLOCKING
-			Reader.OneByteSpan();
-			#else
-			Reader.OneByteMemory();
-			#endif
-		
 		private /*async*/ long GetFrameLength(Token token)
 		{
 			/*await*/ EnsureHeader(token);
 			return _descriptor?.ContentLength ?? -1;
 		}
-		
+
 		private /*async*/ int ReadOneByte(Token token) =>
-			/*await*/ ReadManyBytes(token, OneByteBuffer(token)) > 0 ? Reader.OneByteValue() : -1;
-		
-		private /*async*/ int ReadManyBytes(Token token, WritableBuffer buffer)
+			/*await*/ ReadManyBytes(token, Reader.OneByteBuffer(token)) > 0
+				? Reader.OneByteValue()
+				: -1;
+
+		private /*async*/ int ReadManyBytes(
+			Token token, WritableBuffer buffer, bool interactive)
 		{
 			var hasFrame = /*await*/ EnsureHeader(token);
 			if (!hasFrame) return 0;
@@ -182,13 +162,12 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 				if (_decoded <= 0 && (_decoded = /*await*/ ReadBlock(token)) == 0)
 					break;
 
-				if (Drain(buffer.ToSpan(), ref offset, ref count, ref read))
+				var empty = Drain(buffer.ToSpan(), ref offset, ref count, ref read); 
+
+				if (empty || interactive)
 					break;
 			}
 
 			return read;
 		}
-		
-		#endregion
-	}
 }
