@@ -1,19 +1,21 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
+using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams;
+namespace K4os.Compression.LZ4.Streams;
 
 /// <summary>
 /// LZ4 Decompression stream handling.
 /// </summary>
-public partial class FrameDecoder<TStream>: IDisposable where TStream: IStreamReader
+public partial class FrameDecoder<TStream>: 
+	IFrameDecoder 
+	where TStream: IStreamReader
 {
 	private ReaderTools<TStream> _reader;
 	private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
@@ -31,7 +33,7 @@ public partial class FrameDecoder<TStream>: IDisposable where TStream: IStreamRe
 	/// <summary>Creates new instance <see cref="LZ4DecoderStream"/>.</summary>
 	/// <param name="stream">Inner stream.</param>
 	/// <param name="decoderFactory">Decoder factory.</param>
-	protected FrameDecoder(
+	public FrameDecoder(
 		TStream stream,
 		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory)
 	{
@@ -44,20 +46,18 @@ public partial class FrameDecoder<TStream>: IDisposable where TStream: IStreamRe
 		blockSizeCode switch {
 			7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64
 		};
-	
-	private static ArrayPool<byte> ArrayPool => ArrayPool<byte>.Shared;
 
 	private ILZ4Decoder CreateDecoder(ILZ4Descriptor descriptor) =>
 		_decoderFactory(descriptor);
 
-	protected void CloseFrame()
+	public void CloseFrame()
 	{
-		if (_decoder == null)
+		if (_decoder is null)
 			return;
 
 		try
 		{
-			if (_buffer is not null) 
+			if (_buffer is not null)
 				ReleaseBuffer(_buffer);
 			_decoder.Dispose();
 		}
@@ -68,15 +68,15 @@ public partial class FrameDecoder<TStream>: IDisposable where TStream: IStreamRe
 			_decoder = null;
 		}
 	}
-
+	
 	/// <summary>Allocate temporary buffer to store decompressed data.</summary>
 	/// <param name="size">Minimum size of the buffer.</param>
 	/// <returns>Allocated buffer.</returns>
-	protected virtual byte[] AllocBuffer(int size) => ArrayPool.Rent(size);
+	protected virtual byte[] AllocBuffer(int size) => BufferPool.Alloc(size);
 
 	/// <summary>Releases allocated buffer. <see cref="AllocBuffer"/></summary>
 	/// <param name="buffer">Previously allocated buffer.</param>
-	protected virtual void ReleaseBuffer(byte[] buffer) => ArrayPool.Return(buffer);
+	protected virtual void ReleaseBuffer(byte[] buffer) => BufferPool.Free(buffer);
 
 	private int InjectOrDecode(int blockLength, bool uncompressed) =>
 		uncompressed
@@ -100,32 +100,45 @@ public partial class FrameDecoder<TStream>: IDisposable where TStream: IStreamRe
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected long GetBytesRead() => _bytesRead;
+	public bool OpenFrame() => 
+		EnsureHeader(EmptyToken.Value);
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Task<bool> OpenFrameAsync(CancellationToken token) => 
+		EnsureHeader(token);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected long GetFrameLength() =>
+	public long GetBytesRead() => _bytesRead;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public long? GetFrameLength() =>
 		GetFrameLength(EmptyToken.Value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected Task<long> GetFrameLengthAsync(CancellationToken token = default) =>
+	public Task<long?> GetFrameLengthAsync(CancellationToken token = default) =>
 		GetFrameLength(token);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected int ReadOneByte() =>
+	public int ReadOneByte() =>
 		ReadOneByte(EmptyToken.Value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected Task<int> ReadOneByteAsync(CancellationToken token = default) =>
+	public Task<int> ReadOneByteAsync(CancellationToken token = default) =>
 		ReadOneByte(token);
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected int ReadManyBytes(Span<byte> buffer, bool interactive = false) =>
+	public int ReadManyBytes(Span<byte> buffer, bool interactive = false) =>
 		ReadManyBytes(EmptyToken.Value, buffer, interactive);
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected Task<int> ReadManyBytesAsync(
+	public Task<int> ReadManyBytesAsync(
 		CancellationToken token, Memory<byte> buffer, bool interactive = false) =>
 		ReadManyBytes(token, buffer, interactive);
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Task<int> ReadManyBytesAsync(
+		Memory<byte> buffer, bool interactive = false) =>
+		ReadManyBytes(CancellationToken.None, buffer, interactive);
 
 	private static NotImplementedException NotImplemented(string feature) =>
 		new($"Feature '{feature}' is not implemented");
@@ -141,8 +154,10 @@ public partial class FrameDecoder<TStream>: IDisposable where TStream: IStreamRe
 
 	protected virtual void Dispose(bool disposing)
 	{
-		if (disposing)
-			CloseFrame();
+		if (!disposing) return;
+
+		CloseFrame();
+		Reader.Dispose();
 	}
 
 	public void Dispose()

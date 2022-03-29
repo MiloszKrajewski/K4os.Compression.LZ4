@@ -3,13 +3,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams;
+namespace K4os.Compression.LZ4.Streams;
 
 public class LZ4DecoderStream: LZ4StreamEssentials
 {
-	private readonly StreamFrameDecoder _decoder;
+	private readonly FrameDecoder<StreamAdapter> _decoder;
 	private readonly bool _interactive;
 
 	public LZ4DecoderStream(
@@ -19,7 +20,7 @@ public class LZ4DecoderStream: LZ4StreamEssentials
 		bool interactive = false):
 		base(inner, leaveOpen)
 	{
-		_decoder = new StreamFrameDecoder(inner, decoderFactory);
+		_decoder = new FrameDecoder<StreamAdapter>(new StreamAdapter(inner), decoderFactory);
 		_interactive = interactive;
 	}
 
@@ -42,9 +43,10 @@ public class LZ4DecoderStream: LZ4StreamEssentials
 	/// <summary>
 	/// Length of stream. Please note, this will only work if original LZ4 stream has
 	/// <c>ContentLength</c> field set in descriptor. Otherwise returned value will be <c>-1</c>.
-	/// It will also require synchronous stream access, so it wont work if AllowSynchronousIO is false.
+	/// It will also require synchronous stream access, so it wont work if AllowSynchronousIO
+	/// is <c>false</c>.
 	/// </summary>
-	public override long Length => _decoder.GetFrameLength();
+	public override long Length => _decoder.GetFrameLength() ?? -1;
 
 	/// <summary>
 	/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does

@@ -5,16 +5,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
+using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams
+namespace K4os.Compression.LZ4.Streams
 {
 	/// <summary>
 	/// LZ4 stream encoder. 
 	/// </summary>
-	public partial class FrameEncoder<TStream>:
-		IAsyncDisposable,
-		IDisposable
+	public partial class FrameEncoder<TStream>: 
+		IFrameEncoder 
 		where TStream: IStreamWriter
 	{
 		private WriterTools<TStream> _writer;
@@ -33,7 +33,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		/// <param name="inner">Inner stream.</param>
 		/// <param name="encoderFactory">LZ4 Encoder factory.</param>
 		/// <param name="descriptor">LZ4 Descriptor.</param>
-		protected FrameEncoder(
+		public FrameEncoder(
 			TStream inner,
 			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 			ILZ4Descriptor descriptor)
@@ -96,10 +96,14 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			return true;
 		}
 
-		protected virtual byte[] AllocateBuffer(int size) => 
-			new byte[size];
+		/// <summary>Allocate temporary buffer to store decompressed data.</summary>
+		/// <param name="size">Minimum size of the buffer.</param>
+		/// <returns>Allocated buffer.</returns>
+		protected virtual byte[] AllocateBuffer(int size) => BufferPool.Alloc(size);
 
-		protected virtual void ReleaseBuffer(byte[] buffer) { }
+		/// <summary>Releases allocated buffer. <see cref="AllocateBuffer"/></summary>
+		/// <param name="buffer">Previously allocated buffer.</param>
+		protected virtual void ReleaseBuffer(byte[] buffer) => BufferPool.Free(buffer);
 
 		private ILZ4Encoder CreateEncoder()
 		{
@@ -132,17 +136,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			var action = _encoder.FlushAndEncode(
 				_buffer.AsSpan(), true, out var encoded);
 
-			try
-			{
-				_encoder.Dispose();
-
-				return new BlockInfo(_buffer, action, encoded);
-			}
-			finally
-			{
-				_encoder = null;
-				_buffer = null;
-			}
+			return new BlockInfo(_buffer, action, encoded);
 		}
 
 		private static uint BlockLengthCode(in BlockInfo block) =>
@@ -174,45 +168,44 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			throw InvalidBlockSize(blockSize);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected long GetBytesWritten() => _bytesWritten;
+		public long GetBytesWritten() => _bytesWritten;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected void WriteOneByte(byte value) =>
+		public void WriteOneByte(byte value) =>
 			WriteOneByte(EmptyToken.Value, value);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected Task WriteOneByteAsync(byte value, CancellationToken token = default) =>
+		public Task WriteOneByteAsync(byte value, CancellationToken token = default) =>
 			WriteOneByte(token, value);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected void WriteManyBytes(ReadOnlySpan<byte> buffer) =>
+		public void WriteManyBytes(ReadOnlySpan<byte> buffer) =>
 			WriteManyBytes(EmptyToken.Value, buffer);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected Task WriteManyBytesAsync(
+		public Task WriteManyBytesAsync(
 			ReadOnlyMemory<byte> buffer, CancellationToken token = default) =>
 			WriteManyBytes(token, buffer);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected void CloseFrame() => CloseFrame(EmptyToken.Value);
+		public bool OpenFrame() => OpenFrame(EmptyToken.Value);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected Task CloseFrameAsync(CancellationToken token = default) =>
+		public Task<bool> OpenFrameAsync(CancellationToken token = default) => OpenFrame(token);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void CloseFrame() => CloseFrame(EmptyToken.Value);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Task CloseFrameAsync(CancellationToken token = default) =>
 			CloseFrame(token);
-
-		private NotImplementedException NotImplemented(string operation) =>
-			new($"Feature {operation} has not been implemented in {GetType().Name}");
-
-		private static ArgumentException InvalidValue(string description) =>
-			new(description);
-
-		private protected ArgumentException InvalidBlockSize(int blockSize) =>
-			InvalidValue($"Invalid block size ${blockSize} for {GetType().Name}");
 
 		protected virtual void Dispose(bool disposing)
 		{
-			if (disposing)
-				CloseFrame();
+			if (!disposing) return;
+
+			CloseFrame();
+			Writer.Dispose();
 		}
 
 		public void Dispose()
@@ -221,10 +214,23 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			GC.SuppressFinalize(this);
 		}
 
+		#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
+
 		public async ValueTask DisposeAsync()
 		{
 			await CloseFrameAsync();
 			GC.SuppressFinalize(this);
 		}
+
+		#endif
+		
+		private NotImplementedException NotImplemented(string operation) =>
+			new($"Feature {operation} has not been implemented in {GetType().Name}");
+
+		private static ArgumentException InvalidValue(string description) =>
+			new(description);
+
+		private protected ArgumentException InvalidBlockSize(int blockSize) =>
+			InvalidValue($"Invalid block size ${blockSize} for {GetType().Name}");
 	}
 }

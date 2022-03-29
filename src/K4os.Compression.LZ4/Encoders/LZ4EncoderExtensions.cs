@@ -207,7 +207,6 @@ namespace K4os.Compression.LZ4.Encoders
 
 			encoded = -encoded;
 			return EncoderAction.Copied;
-
 		}
 
 		/// <summary>Encoded remaining bytes in encoder.</summary>

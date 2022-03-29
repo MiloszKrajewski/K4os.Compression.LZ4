@@ -3,12 +3,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Compression.LZ4.Streams.Adapters;
+using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams;
+namespace K4os.Compression.LZ4.Streams;
 
 public class LZ4EncoderStream: LZ4StreamEssentials
 {
-	private readonly StreamFrameEncoder _encoder;
+	private readonly FrameEncoder<StreamAdapter> _encoder;
 
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="inner">Inner stream.</param>
@@ -24,7 +26,8 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 		bool leaveOpen = false):
 		base(inner, leaveOpen)
 	{
-		_encoder = new StreamFrameEncoder(inner, encoderFactory, descriptor);
+		_encoder = new FrameEncoder<StreamAdapter>(
+			new StreamAdapter(inner), encoderFactory, descriptor);
 	}
 
 	protected override void Dispose(bool disposing)
@@ -32,13 +35,7 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 		_encoder.Dispose();
 		base.Dispose(disposing);
 	}
-
-	public override ValueTask DisposeAsync()
-	{
-		_encoder.Dispose();
-		return base.DisposeAsync();
-	}
-
+	
 	/// <inheritdoc />
 	public override void WriteByte(byte value) =>
 		_encoder.WriteOneByte(value);
@@ -51,6 +48,14 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 	public override Task WriteAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
 		_encoder.WriteManyBytesAsync(buffer.AsMemory(offset, count), token);
+	
+	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
+
+	public override ValueTask DisposeAsync()
+	{
+		_encoder.Dispose();
+		return base.DisposeAsync();
+	}
 
 	/// <inheritdoc />
 	public override void Write(ReadOnlySpan<byte> buffer) =>
@@ -60,6 +65,8 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 	public override ValueTask WriteAsync(
 		ReadOnlyMemory<byte> buffer, CancellationToken token = default) =>
 		new(_encoder.WriteManyBytesAsync(buffer, token));
+
+	#endif
 
 	/// <inheritdoc />
 	public override bool CanRead => false;

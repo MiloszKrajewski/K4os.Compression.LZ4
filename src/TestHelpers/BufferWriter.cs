@@ -8,8 +8,8 @@ namespace TestHelpers
 	{
 		private const int BLOCK_SIZE = 1024;
 
-		public static BufferWriter New() => new BufferWriter();
-		public static BufferWriter New(int size) => new BufferWriter(size);
+		public static BufferWriter New() => new();
+		public static BufferWriter New(int size) => new(size);
 
 		private byte[] _buffer;
 		private int _position;
@@ -17,7 +17,8 @@ namespace TestHelpers
 		public BufferWriter() => _buffer = Mem.Empty;
 		public BufferWriter(int size) => _buffer = Reallocate(RoundUp(size));
 
-		public ReadOnlySpan<byte> WrittenSpan => _buffer.AsSpan(0, _position);
+		public ReadOnlySpan<byte> WrittenSpan => WrittenMemory.Span;
+		public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
 
 		public void Advance(int count) => _position += count;
 
