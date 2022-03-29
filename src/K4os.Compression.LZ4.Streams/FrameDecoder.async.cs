@@ -8,11 +8,12 @@ using Token = System.Threading.CancellationToken;
 #endif
 using System;
 using System.Diagnostics.CodeAnalysis;
+
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams;
+namespace K4os.Compression.LZ4.Streams;
 
-public partial class FrameDecoder<TStream> where TStream: IStreamReader
+public partial class FrameDecoder<TStream>
 {
 		private async Task<ulong> Peek8(Token token)
 		{
@@ -46,7 +47,7 @@ public partial class FrameDecoder<TStream> where TStream: IStreamReader
 
 		private async Task<bool> EnsureHeader(Token token) =>
 			_decoder != null || await ReadHeader(token).Weave();
-
+		
 		[SuppressMessage("ReSharper", "InconsistentNaming")]
 		private async Task<bool> ReadHeader(Token token)
 		{
@@ -129,10 +130,10 @@ public partial class FrameDecoder<TStream> where TStream: IStreamReader
 			return InjectOrDecode(blockLength, uncompressed);
 		}
 
-		private async Task<long> GetFrameLength(Token token)
+		private async Task<long?> GetFrameLength(Token token)
 		{
 			await EnsureHeader(token).Weave();
-			return _descriptor?.ContentLength ?? -1;
+			return _descriptor?.ContentLength;
 		}
 
 		private async Task<int> ReadOneByte(Token token) =>

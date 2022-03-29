@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams;
+namespace K4os.Compression.LZ4.Streams.Internal;
 
 public abstract class LZ4StreamEssentials: Stream
 {

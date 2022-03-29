@@ -3,17 +3,17 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using K4os.Compression.LZ4.Streams.Internal;
+using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Hash.xxHash;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams
+namespace K4os.Compression.LZ4.Streams.Internal
 {
 	internal struct WriterTools<TStream> where TStream: IStreamWriter
 	{
 		private readonly TStream _stream;
-		private readonly byte[] _buffer;
+		private byte[] _buffer;
 		private readonly int _size;
-		
+
 		private int _head;
 
 		public WriterTools(TStream stream): this(stream, 32) { }
@@ -23,9 +23,16 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			Debug.Assert(size >= 16, "Buffer is too small");
 
 			_stream = stream;
-			_buffer = new byte[size];
-			_size = size - 8;
+			_buffer = BufferPool.Alloc(size);
+			_size = _buffer.Length - 8;
 			_head = 0;
+		}
+
+		public void Dispose()
+		{
+			if (_buffer != null) 
+				BufferPool.Free(_buffer);
+			_buffer = null!;
 		}
 
 		public TStream Stream => _stream;
@@ -40,7 +47,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			_head = 0;
 			return result;
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Write(
 			EmptyToken _, byte[] blockBuffer, int blockOffset, int blockLength) =>
@@ -50,7 +57,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 		public Task Write(
 			CancellationToken token, byte[] blockBuffer, int blockOffset, int blockLength) =>
 			_stream.WriteAsync(blockBuffer, blockOffset, blockLength, token);
-		
+
 		public void Flush(EmptyToken token)
 		{
 			var length = Clear();
@@ -66,20 +73,20 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 				? LZ4Stream.CompletedTask
 				: Write(token, _buffer, 0, length);
 		}
-		
+
 		public int Advance(int loaded)
 		{
 			_head += loaded;
 			return loaded;
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Span<byte> AsSpan(int offset = 0) =>
 			_buffer.AsSpan(offset, Math.Max(0, _head - offset));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Span<byte> OneByteSpan() => _buffer.AsSpan(_size, 1);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Memory<byte> OneByteMemory() => _buffer.AsMemory(_size, 1);
 
@@ -89,51 +96,38 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			result[0] = value;
 			return result;
 		}
-		
+
 		public Memory<byte> OneByteMemory(byte value)
 		{
 			var result = OneByteMemory();
 			result.Span[0] = value;
 			return result;
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		// ReSharper disable once UnusedParameter.Local
-		public Span<byte> OneByteBuffer(in EmptyToken _, byte value) => 
+		public Span<byte> OneByteBuffer(in EmptyToken _, byte value) =>
 			OneByteSpan(value);
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		// ReSharper disable once UnusedParameter.Local
-		public Memory<byte> OneByteBuffer(in CancellationToken _, byte value) => 
+		public Memory<byte> OneByteBuffer(in CancellationToken _, byte value) =>
 			OneByteMemory(value);
 
 		public uint Digest(int offset = 0) =>
 			XXH32.DigestOf(AsSpan(offset));
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Poke1(byte value) => PokeN(value);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Poke2(ushort value) => PokeN(value);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Poke4(uint value) => PokeN(value);
 		
-		public void Poke1(byte value)
-		{
-			#warning can be better
-			_buffer[_head + 0] = value;
-			_head++;
-		}
-
-		public void Poke2(ushort value)
-		{
-			#warning can be better
-			_buffer[_head + 0] = (byte) (value >> 0);
-			_buffer[_head + 1] = (byte) (value >> 8);
-			_head += 2;
-		}
-
-		public void Poke4(uint value)
-		{
-			#warning can be better
-			_buffer[_head + 0] = (byte) (value >> 0);
-			_buffer[_head + 1] = (byte) (value >> 8);
-			_buffer[_head + 2] = (byte) (value >> 16);
-			_buffer[_head + 3] = (byte) (value >> 24);
-			_head += 4;
-		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Poke8(ulong value) => PokeN(value);
 
 		public void TryPoke4(uint? value)
 		{
@@ -142,18 +136,22 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			Poke4(value.Value);
 		}
 
-		public void Poke8(ulong value)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void ValidateBuffer() => _ = _head >= _size ? ThrowBufferTooSmall() : 0;
+
+		private int ThrowBufferTooSmall() => 
+			throw new InvalidOperationException($"Buffer too small ({_size})");
+
+		private unsafe void PokeN<T>(T value) where T: struct
 		{
-			#warning can be better
-			_buffer[_head + 0] = (byte) (value >> 0);
-			_buffer[_head + 1] = (byte) (value >> 8);
-			_buffer[_head + 2] = (byte) (value >> 16);
-			_buffer[_head + 3] = (byte) (value >> 24);
-			_buffer[_head + 4] = (byte) (value >> 32);
-			_buffer[_head + 5] = (byte) (value >> 40);
-			_buffer[_head + 6] = (byte) (value >> 48);
-			_buffer[_head + 7] = (byte) (value >> 56);
-			_head += 8;
+			ValidateBuffer();
+			Unsafe.CopyBlockUnaligned(
+				ref _buffer[_head], 
+				ref *(byte*)Unsafe.AsPointer(ref value),
+				(uint)Unsafe.SizeOf<T>());
+			_head += Unsafe.SizeOf<T>();
 		}
+
+		
 	}
 }

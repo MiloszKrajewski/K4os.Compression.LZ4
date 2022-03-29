@@ -1,6 +1,3 @@
-using System;
-using K4os.Compression.LZ4.Streams.Internal;
-
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
 using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
@@ -9,10 +6,12 @@ using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
+using System;
+using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams
+namespace K4os.Compression.LZ4.Streams
 {
-	public partial class FrameEncoder<TStream> where TStream: IStreamWriter
+	public partial class FrameEncoder<TStream>
 	{
 		private async Task WriteBlock(Token token, BlockInfo block)
 		{
@@ -21,7 +20,7 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 			Writer.Poke4(BlockLengthCode(block));
 			await Writer.Flush(token).Weave();
 
-			Writer.Write(token, block.Buffer, block.Offset, block.Length).Weave();
+			await Writer.Write(token, block.Buffer, block.Offset, block.Length).Weave();
 
 			Writer.TryPoke4(BlockChecksum(block));
 			await Writer.Flush(token).Weave();
@@ -43,6 +42,15 @@ namespace K4os.Compression.LZ4.Streams.NewStreams
 				var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
 				if (block.Ready) await WriteBlock(token, block).Weave();
 			}
+		}
+
+		private async Task<bool> OpenFrame(Token token)
+		{
+			if (!TryStashFrame())
+				return false;
+
+			await Writer.Flush(token).Weave();
+			return true;
 		}
 
 		private async Task CloseFrame(Token token)

@@ -6,6 +6,12 @@ namespace TestHelpers
 {
 	public static class Tools
 	{
+		public static void Fill(this Random random, Span<byte> span)
+		{
+			for (var i = 0; i < span.Length; i++)
+				span[i] = (byte) random.Next();
+		}
+		
 		public static unsafe uint Adler32(byte* data, int length)
 		{
 			const uint modAdler = 65521;

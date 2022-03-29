@@ -4,29 +4,36 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using K4os.Compression.LZ4.Streams.Internal;
+using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Hash.xxHash;
 
-namespace K4os.Compression.LZ4.Streams.NewStreams;
+namespace K4os.Compression.LZ4.Streams.Internal;
 
 internal struct ReaderTools<TStream> where TStream: IStreamReader
 {
 	private readonly TStream _stream;
-	private readonly byte[] _buffer;
+	private byte[] _buffer;
 	private readonly int _size;
-		
+
 	private int _head;
 		
 	public ReaderTools(TStream stream): this(stream, 32) { }
-
+	
 	public ReaderTools(TStream stream, int size)
 	{
 		Debug.Assert(size >= 16, "Buffer is too small");
 			
 		_stream = stream;
-		_buffer = new byte[size];
-		_size = size - 8;
+		_buffer = BufferPool.Alloc(size);
+		_size = _buffer.Length - 8;
 		_head = 0;
+	}
+	
+	public void Dispose()
+	{
+		if (_buffer != null) 
+			BufferPool.Free(_buffer);
+		_buffer = null!;
 	}
 		
 	public TStream Stream => _stream;
