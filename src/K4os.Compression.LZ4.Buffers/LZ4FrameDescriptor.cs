@@ -51,7 +51,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (version != Version)
             {
-                throw new InvalidDataException();
+                throw new InvalidDataException("Invalid LZ4 frame version");
             }
 
             var contentSize = 0UL;
@@ -90,9 +90,8 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (HC != digest)
             {
-                throw new InvalidDataException();
+                throw new InvalidDataException($"The header digest {digest} did not match the header checksum field {HC}");
             }
-
 
             result = new LZ4FrameDescriptor()
             {

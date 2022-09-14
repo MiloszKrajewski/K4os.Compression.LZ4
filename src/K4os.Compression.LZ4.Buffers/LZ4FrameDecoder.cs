@@ -49,7 +49,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (!TryReadHeader(compressed, out var header, out var headerLength))
             {
-                throw new InvalidDataException();
+                throw new InvalidDataException("Unable to read frame header");
             }
             totalConsumed += headerLength;
             compressed = compressed.Slice(headerLength);
@@ -190,9 +190,10 @@ namespace K4os.Compression.LZ4.Buffers
                     }
                     consumed += 4;
 
-                    if (CC != _contentChecksum.Digest())
+                    var digest = _contentChecksum.Digest();
+                    if (CC != digest)
                     {
-                        throw new InvalidDataException();
+                        throw new InvalidDataException($"Found content checksum digest to be {digest} but expected {CC}");
                     }
                 }
 
@@ -222,9 +223,10 @@ namespace K4os.Compression.LZ4.Buffers
                 _blockChecksum.Reset();
                 _blockChecksum.Update(decoded);
 
-                if (_blockChecksum.Digest() != block.BlockChecksum)
+                var digest = _blockChecksum.Digest();
+                if (digest != block.BlockChecksum)
                 {
-                    throw new InvalidDataException();
+                    throw new InvalidDataException($"Found block digest to be {digest} but expected {block.BlockChecksum}");
                 }
             }
 

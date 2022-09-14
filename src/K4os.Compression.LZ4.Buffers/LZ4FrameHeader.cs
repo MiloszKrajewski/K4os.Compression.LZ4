@@ -26,7 +26,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (magic != Magic)
             {
-                throw new InvalidDataException();
+                throw new InvalidDataException("Invalid LZ4 frame magic");
             }
 
             if (!LZ4FrameDescriptor.TryRead(source[4..], out var frameDescriptor, out var frameDescriptorLength))
