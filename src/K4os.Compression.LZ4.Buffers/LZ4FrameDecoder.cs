@@ -59,7 +59,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             while (true)
             {
-                if (!TryTopupAndDecode(decompressed, header, remaining, out var block, out var blockConsumed))
+                if (!TryTopupAndDecode(remaining, header, decompressed, out var block, out var blockConsumed))
                 {
                     throw new InvalidDataException("Unable to completely read block");
                 }
@@ -114,7 +114,7 @@ namespace K4os.Compression.LZ4.Buffers
             while (true)
             {
                 var result = await compressed.ReadAsync(cancellationToken);
-                if (!TryTopupAndDecode(decompressed, header, result.Buffer, out var block, out var blockConsumed))
+                if (!TryTopupAndDecode(result.Buffer, header, decompressed, out var block, out var blockConsumed))
                 {
                     if (result.IsCompleted)
                     {
@@ -173,7 +173,7 @@ namespace K4os.Compression.LZ4.Buffers
             return false;
         }
 
-        private bool TryTopupAndDecode(IBufferWriter<byte> writer, LZ4FrameHeader header, in ReadOnlySequence<byte> source, out LZ4BlockInfo block, out int consumed)
+        private bool TryTopupAndDecode(in ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer, out LZ4BlockInfo block, out int consumed)
         {
             if (!TryReadBlock(source, header, out block, out consumed))
             {
