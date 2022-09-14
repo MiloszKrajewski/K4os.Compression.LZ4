@@ -23,7 +23,7 @@ namespace K4os.Compression.LZ4.Buffers
         /// <param name="level">The compression level</param>
         /// <param name="frameDescriptor">The frame descriptor to use; if none is provided the default used is <see cref="LZ4FrameDescriptor.Default"/></param>
         /// <returns>The number of written bytes</returns>
-        public int Encode(ReadOnlySequence<byte> uncompressed, IBufferWriter<byte> compressed, LZ4Level level = LZ4Level.L00_FAST, LZ4FrameDescriptor? frameDescriptor = null)
+        public int Encode(in ReadOnlySequence<byte> uncompressed, IBufferWriter<byte> compressed, LZ4Level level = LZ4Level.L00_FAST, LZ4FrameDescriptor? frameDescriptor = null)
         {
             var header = new LZ4FrameHeader(frameDescriptor ?? LZ4FrameDescriptor.Default);
 
@@ -113,7 +113,7 @@ namespace K4os.Compression.LZ4.Buffers
             return totalWritten;
         }
 
-        private int WriteBlocks(ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer)
+        private int WriteBlocks(in ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer)
         {
             var totalWritten = 0;
             foreach (var segment in source)
@@ -168,7 +168,7 @@ namespace K4os.Compression.LZ4.Buffers
             return digest;
         }
 
-        private static int WriteBlock(LZ4BlockInfo blockInfo, IBufferWriter<byte> writer)
+        private static int WriteBlock(in LZ4BlockInfo blockInfo, IBufferWriter<byte> writer)
         {
             var block = blockInfo.Span;
             var blockLength = block.Length;

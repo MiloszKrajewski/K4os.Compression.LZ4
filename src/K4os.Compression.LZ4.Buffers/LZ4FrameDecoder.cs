@@ -23,7 +23,7 @@ namespace K4os.Compression.LZ4.Buffers
         /// <param name="frame">The frame buffer</param>
         /// <returns>The frame descriptor</returns>
         /// <exception cref="InvalidDataException"></exception>
-        public LZ4FrameDescriptor GetFrameDescriptor(ReadOnlySequence<byte> frame)
+        public LZ4FrameDescriptor GetFrameDescriptor(in ReadOnlySequence<byte> frame)
         {
             if (!TryReadHeader(frame, out var header, out _))
             {
@@ -39,7 +39,7 @@ namespace K4os.Compression.LZ4.Buffers
         /// <param name="decompressed">The writer to where the decompressed bytes are written</param>
         /// <returns>The number of frame bytes consumed from <paramref name="compressed"/></returns>
         /// <exception cref="InvalidDataException"></exception>
-        public int Decode(ReadOnlySequence<byte> compressed, IBufferWriter<byte> decompressed)
+        public int Decode(in ReadOnlySequence<byte> compressed, IBufferWriter<byte> decompressed)
         {
             var totalConsumed = 0;
             if (compressed.IsEmpty)
@@ -52,20 +52,20 @@ namespace K4os.Compression.LZ4.Buffers
                 throw new InvalidDataException("Unable to read frame header");
             }
             totalConsumed += headerLength;
-            compressed = compressed.Slice(headerLength);
+            var remaining = compressed.Slice(headerLength);
 
             // Setup the decoder for parameters matching the header.
             Setup(header);
 
             while (true)
             {
-                if (!TryTopupAndDecode(decompressed, header, compressed, out var block, out var blockConsumed))
+                if (!TryTopupAndDecode(decompressed, header, remaining, out var block, out var blockConsumed))
                 {
                     throw new InvalidDataException("Unable to completely read block");
                 }
 
                 totalConsumed += blockConsumed;
-                compressed = compressed.Slice(blockConsumed);
+                remaining = remaining.Slice(blockConsumed);
 
                 if (block.BlockLength == 0)
                 {
@@ -140,7 +140,7 @@ namespace K4os.Compression.LZ4.Buffers
             }
         }
 
-        private bool TryReadHeader(ReadOnlySequence<byte> source, [MaybeNullWhen(false)] out LZ4FrameHeader header, out int consumed)
+        private bool TryReadHeader(in ReadOnlySequence<byte> source, [MaybeNullWhen(false)] out LZ4FrameHeader header, out int consumed)
         {
             if (LZ4FrameHeader.TryRead(source.FirstSpan, out header, out var headerLength))
             {
@@ -173,7 +173,7 @@ namespace K4os.Compression.LZ4.Buffers
             return false;
         }
 
-        private bool TryTopupAndDecode(IBufferWriter<byte> writer, LZ4FrameHeader header, ReadOnlySequence<byte> source, out LZ4BlockInfo block, out int consumed)
+        private bool TryTopupAndDecode(IBufferWriter<byte> writer, LZ4FrameHeader header, in ReadOnlySequence<byte> source, out LZ4BlockInfo block, out int consumed)
         {
             if (!TryReadBlock(source, header, out block, out consumed))
             {
@@ -238,7 +238,7 @@ namespace K4os.Compression.LZ4.Buffers
             return true;
         }
 
-        private bool TryReadBlock(ReadOnlySequence<byte> source, LZ4FrameHeader header, out LZ4BlockInfo value, out int consumed)
+        private bool TryReadBlock(in ReadOnlySequence<byte> source, LZ4FrameHeader header, out LZ4BlockInfo value, out int consumed)
         {
             consumed = 0;
 
@@ -283,7 +283,7 @@ namespace K4os.Compression.LZ4.Buffers
             return true;
         }
 
-        private bool TryReadUInt32(ReadOnlySequence<byte> source, out uint value)
+        private bool TryReadUInt32(in ReadOnlySequence<byte> source, out uint value)
         {
             if (source.Length < 4)
             {
