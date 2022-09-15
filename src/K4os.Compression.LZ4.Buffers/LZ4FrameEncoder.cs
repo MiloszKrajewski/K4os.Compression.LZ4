@@ -77,7 +77,7 @@ namespace K4os.Compression.LZ4.Buffers
             {
                 var result = await uncompressed.ReadAsync(cancellationToken);
 
-                var written = WriteBlocks(result.Buffer, header, compressed);
+                var written = await WriteBlocksAsync(result.Buffer, header, compressed, cancellationToken);
                 totalWritten += written;
 
                 // All read bytes are consumed
@@ -133,6 +133,40 @@ namespace K4os.Compression.LZ4.Buffers
                             BlockChecksum = GetBlockChecksum(header)
                         };
                         totalWritten += WriteBlock(block, writer);
+                    }
+
+                    remaining = remaining.Slice(loaded);
+                }
+
+                if (header.FrameDescriptor.ContentChecksumFlag)
+                {
+                    _contentChecksum.Update(segment.Span);
+                }
+            }
+
+            return totalWritten;
+        }
+
+        private async ValueTask<int> WriteBlocksAsync(ReadOnlySequence<byte> source, LZ4FrameHeader header, PipeWriter writer, CancellationToken cancellationToken)
+        {
+            var totalWritten = 0;
+            foreach (var segment in source)
+            {
+                var remaining = segment;
+                while (!remaining.IsEmpty)
+                {
+                    var block = TopupAndEncode(remaining.Span, out var loaded);
+
+                    UpdateBlockChecksum(header, remaining.Span.Slice(0, loaded));
+
+                    if (block.IsCompleted)
+                    {
+                        block = block with
+                        {
+                            BlockChecksum = GetBlockChecksum(header)
+                        };
+                        totalWritten += WriteBlock(block, writer);
+                        await writer.FlushAsync(cancellationToken);
                     }
 
                     remaining = remaining.Slice(loaded);
