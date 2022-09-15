@@ -142,7 +142,7 @@ namespace K4os.Compression.LZ4.Buffers
 
         private bool TryReadHeader(in ReadOnlySequence<byte> source, [MaybeNullWhen(false)] out LZ4FrameHeader header, out int consumed)
         {
-            if (LZ4FrameHeader.TryRead(source.FirstSpan, out header, out var headerLength))
+            if (LZ4FrameHeader.TryRead(source.First.Span, out header, out var headerLength))
             {
                 consumed = headerLength;
                 return true;
@@ -154,11 +154,11 @@ namespace K4os.Compression.LZ4.Buffers
             {
                 var span = segment.Span;
                 var chunk = Math.Min(span.Length, buffer.Length - length);
-                span[..chunk].CopyTo(buffer[length..]);
+                span.Slice(0, chunk).CopyTo(buffer.Slice(length));
 
                 if (length > 0)
                 {
-                    var headerSpan = buffer[..(length + chunk)];
+                    var headerSpan = buffer.Slice(0, length + chunk);
                     if (LZ4FrameHeader.TryRead(headerSpan, out header, out headerLength))
                     {
                         consumed = headerLength;
@@ -212,13 +212,13 @@ namespace K4os.Compression.LZ4.Buffers
 
                 var span = writer.GetSpan(decodedBytes);
                 _decoder.Drain(span, -decodedBytes, decodedBytes);
-                decoded = span[..decodedBytes];
+                decoded = span.Slice(0, decodedBytes);
             }
             else
             {
                 var span = writer.GetSpan(block.Memory.Length);
                 block.Span.CopyTo(span);
-                decoded = span[..block.Memory.Length];
+                decoded = span.Slice(0, block.Memory.Length);
             }
 
             writer.Advance(decoded.Length);
@@ -296,9 +296,9 @@ namespace K4os.Compression.LZ4.Buffers
                 return false;
             }
 
-            if (source.FirstSpan.Length >= 4)
+            if (source.First.Length >= 4)
             {
-                value = BinaryPrimitives.ReadUInt32LittleEndian(source.FirstSpan);
+                value = BinaryPrimitives.ReadUInt32LittleEndian(source.First.Span);
                 return true;
             }
             else

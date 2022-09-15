@@ -123,7 +123,7 @@ namespace K4os.Compression.LZ4.Buffers
                 {
                     var block = TopupAndEncode(remaining, out var loaded);
 
-                    UpdateBlockChecksum(header, remaining[..loaded]);
+                    UpdateBlockChecksum(header, remaining.Slice(0, loaded));
 
                     if (block.IsCompleted)
                     {
@@ -134,7 +134,7 @@ namespace K4os.Compression.LZ4.Buffers
                         totalWritten += WriteBlock(block, writer);
                     }
 
-                    remaining = remaining[loaded..];
+                    remaining = remaining.Slice(loaded);
                 }
 
                 if (header.FrameDescriptor.ContentChecksumFlag)
@@ -175,7 +175,7 @@ namespace K4os.Compression.LZ4.Buffers
             var span = writer.GetSpan(4 + blockLength);
 
             BinaryPrimitives.WriteUInt32LittleEndian(span, (uint)blockLength | (blockInfo.Compressed ? 0 : 0x80000000));
-            block.CopyTo(span[4..]);
+            block.CopyTo(span.Slice(4));
             writer.Advance(4 + blockLength);
             var written = 4 + blockLength;
 

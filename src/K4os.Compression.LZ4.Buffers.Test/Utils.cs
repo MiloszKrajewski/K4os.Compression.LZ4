@@ -18,7 +18,7 @@ namespace K4os.Compression.LZ4.Buffers.Test
             var writer = new ArrayBufferWriter<byte>();
             while (true)
             {
-                var buffer = writer.GetSpan();
+                var buffer = writer.GetMemory();
                 var count = stream.Read(buffer);
                 if (count == 0)
                 {

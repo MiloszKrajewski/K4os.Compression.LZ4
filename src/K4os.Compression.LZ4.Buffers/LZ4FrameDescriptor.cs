@@ -58,7 +58,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (hasContentSize)
             {
-                if (!BinaryPrimitives.TryReadUInt64LittleEndian(source[length..], out contentSize))
+                if (!BinaryPrimitives.TryReadUInt64LittleEndian(source.Slice(length), out contentSize))
                 {
                     result = null;
                     return false;
@@ -69,7 +69,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (hasDictionaryId)
             {
-                if (!BinaryPrimitives.TryReadUInt32LittleEndian(source[length..], out dictionaryId))
+                if (!BinaryPrimitives.TryReadUInt32LittleEndian(source.Slice(length), out dictionaryId))
                 {
                     result = null;
                     return false;
@@ -84,7 +84,7 @@ namespace K4os.Compression.LZ4.Buffers
                 return false;
             }
 
-            var digest = (byte)(XXH32.DigestOf(source[..length]) >> 8);
+            var digest = (byte)(XXH32.DigestOf(source.Slice(0, length)) >> 8);
             var HC = source[length++];
 
             if (HC != digest)
@@ -124,19 +124,19 @@ namespace K4os.Compression.LZ4.Buffers
             // Content size (optional)
             if (ContentSize.HasValue)
             {
-                BinaryPrimitives.WriteUInt64LittleEndian(destination[length..], (ulong)ContentSize.Value);
+                BinaryPrimitives.WriteUInt64LittleEndian(destination.Slice(length), (ulong)ContentSize.Value);
                 length += 8;
             }
 
             // Dictionary id (optional)
             if (DictionaryId.HasValue)
             {
-                BinaryPrimitives.WriteUInt32LittleEndian(destination[length..], (uint)DictionaryId.Value);
+                BinaryPrimitives.WriteUInt32LittleEndian(destination.Slice(length), (uint)DictionaryId.Value);
                 length += 4;
             }
 
             // Header checksum
-            destination[length] = (byte)(XXH32.DigestOf(destination[..length]) >> 8);
+            destination[length] = (byte)(XXH32.DigestOf(destination.Slice(0, length)) >> 8);
             length++;
 
             return length;
