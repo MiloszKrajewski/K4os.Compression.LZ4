@@ -219,7 +219,7 @@ namespace K4os.Compression.LZ4.Buffers
                     out loaded,
                     out var encoded);
 
-            return new LZ4BlockInfo(_buffer!, encoded, action == EncoderAction.Encoded);
+            return new LZ4BlockInfo(_buffer.AsMemory(0, encoded), action == EncoderAction.Encoded);
         }
 
         private LZ4BlockInfo FlushAndEncode()
@@ -229,7 +229,7 @@ namespace K4os.Compression.LZ4.Buffers
                 allowCopy: true,
                 out var encoded);
 
-            return new LZ4BlockInfo(_buffer!, encoded, action == EncoderAction.Encoded);
+            return new LZ4BlockInfo(_buffer.AsMemory(0, encoded), action == EncoderAction.Encoded);
         }
 
         private void Setup(LZ4FrameHeader header, LZ4Level level)

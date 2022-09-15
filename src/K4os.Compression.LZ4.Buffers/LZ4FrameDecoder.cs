@@ -67,7 +67,7 @@ namespace K4os.Compression.LZ4.Buffers
                 totalConsumed += blockConsumed;
                 remaining = remaining.Slice(blockConsumed);
 
-                if (block.BlockLength == 0)
+                if (block.Memory.Length == 0)
                 {
                     return totalConsumed;
                 }
@@ -130,7 +130,7 @@ namespace K4os.Compression.LZ4.Buffers
                 totalConsumed += blockConsumed;
                 compressed.AdvanceTo(result.Buffer.GetPosition(offset: blockConsumed));
 
-                if (block.BlockLength == 0)
+                if (block.Memory.Length == 0)
                 {
                     return totalConsumed;
                 }
@@ -173,14 +173,14 @@ namespace K4os.Compression.LZ4.Buffers
             return false;
         }
 
-        private bool TryTopupAndDecode(in ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer, out LZ4BlockInfo block, out int consumed)
+        private unsafe bool TryTopupAndDecode(in ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer, out LZ4BlockInfo block, out int consumed)
         {
             if (!TryReadBlock(source, header, out block, out consumed))
             {
                 return false;
             }
 
-            if (block.BlockLength == 0)
+            if (block.Memory.Length == 0)
             {
                 if (header.FrameDescriptor.ContentChecksumFlag)
                 {
@@ -204,16 +204,21 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (block.Compressed)
             {
-                var decodedBytes = _decoder.Decode(block.BlockBuffer, 0, block.BlockLength);
+                int decodedBytes;
+                fixed (byte* pBuffer = &block.Span[0])
+                {
+                    decodedBytes = _decoder!.Decode(pBuffer, 0, block.Memory.Length);
+                }
+
                 var span = writer.GetSpan(decodedBytes);
                 _decoder.Drain(span, -decodedBytes, decodedBytes);
                 decoded = span[..decodedBytes];
             }
             else
             {
-                var span = writer.GetSpan(block.BlockLength);
+                var span = writer.GetSpan(block.Memory.Length);
                 block.Span.CopyTo(span);
-                decoded = span[..block.BlockLength];
+                decoded = span[..block.Memory.Length];
             }
 
             writer.Advance(decoded.Length);
@@ -251,7 +256,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (blockLength == 0)
             {
-                value = new LZ4BlockInfo(Array.Empty<byte>(), 0, false);
+                value = new LZ4BlockInfo(default, false);
                 return true;
             }
 
@@ -279,7 +284,7 @@ namespace K4os.Compression.LZ4.Buffers
                 consumed += 4;
             }
 
-            value = new LZ4BlockInfo(_buffer!, (int)blockLength, compressed, blockChecksum);
+            value = new LZ4BlockInfo(_buffer.AsMemory(0, checked((int)blockLength)), compressed, blockChecksum);
             return true;
         }
 
