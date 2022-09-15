@@ -129,6 +129,7 @@ namespace K4os.Compression.LZ4.Buffers
                 // Consume the block
                 totalConsumed += blockConsumed;
                 compressed.AdvanceTo(result.Buffer.GetPosition(offset: blockConsumed));
+                result = default;
 
                 if (block.Memory.Length == 0)
                 {

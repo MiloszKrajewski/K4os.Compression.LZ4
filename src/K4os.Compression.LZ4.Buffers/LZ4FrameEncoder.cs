@@ -76,13 +76,14 @@ namespace K4os.Compression.LZ4.Buffers
             while (true)
             {
                 var result = await uncompressed.ReadAsync(cancellationToken);
-                var buffer = result.Buffer;
 
-                var written = WriteBlocks(buffer, header, compressed);
+                var written = WriteBlocks(result.Buffer, header, compressed);
                 totalWritten += written;
 
                 // All read bytes are consumed
-                uncompressed.AdvanceTo(buffer.End);
+                uncompressed.AdvanceTo(result.Buffer.End);
+                bool isCompleted = result.IsCompleted;
+                result = default;
 
                 if (written > 0)
                 {
@@ -90,7 +91,7 @@ namespace K4os.Compression.LZ4.Buffers
                     await compressed.FlushAsync(cancellationToken);
                 }
 
-                if (result.IsCompleted)
+                if (isCompleted)
                 {
                     var block = FlushAndEncode();
                     if (block.IsCompleted)
