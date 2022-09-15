@@ -1,6 +1,5 @@
 ﻿using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
-using System;
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 

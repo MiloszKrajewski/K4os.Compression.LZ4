@@ -34,7 +34,7 @@ namespace K4os.Compression.LZ4.Buffers
             var headerLength = header.Write(compressed.GetSpan(LZ4FrameHeader.MaxSize));
             compressed.Advance(headerLength);
             var totalWritten = headerLength;
-            
+
             totalWritten += WriteBlocks(uncompressed, header, compressed);
 
             var block = FlushAndEncode();

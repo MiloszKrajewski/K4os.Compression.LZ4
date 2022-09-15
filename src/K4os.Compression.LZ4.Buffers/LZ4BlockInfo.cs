@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace K4os.Compression.LZ4.Buffers
+﻿namespace K4os.Compression.LZ4.Buffers
 {
     internal readonly record struct LZ4BlockInfo(byte[] BlockBuffer, int BlockLength, bool Compressed, uint? BlockChecksum = null)
     {
