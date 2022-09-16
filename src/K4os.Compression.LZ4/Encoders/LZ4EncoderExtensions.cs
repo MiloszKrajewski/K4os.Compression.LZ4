@@ -403,6 +403,22 @@ namespace K4os.Compression.LZ4.Encoders
 				return decoder.Decode(bufferP + offset, length, blockSize);
 		}
 
-	
+		/// <summary>
+		/// Decodes previously compressed block and caches decompressed block in decoder.
+		/// Returns number of bytes decoded.
+		/// See <see cref="ILZ4Decoder.Decode"/>.
+		/// </summary>
+		/// <param name="decoder">Decoder.</param>
+		/// <param name="buffer">Compressed block.</param>
+		/// <param name="blockSize">Size of the block. Value <c>0</c> indicates default block size.</param>
+		/// <returns>Number of decoded bytes.</returns>
+		public static unsafe int Decode(
+			this ILZ4Decoder decoder, ReadOnlySpan<byte> buffer, int blockSize = 0)
+		{
+			fixed (byte* bufferP = buffer)
+			{
+				return decoder.Decode(bufferP, buffer.Length, blockSize);
+			}
+		}
 	}
 }

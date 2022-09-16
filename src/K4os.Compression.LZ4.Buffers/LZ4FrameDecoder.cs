@@ -174,7 +174,7 @@ namespace K4os.Compression.LZ4.Buffers
             return false;
         }
 
-        private unsafe bool TryTopupAndDecode(in ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer, out LZ4BlockInfo block, out int consumed)
+        private bool TryTopupAndDecode(in ReadOnlySequence<byte> source, LZ4FrameHeader header, IBufferWriter<byte> writer, out LZ4BlockInfo block, out int consumed)
         {
             if (!TryReadBlock(source, header, out block, out consumed))
             {
@@ -205,11 +205,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (block.Compressed)
             {
-                int decodedBytes;
-                fixed (byte* pBuffer = &block.Span[0])
-                {
-                    decodedBytes = _decoder!.Decode(pBuffer, 0, block.Memory.Length);
-                }
+                int decodedBytes = _decoder.Decode(block.Span);
 
                 var span = writer.GetSpan(decodedBytes);
                 _decoder.Drain(span, -decodedBytes, decodedBytes);
