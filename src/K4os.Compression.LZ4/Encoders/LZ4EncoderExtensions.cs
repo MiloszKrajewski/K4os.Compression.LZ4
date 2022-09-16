@@ -55,12 +55,24 @@ namespace K4os.Compression.LZ4.Encoders
 		/// <param name="offset">Offset in target buffer.</param>
 		/// <param name="length">Length of target buffer.</param>
 		/// <param name="allowCopy">if <c>true</c> copying bytes is allowed.</param>
-		/// <returns>Number of bytes encoder. If bytes were copied than this value is negative.</returns>
+		/// <returns>Number of bytes encoder. If bytes were copied then this value is negative.</returns>
 		public static unsafe int Encode(
 			this ILZ4Encoder encoder, byte[] target, int offset, int length, bool allowCopy)
 		{
 			fixed (byte* targetP = target)
 				return encoder.Encode(targetP + offset, length, allowCopy);
+		}
+
+		/// <summary>Encodes all bytes currently stored in encoder into target buffer.</summary>
+		/// <param name="encoder">Encoder.</param>
+		/// <param name="target">Target buffer.</param>
+		/// <param name="allowCopy">if <c>true</c> copying bytes is allowed.</param>
+		/// <returns>Number of bytes encoder. If bytes were copied then this value is negative.</returns>
+		public static unsafe int Encode(
+			this ILZ4Encoder encoder, Span<byte> target, bool allowCopy)
+		{
+			fixed (byte* targetP = target)
+				return encoder.Encode(targetP, target.Length, allowCopy);
 		}
 
 		/// <summary>Encodes all bytes currently stored in encoder into target buffer.</summary>
