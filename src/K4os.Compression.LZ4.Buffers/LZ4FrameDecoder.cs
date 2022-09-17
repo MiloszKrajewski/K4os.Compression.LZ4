@@ -67,7 +67,7 @@ namespace K4os.Compression.LZ4.Buffers
                 totalConsumed += blockConsumed;
                 remaining = remaining.Slice(blockConsumed);
 
-                if (block.BlockLength == 0)
+                if (block.Memory.Length == 0)
                 {
                     return totalConsumed;
                 }
@@ -129,8 +129,9 @@ namespace K4os.Compression.LZ4.Buffers
                 // Consume the block
                 totalConsumed += blockConsumed;
                 compressed.AdvanceTo(result.Buffer.GetPosition(offset: blockConsumed));
+                result = default;
 
-                if (block.BlockLength == 0)
+                if (block.Memory.Length == 0)
                 {
                     return totalConsumed;
                 }
@@ -142,7 +143,7 @@ namespace K4os.Compression.LZ4.Buffers
 
         private bool TryReadHeader(in ReadOnlySequence<byte> source, [MaybeNullWhen(false)] out LZ4FrameHeader header, out int consumed)
         {
-            if (LZ4FrameHeader.TryRead(source.FirstSpan, out header, out var headerLength))
+            if (LZ4FrameHeader.TryRead(source.First.Span, out header, out var headerLength))
             {
                 consumed = headerLength;
                 return true;
@@ -154,11 +155,11 @@ namespace K4os.Compression.LZ4.Buffers
             {
                 var span = segment.Span;
                 var chunk = Math.Min(span.Length, buffer.Length - length);
-                span[..chunk].CopyTo(buffer[length..]);
+                span.Slice(0, chunk).CopyTo(buffer.Slice(length));
 
                 if (length > 0)
                 {
-                    var headerSpan = buffer[..(length + chunk)];
+                    var headerSpan = buffer.Slice(0, length + chunk);
                     if (LZ4FrameHeader.TryRead(headerSpan, out header, out headerLength))
                     {
                         consumed = headerLength;
@@ -180,7 +181,7 @@ namespace K4os.Compression.LZ4.Buffers
                 return false;
             }
 
-            if (block.BlockLength == 0)
+            if (block.Memory.Length == 0)
             {
                 if (header.FrameDescriptor.ContentChecksumFlag)
                 {
@@ -204,16 +205,17 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (block.Compressed)
             {
-                var decodedBytes = _decoder.Decode(block.BlockBuffer, 0, block.BlockLength);
+                int decodedBytes = _decoder.Decode(block.Span);
+
                 var span = writer.GetSpan(decodedBytes);
                 _decoder.Drain(span, -decodedBytes, decodedBytes);
-                decoded = span[..decodedBytes];
+                decoded = span.Slice(0, decodedBytes);
             }
             else
             {
-                var span = writer.GetSpan(block.BlockLength);
+                var span = writer.GetSpan(block.Memory.Length);
                 block.Span.CopyTo(span);
-                decoded = span[..block.BlockLength];
+                decoded = span.Slice(0, block.Memory.Length);
             }
 
             writer.Advance(decoded.Length);
@@ -251,7 +253,7 @@ namespace K4os.Compression.LZ4.Buffers
 
             if (blockLength == 0)
             {
-                value = new LZ4BlockInfo(Array.Empty<byte>(), 0, false);
+                value = new LZ4BlockInfo(default, false);
                 return true;
             }
 
@@ -279,7 +281,7 @@ namespace K4os.Compression.LZ4.Buffers
                 consumed += 4;
             }
 
-            value = new LZ4BlockInfo(_buffer!, (int)blockLength, compressed, blockChecksum);
+            value = new LZ4BlockInfo(_buffer.AsMemory(0, checked((int)blockLength)), compressed, blockChecksum);
             return true;
         }
 
@@ -291,9 +293,9 @@ namespace K4os.Compression.LZ4.Buffers
                 return false;
             }
 
-            if (source.FirstSpan.Length >= 4)
+            if (source.First.Length >= 4)
             {
-                value = BinaryPrimitives.ReadUInt32LittleEndian(source.FirstSpan);
+                value = BinaryPrimitives.ReadUInt32LittleEndian(source.First.Span);
                 return true;
             }
             else

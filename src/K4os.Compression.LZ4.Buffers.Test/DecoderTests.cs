@@ -15,7 +15,7 @@ namespace K4os.Compression.LZ4.Buffers.Test
             ("large.bin", "large.bin.c3.lz4"), // Generated with "lz4 -v -B4 -BD -3 large.bin large.bin.c3.lz4"
         }
             .Select(x => new object[] { x.UncompressedFilename, x.CompressedFilename });
-        
+
         [Theory]
         [MemberData(nameof(TestData))]
         public void CanDecode(string expectedFilename, string sourceFilename)

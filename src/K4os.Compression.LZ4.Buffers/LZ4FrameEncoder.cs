@@ -34,7 +34,7 @@ namespace K4os.Compression.LZ4.Buffers
             var headerLength = header.Write(compressed.GetSpan(LZ4FrameHeader.MaxSize));
             compressed.Advance(headerLength);
             var totalWritten = headerLength;
-            
+
             totalWritten += WriteBlocks(uncompressed, header, compressed);
 
             var block = FlushAndEncode();
@@ -76,13 +76,14 @@ namespace K4os.Compression.LZ4.Buffers
             while (true)
             {
                 var result = await uncompressed.ReadAsync(cancellationToken);
-                var buffer = result.Buffer;
 
-                var written = WriteBlocks(buffer, header, compressed);
+                var written = await WriteBlocksAsync(result.Buffer, header, compressed, cancellationToken);
                 totalWritten += written;
 
                 // All read bytes are consumed
-                uncompressed.AdvanceTo(buffer.End);
+                uncompressed.AdvanceTo(result.Buffer.End);
+                bool isCompleted = result.IsCompleted;
+                result = default;
 
                 if (written > 0)
                 {
@@ -90,7 +91,7 @@ namespace K4os.Compression.LZ4.Buffers
                     await compressed.FlushAsync(cancellationToken);
                 }
 
-                if (result.IsCompleted)
+                if (isCompleted)
                 {
                     var block = FlushAndEncode();
                     if (block.IsCompleted)
@@ -123,7 +124,7 @@ namespace K4os.Compression.LZ4.Buffers
                 {
                     var block = TopupAndEncode(remaining, out var loaded);
 
-                    UpdateBlockChecksum(header, remaining[..loaded]);
+                    UpdateBlockChecksum(header, remaining.Slice(0, loaded));
 
                     if (block.IsCompleted)
                     {
@@ -134,7 +135,41 @@ namespace K4os.Compression.LZ4.Buffers
                         totalWritten += WriteBlock(block, writer);
                     }
 
-                    remaining = remaining[loaded..];
+                    remaining = remaining.Slice(loaded);
+                }
+
+                if (header.FrameDescriptor.ContentChecksumFlag)
+                {
+                    _contentChecksum.Update(segment.Span);
+                }
+            }
+
+            return totalWritten;
+        }
+
+        private async ValueTask<int> WriteBlocksAsync(ReadOnlySequence<byte> source, LZ4FrameHeader header, PipeWriter writer, CancellationToken cancellationToken)
+        {
+            var totalWritten = 0;
+            foreach (var segment in source)
+            {
+                var remaining = segment;
+                while (!remaining.IsEmpty)
+                {
+                    var block = TopupAndEncode(remaining.Span, out var loaded);
+
+                    UpdateBlockChecksum(header, remaining.Span.Slice(0, loaded));
+
+                    if (block.IsCompleted)
+                    {
+                        block = block with
+                        {
+                            BlockChecksum = GetBlockChecksum(header)
+                        };
+                        totalWritten += WriteBlock(block, writer);
+                        await writer.FlushAsync(cancellationToken);
+                    }
+
+                    remaining = remaining.Slice(loaded);
                 }
 
                 if (header.FrameDescriptor.ContentChecksumFlag)
@@ -175,7 +210,7 @@ namespace K4os.Compression.LZ4.Buffers
             var span = writer.GetSpan(4 + blockLength);
 
             BinaryPrimitives.WriteUInt32LittleEndian(span, (uint)blockLength | (blockInfo.Compressed ? 0 : 0x80000000));
-            block.CopyTo(span[4..]);
+            block.CopyTo(span.Slice(4));
             writer.Advance(4 + blockLength);
             var written = 4 + blockLength;
 
@@ -219,7 +254,7 @@ namespace K4os.Compression.LZ4.Buffers
                     out loaded,
                     out var encoded);
 
-            return new LZ4BlockInfo(_buffer!, encoded, action == EncoderAction.Encoded);
+            return new LZ4BlockInfo(_buffer.AsMemory(0, encoded), action == EncoderAction.Encoded);
         }
 
         private LZ4BlockInfo FlushAndEncode()
@@ -229,7 +264,7 @@ namespace K4os.Compression.LZ4.Buffers
                 allowCopy: true,
                 out var encoded);
 
-            return new LZ4BlockInfo(_buffer!, encoded, action == EncoderAction.Encoded);
+            return new LZ4BlockInfo(_buffer.AsMemory(0, encoded), action == EncoderAction.Encoded);
         }
 
         private void Setup(LZ4FrameHeader header, LZ4Level level)

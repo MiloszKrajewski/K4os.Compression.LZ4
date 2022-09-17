@@ -29,7 +29,7 @@ namespace K4os.Compression.LZ4.Buffers
                 throw new InvalidDataException("Invalid LZ4 frame magic");
             }
 
-            if (!LZ4FrameDescriptor.TryRead(source[4..], out var frameDescriptor, out var frameDescriptorLength))
+            if (!LZ4FrameDescriptor.TryRead(source.Slice(4), out var frameDescriptor, out var frameDescriptorLength))
             {
                 result = null;
                 length = 0;
@@ -44,10 +44,10 @@ namespace K4os.Compression.LZ4.Buffers
         internal int Write(Span<byte> destination)
         {
             // Magic
-            BinaryPrimitives.WriteUInt32LittleEndian(destination[0..], Magic);
+            BinaryPrimitives.WriteUInt32LittleEndian(destination, Magic);
 
             // Frame Descriptor
-            var fdLength = FrameDescriptor.Write(destination[4..]);
+            var fdLength = FrameDescriptor.Write(destination.Slice(4));
 
             return 4 + fdLength;
         }
