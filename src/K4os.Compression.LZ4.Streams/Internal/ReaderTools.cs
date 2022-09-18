@@ -9,17 +9,19 @@ using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
-internal struct ReaderTools<TStream> where TStream: IStreamReader
+internal struct ReaderTools<TStreamReader, TStreamState> 
+	where TStreamReader: IStreamReader<TStreamState>
 {
-	private readonly TStream _stream;
+	private readonly TStreamReader _stream;
+	
 	private byte[] _buffer;
 	private readonly int _size;
 
 	private int _head;
 		
-	public ReaderTools(TStream stream): this(stream, 32) { }
+	public ReaderTools(TStreamReader stream): this(stream, 32) { }
 	
-	public ReaderTools(TStream stream, int size)
+	public ReaderTools(TStreamReader stream, int size)
 	{
 		Debug.Assert(size >= 16, "Buffer is too small");
 			
@@ -36,7 +38,7 @@ internal struct ReaderTools<TStream> where TStream: IStreamReader
 		_buffer = null!;
 	}
 		
-	public TStream Stream => _stream;
+	public TStreamReader Stream => _stream;
 
 	public bool Empty => _head <= 0;
 
@@ -52,27 +54,35 @@ internal struct ReaderTools<TStream> where TStream: IStreamReader
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Read(
-		EmptyToken _, int count, bool optional = false) =>
-		_stream.TryReadBlock(_buffer, _head, count, optional);
+		EmptyToken _, 
+		ref TStreamState state, 
+		int count, 
+		bool optional = false) =>
+		_stream.TryReadBlock(ref state, _buffer, _head, count, optional);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Task<int> Read(
-		CancellationToken token, int count, bool optional = false) =>
-		_stream.TryReadBlockAsync(_buffer, _head, count, optional, token);
+	public Task<ReadResult<TStreamState>> Read(
+		CancellationToken token, 
+		TStreamState state, 
+		int count, 
+		bool optional = false) =>
+		_stream.TryReadBlockAsync(state, _buffer, _head, count, optional, token);
 		
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Read(
 		EmptyToken _, 
+		ref TStreamState state,
 		byte[] buffer, int offset, int count, 
 		bool optional = false) =>
-		_stream.TryReadBlock(buffer, offset, count, optional);
+		_stream.TryReadBlock(ref state, buffer, offset, count, optional);
 		
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Task<int> Read(
+	public Task<ReadResult<TStreamState>> Read(
 		CancellationToken token, 
+		TStreamState state, 
 		byte[] buffer, int offset, int count, 
 		bool optional = false) =>
-		_stream.TryReadBlockAsync(buffer, offset, count, optional, token);
+		_stream.TryReadBlockAsync(state, buffer, offset, count, optional, token);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Advance(int loaded)

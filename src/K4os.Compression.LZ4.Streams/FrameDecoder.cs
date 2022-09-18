@@ -13,11 +13,13 @@ namespace K4os.Compression.LZ4.Streams;
 /// <summary>
 /// LZ4 Decompression stream handling.
 /// </summary>
-public partial class FrameDecoder<TStream>: 
+public partial class FrameDecoder<TStreamReader, TStreamState>: 
 	IFrameDecoder 
-	where TStream: IStreamReader
+	where TStreamReader: IStreamReader<TStreamState>
 {
-	private ReaderTools<TStream> _reader;
+	private ReaderTools<TStreamReader, TStreamState> _reader;
+	private TStreamState _state;
+	
 	private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
 
 	private ILZ4Descriptor _descriptor;
@@ -28,17 +30,20 @@ public partial class FrameDecoder<TStream>:
 
 	private long _bytesRead;
 
-	private ref ReaderTools<TStream> Reader => ref _reader;
+	private ref ReaderTools<TStreamReader, TStreamState> Reader => ref _reader;
 
 	/// <summary>Creates new instance <see cref="LZ4DecoderStream"/>.</summary>
 	/// <param name="stream">Inner stream.</param>
+	/// <param name="state0">Inner stream initial state.</param>
 	/// <param name="decoderFactory">Decoder factory.</param>
 	public FrameDecoder(
-		TStream stream,
+		TStreamReader stream,
+		TStreamState state0,
 		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory)
 	{
 		_decoderFactory = decoderFactory;
-		_reader = new ReaderTools<TStream>(stream);
+		_reader = new ReaderTools<TStreamReader, TStreamState>(stream);
+		_state = state0;
 		_bytesRead = 0;
 	}
 
@@ -135,11 +140,6 @@ public partial class FrameDecoder<TStream>:
 		CancellationToken token, Memory<byte> buffer, bool interactive = false) =>
 		ReadManyBytes(token, buffer, interactive);
 	
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Task<int> ReadManyBytesAsync(
-		Memory<byte> buffer, bool interactive = false) =>
-		ReadManyBytes(CancellationToken.None, buffer, interactive);
-
 	private static NotImplementedException NotImplemented(string feature) =>
 		new($"Feature '{feature}' is not implemented");
 
@@ -165,4 +165,22 @@ public partial class FrameDecoder<TStream>:
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
+	
+	private int ReadMeta(EmptyToken token, int length, bool optional = false)
+	{
+		var loaded = Reader.Read(token, ref _state, length, optional);
+		return loaded;
+	}
+	
+	private async Task<int> ReadMeta(CancellationToken token, int length, bool optional = false)
+	{
+		(_state, var loaded) = await Reader.Read(token, _state, length, optional).Weave();
+		return loaded;
+	}
+
+	private void ReadData(EmptyToken token, int length) => 
+		Reader.Read(token, ref _state, _buffer, 0, length);
+
+	private async Task ReadData(CancellationToken token, int length) => 
+		_state = (await Reader.Read(token, _state, _buffer, 0, length).Weave()).State;
 }

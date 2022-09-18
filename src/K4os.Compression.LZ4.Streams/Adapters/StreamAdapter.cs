@@ -6,25 +6,27 @@ using K4os.Compression.LZ4.Streams.Abstractions;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;
 
-public readonly struct StreamAdapter: IStreamReader, IStreamWriter
+public readonly struct StreamAdapter:
+	IStreamReader<Stream>, IStreamWriter<Stream>
 {
-	private readonly Stream _stream;
-
-	public StreamAdapter(Stream stream) => _stream = stream;
-
 	public int Read(
+		ref Stream stream,
 		byte[] buffer, int offset, int length) =>
-		_stream.Read(buffer, offset, length);
+		stream.Read(buffer, offset, length);
 
-	public Task<int> ReadAsync(
-		byte[] buffer, int offset, int length, CancellationToken token) =>
-		_stream.ReadAsync(buffer, offset, length, token);
+	public Task<ReadResult<Stream>> ReadAsync(
+		Stream stream, byte[] buffer, int offset, int length, CancellationToken token) =>
+		ReadResult.Some(stream, stream.ReadAsync(buffer, offset, length, token));
 
-	public void Write(
-		byte[] buffer, int offset, int length) =>
-		_stream.Write(buffer, offset, length);
+	public void Write(ref Stream stream, byte[] buffer, int offset, int length) =>
+		stream.Write(buffer, offset, length);
 
-	public Task WriteAsync(
-		byte[] buffer, int offset, int length, CancellationToken token) =>
-		_stream.WriteAsync(buffer, offset, length, token);
+	public async Task<Stream> WriteAsync(
+		Stream stream,
+		byte[] buffer, int offset, int length,
+		CancellationToken token)
+	{
+		await stream.WriteAsync(buffer, offset, length, token);
+		return stream;
+	}
 }

@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Streams;
 
 public class LZ4EncoderStream: LZ4StreamEssentials
 {
-	private readonly FrameEncoder<StreamAdapter> _encoder;
+	private readonly FrameEncoder<StreamAdapter, Stream> _encoder;
 
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="inner">Inner stream.</param>
@@ -26,8 +26,8 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 		bool leaveOpen = false):
 		base(inner, leaveOpen)
 	{
-		_encoder = new FrameEncoder<StreamAdapter>(
-			new StreamAdapter(inner), encoderFactory, descriptor);
+		_encoder = new FrameEncoder<StreamAdapter, Stream>(
+			default, inner, encoderFactory, descriptor);
 	}
 
 	protected override void Dispose(bool disposing)

@@ -6,23 +6,28 @@ using K4os.Compression.LZ4.Streams.Abstractions;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;
 
-public readonly struct BufferWriterAdapter: IStreamWriter
+public struct BufferWriterAdapter<TBufferWriter>: 
+	IStreamWriter<TBufferWriter>
+	where TBufferWriter: IBufferWriter<byte>
 {
-	private readonly IBufferWriter<byte> _writer;
-
-	public BufferWriterAdapter(IBufferWriter<byte> writer) => _writer = writer;
-
-	public void Write(byte[] buffer, int offset, int length)
+	public void Write(
+		ref TBufferWriter state,
+		byte[] buffer, int offset, int length)
 	{
 		if (length <= 0) return;
 
-		buffer.AsSpan(offset, length).CopyTo(_writer.GetSpan(length));
-		_writer.Advance(length);
+		var source = buffer.AsSpan(offset, length);
+		var target = state.GetSpan(length);
+		source.CopyTo(target);
+		state.Advance(length);
 	}
 
-	public Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken token)
+	public Task<TBufferWriter> WriteAsync(
+		TBufferWriter state,
+		byte[] buffer, int offset, int length,
+		CancellationToken token)
 	{
-		Write(buffer, offset, length);
-		return LZ4Stream.CompletedTask;
+		Write(ref state, buffer, offset, length);
+		return Task.FromResult(state);
 	}
 }
