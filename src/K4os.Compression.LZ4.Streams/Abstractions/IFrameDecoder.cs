@@ -36,8 +36,6 @@ public interface IFrameDecoder: IDisposable
 		Span<byte> buffer, bool interactive = false);
 	Task<int> ReadManyBytesAsync(
 		CancellationToken token, Memory<byte> buffer, bool interactive = false);
-	Task<int> ReadManyBytesAsync(
-		Memory<byte> buffer, bool interactive = false);
 	
 	long GetBytesRead();
 	

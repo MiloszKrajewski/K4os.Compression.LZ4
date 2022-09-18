@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Streams;
 
 public class LZ4DecoderStream: LZ4StreamEssentials
 {
-	private readonly FrameDecoder<StreamAdapter> _decoder;
+	private readonly FrameDecoder<StreamAdapter, Stream> _decoder;
 	private readonly bool _interactive;
 
 	public LZ4DecoderStream(
@@ -20,7 +20,7 @@ public class LZ4DecoderStream: LZ4StreamEssentials
 		bool interactive = false):
 		base(inner, leaveOpen)
 	{
-		_decoder = new FrameDecoder<StreamAdapter>(new StreamAdapter(inner), decoderFactory);
+		_decoder = new FrameDecoder<StreamAdapter, Stream>(default, inner, decoderFactory);
 		_interactive = interactive;
 	}
 

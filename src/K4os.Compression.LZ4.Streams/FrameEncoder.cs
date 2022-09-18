@@ -13,11 +13,12 @@ namespace K4os.Compression.LZ4.Streams
 	/// <summary>
 	/// LZ4 stream encoder. 
 	/// </summary>
-	public partial class FrameEncoder<TStream>: 
+	public partial class FrameEncoder<TStreamWriter, TStreamState>: 
 		IFrameEncoder 
-		where TStream: IStreamWriter
+		where TStreamWriter: IStreamWriter<TStreamState>
 	{
-		private WriterTools<TStream> _writer;
+		private WriterTools<TStreamWriter, TStreamState> _writer;
+		private TStreamState _state;
 		private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
 
 		private ILZ4Descriptor _descriptor;
@@ -27,18 +28,21 @@ namespace K4os.Compression.LZ4.Streams
 
 		private long _bytesWritten;
 
-		private ref WriterTools<TStream> Writer => ref _writer;
+		private ref WriterTools<TStreamWriter, TStreamState> Writer => ref _writer;
 
 		/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 		/// <param name="inner">Inner stream.</param>
+		/// <param name="state0">Inner stream initial state.</param>
 		/// <param name="encoderFactory">LZ4 Encoder factory.</param>
 		/// <param name="descriptor">LZ4 Descriptor.</param>
 		public FrameEncoder(
-			TStream inner,
+			TStreamWriter inner,
+			TStreamState state0,
 			Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 			ILZ4Descriptor descriptor)
 		{
-			_writer = new WriterTools<TStream>(inner);
+			_writer = new WriterTools<TStreamWriter, TStreamState>(inner);
+			_state = state0;
 			_encoderFactory = encoderFactory;
 			_descriptor = descriptor;
 			_bytesWritten = 0;
@@ -166,7 +170,7 @@ namespace K4os.Compression.LZ4.Streams
 			blockSize <= Mem.M1 ? 6 :
 			blockSize <= Mem.M4 ? 7 :
 			throw InvalidBlockSize(blockSize);
-
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public long GetBytesWritten() => _bytesWritten;
 
@@ -223,6 +227,20 @@ namespace K4os.Compression.LZ4.Streams
 		}
 
 		#endif
+		
+		private void FlushMeta(EmptyToken token) => 
+			Writer.Flush(token, ref _state);
+		
+		private async Task FlushMeta(CancellationToken token) => 
+			_state = await Writer.Flush(token, _state).Weave();
+	
+		private void WriteData(EmptyToken token, BlockInfo block) =>
+			Writer.Write(token, ref _state, block.Buffer, block.Offset, block.Length);
+
+		private async Task WriteData(CancellationToken token, BlockInfo block) =>
+			_state = await Writer
+				.Write(token, _state, block.Buffer, block.Offset, block.Length)
+				.Weave();
 		
 		private NotImplementedException NotImplemented(string operation) =>
 			new($"Feature {operation} has not been implemented in {GetType().Name}");

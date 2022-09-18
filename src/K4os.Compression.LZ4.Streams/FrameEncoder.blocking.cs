@@ -16,80 +16,79 @@ using Token = System.Threading.CancellationToken;
 using System;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams
+namespace K4os.Compression.LZ4.Streams;
+
+public partial class FrameEncoder<TStreamWriter, TStreamState>
 {
-	public partial class FrameEncoder<TStream>
+	private /*async*/ void WriteBlock(Token token, BlockInfo block)
 	{
-		private /*async*/ void WriteBlock(Token token, BlockInfo block)
+		if (!block.Ready) return;
+
+		Writer.Poke4(BlockLengthCode(block));
+		/*await*/ FlushMeta(token);
+		
+		/*await*/ WriteData(token, block);
+
+		Writer.TryPoke4(BlockChecksum(block));
+		/*await*/ FlushMeta(token);
+	}
+
+	private void WriteOneByte(Token token, byte value) =>
+		WriteManyBytes(token, Writer.OneByteBuffer(token, value));
+
+	private /*async*/ void WriteManyBytes(Token token, ReadableBuffer buffer)
+	{
+		if (TryStashFrame())
+			/*await*/ FlushMeta(token);
+
+		var offset = 0;
+		var count = buffer.Length;
+
+		while (count > 0)
 		{
-			if (!block.Ready) return;
-
-			Writer.Poke4(BlockLengthCode(block));
-			/*await*/ Writer.Flush(token);
-
-			/*await*/ Writer.Write(token, block.Buffer, block.Offset, block.Length);
-
-			Writer.TryPoke4(BlockChecksum(block));
-			/*await*/ Writer.Flush(token);
+			var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
+			if (block.Ready) /*await*/ WriteBlock(token, block);
 		}
+	}
 
-		private void WriteOneByte(Token token, byte value) =>
-			WriteManyBytes(token, Writer.OneByteBuffer(token, value));
+	private /*async*/ bool OpenFrame(Token token)
+	{
+		if (!TryStashFrame())
+			return false;
 
-		private /*async*/ void WriteManyBytes(Token token, ReadableBuffer buffer)
+		/*await*/ FlushMeta(token);
+		return true;
+	}
+
+	private /*async*/ void CloseFrame(Token token)
+	{
+		if (_encoder == null)
+			return;
+
+		try
 		{
-			if (TryStashFrame())
-				/*await*/ Writer.Flush(token);
+			/*await*/ WriteFrameTail(token);
 
-			var offset = 0;
-			var count = buffer.Length;
-
-			while (count > 0)
-			{
-				var block = TopupAndEncode(buffer.ToSpan(), ref offset, ref count);
-				if (block.Ready) /*await*/ WriteBlock(token, block);
-			}
+			if (_buffer is not null)
+				ReleaseBuffer(_buffer);
+			_encoder.Dispose();
 		}
-
-		private /*async*/ bool OpenFrame(Token token)
+		finally
 		{
-			if (!TryStashFrame())
-				return false;
-
-			/*await*/ Writer.Flush(token);
-			return true;
+			_encoder = null;
+			_descriptor = null;
+			_buffer = null;
 		}
+	}
 
-		private /*async*/ void CloseFrame(Token token)
-		{
-			if (_encoder == null)
-				return;
+	private /*async*/ void WriteFrameTail(Token token)
+	{
+		var block = FlushAndEncode();
+		if (block.Ready)
+			/*await*/ WriteBlock(token, block);
 
-			try
-			{
-				/*await*/ WriteFrameTail(token);
-
-				if (_buffer is not null)
-					ReleaseBuffer(_buffer);
-				_encoder.Dispose();
-			}
-			finally
-			{
-				_encoder = null;
-				_descriptor = null;
-				_buffer = null;
-			}
-		}
-
-		private /*async*/ void WriteFrameTail(Token token)
-		{
-			var block = FlushAndEncode();
-			if (block.Ready)
-				/*await*/ WriteBlock(token, block);
-
-			Writer.Poke4(0);
-			Writer.TryPoke4(ContentChecksum());
-			/*await*/ Writer.Flush(token);
-		}
+		Writer.Poke4(0);
+		Writer.TryPoke4(ContentChecksum());
+		/*await*/ FlushMeta(token);
 	}
 }
