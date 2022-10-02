@@ -17,7 +17,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams;
+namespace K4os.Compression.LZ4.Streams.Frames;
 
 public partial class FrameDecoder<TStreamReader, TStreamState>
 {

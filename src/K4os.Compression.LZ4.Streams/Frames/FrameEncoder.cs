@@ -8,7 +8,7 @@ using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams;
+namespace K4os.Compression.LZ4.Streams.Frames;
 
 /// <summary>
 /// LZ4 stream encoder. 

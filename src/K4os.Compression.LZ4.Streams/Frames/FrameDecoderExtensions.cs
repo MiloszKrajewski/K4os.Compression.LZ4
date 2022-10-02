@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
 
-namespace K4os.Compression.LZ4.Streams;
+namespace K4os.Compression.LZ4.Streams.Frames;
 
 public static class FrameDecoderExtensions
 {
