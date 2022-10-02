@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams.Adapters;
+using K4os.Compression.LZ4.Streams.Frames;
 using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams;

@@ -1,8 +1,10 @@
 using System;
+using System.Buffers;
 using System.IO;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
+using K4os.Compression.LZ4.Streams.Frames;
 using TestHelpers;
 using Xunit;
 
@@ -102,6 +104,36 @@ public class MemoryAdapterTests
 			var decompressedBytes = ReadAllBytes(decoder);
 			Tools.SameBytes(originalBytes.AsSpan(), decompressedBytes.Span);
 		}
+	}
+	
+	[Theory]
+	[InlineData(".corpus/webster")]
+	[InlineData(".corpus/mozilla")]
+	[InlineData(".corpus/dickens")]
+	public void RoundtripWithByteSequence(string filename)
+	{
+		filename = Tools.FindFile(filename);
+		var originalBytes = File.ReadAllBytes(filename);
+
+		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
+
+		var encoder = new FrameEncoder<MemoryAdapter, Memory<byte>>(
+			new MemoryAdapter(),
+			new Memory<byte>(compressedBytes),
+			d => d.CreateEncoder(),
+			DefaultSettings);
+
+		WriteAllBytes(originalBytes, encoder);
+		var compressedLength = compressedBytes.Length - encoder.Stream.Length;
+
+		var decoder = new FrameDecoder<ByteSequenceAdapter, ReadOnlySequence<byte>>(
+			new ByteSequenceAdapter(),
+			ByteSegment.BuildSequence(compressedBytes.AsMemory(0, compressedLength), () => 1337),
+			d => d.CreateDecoder());
+
+		var decompressedBytes = ReadAllBytes(decoder);
+
+		Tools.SameBytes(originalBytes.AsSpan(), decompressedBytes.Span);
 	}
 
 	private static void WriteAllBytes(ReadOnlyMemory<byte> buffer, IFrameEncoder encoder)
