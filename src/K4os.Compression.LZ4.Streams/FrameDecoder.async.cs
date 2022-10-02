@@ -17,31 +17,31 @@ public partial class FrameDecoder<TStreamReader, TStreamState>
 	private async Task<ulong> Peek8(Token token)
 	{
 		var loaded = await ReadMeta(token, sizeof(ulong)).Weave();
-		return Reader.Last8(loaded);
+		return _stash.Last8(loaded);
 	}
 
 	private async Task<uint?> TryPeek4(Token token)
 	{
 		var loaded = await ReadMeta(token, sizeof(uint), true).Weave();
-		return loaded <= 0 ? null : Reader.Last4(loaded);
+		return loaded <= 0 ? null : _stash.Last4(loaded);
 	}
 
 	private async Task<uint> Peek4(Token token)
 	{
 		var loaded = await ReadMeta(token, sizeof(uint)).Weave();
-		return Reader.Last4(loaded);
+		return _stash.Last4(loaded);
 	}
 
 	private async Task<ushort> Peek2(Token token)
 	{
 		var loaded = await ReadMeta(token, sizeof(ushort)).Weave();
-		return Reader.Last2(loaded);
+		return _stash.Last2(loaded);
 	}
 
 	private async Task<byte> Peek1(Token token)
 	{
 		var loaded = await ReadMeta(token, sizeof(byte)).Weave();
-		return Reader.Last1(loaded);
+		return _stash.Last1(loaded);
 	}
 
 	private async Task<bool> EnsureHeader(Token token) =>
@@ -50,7 +50,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	private async Task<bool> ReadHeader(Token token)
 	{
-		Reader.Clear();
+		_stash.Flush();
 
 		var magic = await TryPeek4(token).Weave();
 
@@ -60,7 +60,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>
 		if (magic != 0x184D2204)
 			throw MagicNumberExpected();
 
-		var headerOffset = Reader.Length;
+		var headerOffset = _stash.Head;
 
 		var FLG_BD = await Peek2(token).Weave();
 
@@ -82,7 +82,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>
 		var contentLength = hasContentSize ? (long?)await Peek8(token).Weave() : null;
 		var dictionaryId = hasDictionary ? (uint?)await Peek4(token).Weave() : null;
 
-		var actualHC = (byte)(Reader.Digest(headerOffset) >> 8);
+		var actualHC = (byte)(_stash.Digest(headerOffset) >> 8);
 
 		var expectedHC = await Peek1(token).Weave();
 
@@ -107,7 +107,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>
 
 	private async Task<int> ReadBlock(Token token)
 	{
-		Reader.Clear();
+		_stash.Flush();
 
 		var blockLength = (int)await Peek4(token).Weave();
 		if (blockLength == 0)
@@ -136,8 +136,8 @@ public partial class FrameDecoder<TStreamReader, TStreamState>
 	}
 
 	private async Task<int> ReadOneByte(Token token) =>
-		await ReadManyBytes(token, Reader.OneByteBuffer(token)) > 0
-			? Reader.OneByteValue()
+		await ReadManyBytes(token, _stash.OneByteBuffer(token)) > 0
+			? _stash.OneByteValue()
 			: -1;
 
 	private async Task<int> ReadManyBytes(

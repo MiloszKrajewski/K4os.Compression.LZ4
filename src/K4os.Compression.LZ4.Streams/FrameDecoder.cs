@@ -13,13 +13,14 @@ namespace K4os.Compression.LZ4.Streams;
 /// <summary>
 /// LZ4 Decompression stream handling.
 /// </summary>
-public partial class FrameDecoder<TStreamReader, TStreamState>: 
-	IFrameDecoder 
+public partial class FrameDecoder<TStreamReader, TStreamState>:
+	IFrameDecoder
 	where TStreamReader: IStreamReader<TStreamState>
 {
-	private ReaderTools<TStreamReader, TStreamState> _reader;
-	private TStreamState _state;
-	
+	private readonly TStreamReader _reader;
+	private TStreamState _stream;
+	private Stash _stash = new();
+
 	private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
 
 	private ILZ4Descriptor _descriptor;
@@ -30,20 +31,18 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 
 	private long _bytesRead;
 
-	private ref ReaderTools<TStreamReader, TStreamState> Reader => ref _reader;
-
 	/// <summary>Creates new instance <see cref="LZ4DecoderStream"/>.</summary>
-	/// <param name="stream">Inner stream.</param>
-	/// <param name="state0">Inner stream initial state.</param>
+	/// <param name="reader">Inner stream.</param>
+	/// <param name="stream">Inner stream initial state.</param>
 	/// <param name="decoderFactory">Decoder factory.</param>
 	public FrameDecoder(
-		TStreamReader stream,
-		TStreamState state0,
+		TStreamReader reader,
+		TStreamState stream,
 		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory)
 	{
 		_decoderFactory = decoderFactory;
-		_reader = new ReaderTools<TStreamReader, TStreamState>(stream);
-		_state = state0;
+		_reader = reader;
+		_stream = stream;
 		_bytesRead = 0;
 	}
 
@@ -55,6 +54,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 	private ILZ4Decoder CreateDecoder(ILZ4Descriptor descriptor) =>
 		_decoderFactory(descriptor);
 
+	/// <inheritdoc />
 	public void CloseFrame()
 	{
 		if (_decoder is null)
@@ -73,7 +73,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 			_decoder = null;
 		}
 	}
-	
+
 	/// <summary>Allocate temporary buffer to store decompressed data.</summary>
 	/// <param name="size">Minimum size of the buffer.</param>
 	/// <returns>Allocated buffer.</returns>
@@ -104,42 +104,51 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 		return false;
 	}
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool OpenFrame() => 
+	public bool OpenFrame() =>
 		EnsureHeader(EmptyToken.Value);
-	
+
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Task<bool> OpenFrameAsync(CancellationToken token) => 
+	public Task<bool> OpenFrameAsync(CancellationToken token) =>
 		EnsureHeader(token);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public long GetBytesRead() => _bytesRead;
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public long? GetFrameLength() =>
 		GetFrameLength(EmptyToken.Value);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task<long?> GetFrameLengthAsync(CancellationToken token = default) =>
 		GetFrameLength(token);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int ReadOneByte() =>
 		ReadOneByte(EmptyToken.Value);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task<int> ReadOneByteAsync(CancellationToken token = default) =>
 		ReadOneByte(token);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int ReadManyBytes(Span<byte> buffer, bool interactive = false) =>
 		ReadManyBytes(EmptyToken.Value, buffer, interactive);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task<int> ReadManyBytesAsync(
 		CancellationToken token, Memory<byte> buffer, bool interactive = false) =>
 		ReadManyBytes(token, buffer, interactive);
-	
+
 	private static NotImplementedException NotImplemented(string feature) =>
 		new($"Feature '{feature}' is not implemented");
 
@@ -152,35 +161,51 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 	private static InvalidDataException UnknownFrameVersion(int version) =>
 		new($"LZ4 frame version {version} is not supported");
 
+	/// <summary>
+	/// Disposes the decoder. Consecutive attempts to read will fail.
+	/// </summary>
+	/// <param name="disposing"><c>true</c> is stream is being disposed by user,
+	/// <c>true</c> is by garbage collector.</param>
 	protected virtual void Dispose(bool disposing)
 	{
 		if (!disposing) return;
 
 		CloseFrame();
-		Reader.Dispose();
+		_stash.Dispose();
 	}
 
+	/// <inheritdoc />
 	public void Dispose()
 	{
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
-	
-	private int ReadMeta(EmptyToken token, int length, bool optional = false)
+
+	// ReSharper disable once UnusedParameter.Local
+	private int ReadMeta(EmptyToken _, int length, bool optional = false)
 	{
-		var loaded = Reader.Read(token, ref _state, length, optional);
+		var buffer = _stash.Data;
+		var head = _stash.Head;
+		var loaded = _reader.TryReadBlock(ref _stream, buffer, head, length, optional);
 		return loaded;
 	}
-	
+
 	private async Task<int> ReadMeta(CancellationToken token, int length, bool optional = false)
 	{
-		(_state, var loaded) = await Reader.Read(token, _state, length, optional).Weave();
+		var buffer = _stash.Data;
+		var head = _stash.Head;
+		(_stream, var loaded) = await _reader
+			.TryReadBlockAsync(_stream, buffer, head, length, optional, token)
+			.Weave();
 		return loaded;
 	}
 
-	private void ReadData(EmptyToken token, int length) => 
-		Reader.Read(token, ref _state, _buffer, 0, length);
+	// ReSharper disable once UnusedParameter.Local
+	private void ReadData(EmptyToken _, int length) => 
+		_reader.TryReadBlock(ref _stream, _buffer, 0, length, false);
 
-	private async Task ReadData(CancellationToken token, int length) => 
-		_state = (await Reader.Read(token, _state, _buffer, 0, length).Weave()).State;
+	private async Task ReadData(CancellationToken token, int length) =>
+		_stream = (await _reader
+			.TryReadBlockAsync(_stream, _buffer, 0, length, false, token)
+			.Weave()).Stream;
 }

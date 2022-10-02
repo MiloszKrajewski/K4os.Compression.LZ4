@@ -1,4 +1,6 @@
-﻿namespace K4os.Compression.LZ4.Streams;
+﻿using System;
+
+namespace K4os.Compression.LZ4.Streams;
 
 /// <summary>
 /// LZ4 frame descriptor.
