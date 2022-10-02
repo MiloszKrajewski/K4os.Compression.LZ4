@@ -44,12 +44,7 @@ namespace K4os.Compression.LZ4.vPrev.Internal
 		public const int M4 = 4 * M1;
 
 		/// <summary>Empty byte array.</summary>
-		#if NET45
-		public static readonly byte[] Empty = new byte[0];
-		#else
 		public static readonly byte[] Empty = Array.Empty<byte>();
-		#endif
-
 
 		/// <summary>Rounds integer value up to nearest multiple of step.</summary>
 		/// <param name="value">A value.</param>
@@ -69,15 +64,8 @@ namespace K4os.Compression.LZ4.vPrev.Internal
 		/// <param name="source">The source block address.</param>
 		/// <param name="length">Length in bytes.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Copy(byte* target, byte* source, int length)
-		{
-			#if !NET45
+		public static void Copy(byte* target, byte* source, int length) => 
 			Buffer.MemoryCopy(source, target, length, length);
-			#else
-			if (length <= 0) return;
-			Unsafe.CopyBlock(target, source, (uint) length);
-			#endif
-		}
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/>.
@@ -87,15 +75,8 @@ namespace K4os.Compression.LZ4.vPrev.Internal
 		/// <param name="source">The source block address.</param>
 		/// <param name="length">Length in bytes.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static void Move(byte* target, byte* source, int length)
-		{
-			#if !NET45
+		public static void Move(byte* target, byte* source, int length) => 
 			Buffer.MemoryCopy(source, target, length, length);
-			#else
-			if (length <= 0) return;
-			Unsafe.CopyBlock(target, source, (uint) length);
-			#endif
-		}
 
 		/// <summary>
 		/// Copies memory block for <paramref name="source"/> to <paramref name="target"/> 

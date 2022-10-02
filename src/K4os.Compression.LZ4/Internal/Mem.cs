@@ -2,10 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#if NET45 || DEBUG
-using System.Diagnostics.CodeAnalysis;
-#endif
-
 namespace K4os.Compression.LZ4.Internal
 {
 	/// <summary>Utility class with memory related functions.</summary>
@@ -48,11 +44,7 @@ namespace K4os.Compression.LZ4.Internal
 		public const int M4 = 4 * M1;
 
 		/// <summary>Empty byte array.</summary>
-#if NET45
-		public static readonly byte[] Empty = new byte[0];
-#else
 		public static readonly byte[] Empty = Array.Empty<byte>();
-#endif
 
 		/// <summary>Checks if process is ran in 32-bit mode.</summary>
 		public static bool System32
@@ -111,38 +103,9 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
-#if NET45 || DEBUG
-			EnsureNoCopyOverlap(target, source, length);
-#endif
-
-#if NET45
-			if (length <= 0) return;
-
-			CpBlk(target, source, (uint) length);
-#else
 			Buffer.MemoryCopy(source, target, length, length);
-#endif
 		}
 		
-#if NET45 || DEBUG
-
-		[SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local")]
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void EnsureNoCopyOverlap(byte* target, byte* source, int length)
-		{
-			// This is early warning: memmove/Move is not available on
-			// NET45 (it would need to be implemented manually with all
-			// handling potential memory misalignment which is not trivial)
-			// ...but it seems it might not be needed at all as we are not
-			// doing copying of overlapping block at all.
-			// This method is here to make sure 
-
-			if (target > source && source + length > target)
-				throw new InvalidOperationException("Unexpected memory overlap.");
-		}
-
-#endif
-
 		/// <summary>Allocated block of memory. It is NOT initialized with zeroes.</summary>
 		/// <param name="size">Size in bytes.</param>
 		/// <returns>Pointer to allocated block.</returns>

@@ -11,15 +11,11 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public static class LZ4Stream
 {
-	#if NET45
-	internal static readonly Task CompletedTask = Task.FromResult(0);
-	#else
 	internal static Task CompletedTask
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get => Task.CompletedTask;
 	}
-	#endif
 
 	/// <summary>Created compression stream on top of inner stream.</summary>
 	/// <param name="stream">Inner stream.</param>
