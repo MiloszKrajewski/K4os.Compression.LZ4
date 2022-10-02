@@ -24,17 +24,17 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>
 	{
 		if (!block.Ready) return;
 
-		Writer.Poke4(BlockLengthCode(block));
+		_stash.Poke4(BlockLengthCode(block));
 		/*await*/ FlushMeta(token);
 		
 		/*await*/ WriteData(token, block);
 
-		Writer.TryPoke4(BlockChecksum(block));
+		_stash.TryPoke4(BlockChecksum(block));
 		/*await*/ FlushMeta(token);
 	}
 
 	private void WriteOneByte(Token token, byte value) =>
-		WriteManyBytes(token, Writer.OneByteBuffer(token, value));
+		WriteManyBytes(token, OneByteBuffer(token, value));
 
 	private /*async*/ void WriteManyBytes(Token token, ReadableBuffer buffer)
 	{
@@ -87,8 +87,8 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>
 		if (block.Ready)
 			/*await*/ WriteBlock(token, block);
 
-		Writer.Poke4(0);
-		Writer.TryPoke4(ContentChecksum());
+		_stash.Poke4(0);
+		_stash.TryPoke4(ContentChecksum());
 		/*await*/ FlushMeta(token);
 	}
 }

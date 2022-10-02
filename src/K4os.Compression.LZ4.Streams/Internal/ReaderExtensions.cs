@@ -46,13 +46,13 @@ internal static class ReaderExtensions
 
 			if (read == 0)
 				return progress == 0 && optional
-					? ReadResult.None(state)
+					? ReadResult.Create(state, 0)
 					: throw EndOfStream();
 
 			progress += read;
 			count -= read;
 		}
 
-		return ReadResult.Some(state, progress);
+		return ReadResult.Create(state, progress);
 	}
 }

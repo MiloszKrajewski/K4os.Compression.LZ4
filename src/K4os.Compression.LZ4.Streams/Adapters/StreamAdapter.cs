@@ -6,21 +6,27 @@ using K4os.Compression.LZ4.Streams.Abstractions;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;
 
-public readonly struct StreamAdapter:
-	IStreamReader<Stream>, IStreamWriter<Stream>
+/// <summary>
+/// LZ4 stream reader/writer adapter for <see cref="Stream"/>.
+/// </summary>
+public readonly struct StreamAdapter: IStreamReader<Stream>, IStreamWriter<Stream>
 {
+	/// <inheritdoc />
 	public int Read(
 		ref Stream stream,
 		byte[] buffer, int offset, int length) =>
 		stream.Read(buffer, offset, length);
 
+	/// <inheritdoc />
 	public Task<ReadResult<Stream>> ReadAsync(
 		Stream stream, byte[] buffer, int offset, int length, CancellationToken token) =>
-		ReadResult.Some(stream, stream.ReadAsync(buffer, offset, length, token));
+		ReadResult.Create(stream, stream.ReadAsync(buffer, offset, length, token));
 
+	/// <inheritdoc />
 	public void Write(ref Stream stream, byte[] buffer, int offset, int length) =>
 		stream.Write(buffer, offset, length);
 
+	/// <inheritdoc />
 	public async Task<Stream> WriteAsync(
 		Stream stream,
 		byte[] buffer, int offset, int length,

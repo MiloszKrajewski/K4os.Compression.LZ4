@@ -47,7 +47,7 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 	/// <inheritdoc />
 	public override Task WriteAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
-		_encoder.WriteManyBytesAsync(buffer.AsMemory(offset, count), token);
+		_encoder.WriteManyBytesAsync(token, buffer.AsMemory(offset, count));
 	
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 
@@ -64,7 +64,7 @@ public class LZ4EncoderStream: LZ4StreamEssentials
 	/// <inheritdoc />
 	public override ValueTask WriteAsync(
 		ReadOnlyMemory<byte> buffer, CancellationToken token = default) =>
-		new(_encoder.WriteManyBytesAsync(buffer, token));
+		new(_encoder.WriteManyBytesAsync(token, buffer));
 
 	#endif
 
