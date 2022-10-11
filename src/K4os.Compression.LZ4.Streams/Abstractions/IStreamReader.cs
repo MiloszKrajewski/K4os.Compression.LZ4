@@ -10,21 +10,21 @@ namespace K4os.Compression.LZ4.Streams.Abstractions;
 public interface IStreamReader<TStreamState>
 {
 	/// <summary>
-	/// Reads at-most <paramref name="length"/> bytes from given <paramref name="stream"/>. 
+	/// Reads at-most <paramref name="length"/> bytes from given <paramref name="state"/>. 
 	/// </summary>
-	/// <param name="stream">Stream state.</param>
+	/// <param name="state">Stream state.</param>
 	/// <param name="buffer">Buffer to read bytes into.</param>
 	/// <param name="offset">Offset in buffer.</param>
 	/// <param name="length">Maximum number of bytes to read.</param>
 	/// <returns>Number of bytes actually read.</returns>
 	int Read(
-		ref TStreamState stream,
+		ref TStreamState state,
 		byte[] buffer, int offset, int length);
 
 	/// <summary>
-	/// Reads at-most <paramref name="length"/> bytes from given <paramref name="stream"/>. 
+	/// Reads at-most <paramref name="length"/> bytes from given <paramref name="state"/>. 
 	/// </summary>
-	/// <param name="stream">Stream state.</param>
+	/// <param name="state">Stream state.</param>
 	/// <param name="buffer">Buffer to read bytes into.</param>
 	/// <param name="offset">Offset in buffer.</param>
 	/// <param name="length">Maximum number of bytes to read.</param>
@@ -32,7 +32,7 @@ public interface IStreamReader<TStreamState>
 	/// <returns><see cref="ReadResult{TStreamState}"/> containing new stream state,
 	/// and number of bytes actually read..</returns>
 	Task<ReadResult<TStreamState>> ReadAsync(
-		TStreamState stream,
+		TStreamState state,
 		byte[] buffer, int offset, int length,
 		CancellationToken token);
 }

@@ -1,44 +1,36 @@
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using K4os.Compression.LZ4.Encoders;
-using K4os.Compression.LZ4.Streams.Frames;
+using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
 
-namespace K4os.Compression.LZ4.Streams;
+namespace K4os.Compression.LZ4.Streams.Frames;
 
-public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
+public class FrameDecoderAsStream: LZ4StreamEssentials<IFrameDecoder>
 {
-	private readonly StreamFrameDecoder _decoder;
 	private readonly bool _interactive;
-	
-	public LZ4DecoderStream(
-		Stream inner,
-		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
-		bool leaveOpen = false,
-		bool interactive = false):
-		base(inner, leaveOpen)
+
+	public FrameDecoderAsStream(IFrameDecoder decoder, bool leaveOpen, bool interactive):
+		base(decoder, leaveOpen)
 	{
-		_decoder = new StreamFrameDecoder(inner, true, decoderFactory);
 		_interactive = interactive;
 	}
 
 	/// <inheritdoc />
-	public override int ReadByte() => 
-		_decoder.ReadOneByte();
+	public override bool CanRead => true;
+
+	/// <inheritdoc />
+	public override int ReadByte() =>
+		InnerResource.ReadOneByte();
 
 	/// <inheritdoc />
 	public override int Read(byte[] buffer, int offset, int count) =>
-		_decoder.ReadManyBytes(buffer.AsSpan(offset, count), _interactive);
+		InnerResource.ReadManyBytes(buffer.AsSpan(offset, count), _interactive);
 
 	/// <inheritdoc />
 	public override Task<int> ReadAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
-		_decoder.ReadManyBytesAsync(token, buffer.AsMemory(offset, count), _interactive);
-
-	/// <inheritdoc />
-	public override bool CanWrite => false;
+		InnerResource.ReadManyBytesAsync(token, buffer.AsMemory(offset, count), _interactive);
 
 	/// <summary>
 	/// Length of stream. Please note, this will only work if original LZ4 stream has
@@ -46,38 +38,40 @@ public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 	/// It will also require synchronous stream access, so it wont work if AllowSynchronousIO
 	/// is <c>false</c>.
 	/// </summary>
-	public override long Length => _decoder.GetFrameLength() ?? -1;
+	public override long Length =>
+		InnerResource.GetFrameLength() ?? -1;
 
 	/// <summary>
 	/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
 	/// not have <c>Seek</c> capability.
 	/// </summary>
-	public override long Position => _decoder.GetBytesRead();
-	
+	public override long Position =>
+		InnerResource.GetBytesRead();
+
 	/// <inheritdoc />
 	protected override void Dispose(bool disposing)
 	{
-		if (disposing) _decoder.Dispose();
+		if (disposing) InnerResource.Dispose();
 		base.Dispose(disposing);
 	}
-	
+
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-	
+
 	/// <inheritdoc />
 	public override int Read(Span<byte> buffer) =>
-		_decoder.ReadManyBytes(buffer, _interactive);
+		InnerResource.ReadManyBytes(buffer, _interactive);
 
 	/// <inheritdoc />
 	public override ValueTask<int> ReadAsync(
 		Memory<byte> buffer, CancellationToken token = default) =>
-		new(_decoder.ReadManyBytesAsync(token, buffer, _interactive));
+		new(InnerResource.ReadManyBytesAsync(token, buffer, _interactive));
 
 	/// <inheritdoc />
 	public override async ValueTask DisposeAsync()
 	{
-		await _decoder.DisposeAsync().Weave();
+		await InnerResource.DisposeAsync().Weave();
 		await base.DisposeAsync().Weave();
 	}
-	
+
 	#endif
 }

@@ -27,17 +27,5 @@ public static class ReadResult
 	public static ReadResult<TStreamState> Create<TStreamState>(
 		TStreamState stream, int bytes = 0) =>
 		new(stream, bytes);
-	
-	/// <summary>
-	/// Creates read result, composed of new stream state and bytes read.
-	/// </summary>
-	/// <param name="state">Stream state.</param>
-	/// <param name="bytes">Task returning bytes read.</param>
-	/// <typeparam name="TStreamState">Stream state.</typeparam>
-	/// <returns>Read result.</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static async Task<ReadResult<TStreamState>> Create<TStreamState>(
-		TStreamState state, Task<int> bytes) =>
-		new(state, await bytes);
 }
 

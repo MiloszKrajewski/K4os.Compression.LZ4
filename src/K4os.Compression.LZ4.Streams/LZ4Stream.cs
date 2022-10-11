@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
@@ -11,12 +9,6 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public static class LZ4Stream
 {
-	internal static Task CompletedTask
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => Task.CompletedTask;
-	}
-
 	/// <summary>Created compression stream on top of inner stream.</summary>
 	/// <param name="stream">Inner stream.</param>
 	/// <param name="settings">Compression settings.</param>

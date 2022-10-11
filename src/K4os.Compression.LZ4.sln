@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{835ECD
 		..\sanitize.fsx = ..\sanitize.fsx
 		..\Signing.targets = ..\Signing.targets
 		..\paket.lock = ..\paket.lock
+		..\TODO.md = ..\TODO.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sanitized", "sanitized", "{9E28A764-FAC1-4E5C-ABAF-2B2F75173177}"

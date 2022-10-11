@@ -23,7 +23,7 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>
 		await WriteData(token, block).Weave();
 
 		_stash.TryPoke4(BlockChecksum(block));
-		await FlushMeta(token).Weave();
+		await FlushMeta(token, true).Weave();
 	}
 
 	private Task WriteOneByte(Token token, byte value) =>
@@ -82,6 +82,6 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>
 
 		_stash.Poke4(0);
 		_stash.TryPoke4(ContentChecksum());
-		await FlushMeta(token).Weave();
+		await FlushMeta(token, true).Weave();
 	}
 }
