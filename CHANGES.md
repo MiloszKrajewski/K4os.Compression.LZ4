@@ -1,6 +1,9 @@
-## 1.2.18 (2022/10/02)
+## 1.3-beta (2022/10/02)
 * CHANGED: Dropped compatibility with .NET 4.5 and .NET Standard 1.6
 * FIXED #72: Added (again) System.Runtime.CompilerServices.Unsafe as dependency for .NET 4.6, .NET Standard 2.0, .NET Standard 2.1
+* FIXED xxx: Added Pickle/Unpickle overload taking BufferWriter as generic argument not interface (potential performance improvement)
+* ADDED: FrameEncoder / FrameDecoder are now abstraction of stream
+* NOTE: I'm still unhappy with API, but it cannot be addressed without breaking changes, so while this version may receive some bugfixes, there is an overhaul on the horizon
 
 ## 1.2.17 (2021/12/07)
 * ADDED: Forced K4os.Hash.xxHash 1.0.7
