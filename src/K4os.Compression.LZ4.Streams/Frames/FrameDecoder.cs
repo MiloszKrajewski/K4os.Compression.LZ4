@@ -46,6 +46,14 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 		_bytesRead = 0;
 	}
 
+	/// <summary>
+	/// Exposes internal stream state. Existence of this property is a hack,
+	/// and it really shouldn't be here but it is needed for relatively low
+	/// level operations (like writing directly to unmanaged memory).
+	/// Please, do not use it directly, if don't know what you are doing. 
+	/// </summary>
+	public TStreamState StreamState => _stream;
+
 	private static int MaxBlockSize(int blockSizeCode) =>
 		blockSizeCode switch {
 			7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64
@@ -180,7 +188,21 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
-
+	
+	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
+	
+	/// <inheritdoc />
+	public virtual ValueTask DisposeAsync()
+	{
+		CloseFrame();
+		_stash.Dispose();
+		GC.SuppressFinalize(this);
+		// ValueTask.CompletedTask not is .NET Standard
+		return new ValueTask(Task.CompletedTask); 
+	}
+	
+	#endif
+	
 	// ReSharper disable once UnusedParameter.Local
 	private int ReadMeta(EmptyToken _, int length, bool optional = false)
 	{

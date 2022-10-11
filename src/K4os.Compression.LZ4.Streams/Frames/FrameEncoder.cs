@@ -47,12 +47,12 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>:
 	}
 
 	/// <summary>
-	/// Exposes internal stream state. Existence of this stream is a hack,
+	/// Exposes internal stream state. Existence of this field is a hack,
 	/// and it really shouldn't be here but it is needed for relatively low
 	/// level operations (like writing directly to unmanaged memory).
 	/// Please, do not use it directly, if don't know what you are doing. 
 	/// </summary>
-	public TStreamState Stream => _stream;
+	public TStreamState StreamState => _stream;
 
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	private bool TryStashFrame()
@@ -221,7 +221,8 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>:
 	}
 
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-	
+
+	/// <inheritdoc />
 	public async ValueTask DisposeAsync()
 	{
 		await CloseFrameAsync();
@@ -231,22 +232,26 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>:
 	#endif
 
 	// ReSharper disable once UnusedParameter.Local
-	private void FlushMeta(EmptyToken _)
+	private void FlushMeta(EmptyToken _, bool eof = false)
 	{
 		var length = _stash.Flush();
-		if (length <= 0) return;
+		
+		if (length > 0)
+			_writer.Write(ref _stream, _stash.Data, 0, length);
 
-		var buffer = _stash.Data;
-		_writer.Write(ref _stream, buffer, 0, length);
+		if (eof && _writer.CanFlush)
+			_writer.Flush(ref _stream);
 	}
 
-	private async Task FlushMeta(CancellationToken token)
+	private async Task FlushMeta(CancellationToken token, bool eof = false)
 	{
 		var length = _stash.Flush();
-		if (length <= 0) return;
-
-		var buffer = _stash.Data;
-		_stream = await _writer.WriteAsync(_stream, buffer, 0, length, token);
+		
+		if (length > 0)
+			_stream = await _writer.WriteAsync(_stream, _stash.Data, 0, length, token);
+		
+		if (eof && _writer.CanFlush)
+			_stream = await _writer.FlushAsync(_stream, token);
 	}
 
 	// ReSharper disable once UnusedParameter.Local

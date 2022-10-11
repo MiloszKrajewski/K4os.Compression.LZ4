@@ -9,11 +9,13 @@ namespace K4os.Compression.LZ4.Streams.Adapters;
 /// <summary>
 /// Stream adapter for <see cref="ReadOnlyMemory{T}"/> and <see cref="Memory{T}"/>.
 /// This class implements <see cref="IStreamWriter{TStreamState}"/> for <see cref="Memory{T}"/>
-/// but but this can be used in some niche situations, as it is not easy to find out
+/// but should be used only in some niche situations, as it is not easy to find out
 /// how many bytes has been written, use <see cref="BufferWriterAdapter{TBufferWriter}"/>
-/// instead. 
+/// instead.
+/// Please note, whole <c>K4os.Compression.LZ4.Streams.Adapters</c> namespace should be considered
+/// pubternal - exposed as public but still very likely to change.
 /// </summary>
-public readonly struct MemoryAdapter:
+public readonly struct ByteMemoryAdapter:
 	IStreamReader<ReadOnlyMemory<byte>>,
 	IStreamReader<Memory<byte>>,
 	IStreamWriter<Memory<byte>>
@@ -48,63 +50,77 @@ public readonly struct MemoryAdapter:
 
 	/// <inheritdoc />
 	public int Read(
-		ref ReadOnlyMemory<byte> stream,
+		ref ReadOnlyMemory<byte> state,
 		byte[] buffer, int offset, int length) =>
-		Advance(ref stream, ReadAnyMemory(stream, buffer, offset, length));
+		Advance(ref state, ReadAnyMemory(state, buffer, offset, length));
 
 	/// <inheritdoc />
 	public int Read(
-		ref Memory<byte> stream,
+		ref Memory<byte> state,
 		byte[] buffer, int offset, int length) =>
-		Advance(ref stream, ReadAnyMemory(stream, buffer, offset, length));
+		Advance(ref state, ReadAnyMemory(state, buffer, offset, length));
 
 	/// <inheritdoc />
 	public Task<ReadResult<Memory<byte>>> ReadAsync(
-		Memory<byte> stream,
+		Memory<byte> state,
 		byte[] buffer, int offset, int length,
 		CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
-		var bytes = Read(ref stream, buffer, offset, length);
-		return Task.FromResult(ReadResult.Create(stream, bytes));
+		var bytes = Read(ref state, buffer, offset, length);
+		return Task.FromResult(ReadResult.Create(state, bytes));
 	}
 
 	/// <inheritdoc />
 	public Task<ReadResult<ReadOnlyMemory<byte>>> ReadAsync(
-		ReadOnlyMemory<byte> stream,
+		ReadOnlyMemory<byte> state,
 		byte[] buffer, int offset, int length,
 		CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
-		var bytes = Read(ref stream, buffer, offset, length);
-		return Task.FromResult(ReadResult.Create(stream, bytes));
+		var bytes = Read(ref state, buffer, offset, length);
+		return Task.FromResult(ReadResult.Create(state, bytes));
 	}
 
 	/// <inheritdoc />
 	public void Write(
-		ref Memory<byte> stream,
+		ref Memory<byte> state,
 		byte[] buffer, int offset, int length)
 	{
 		if (length <= 0) return;
 
-		if (length > stream.Length)
+		if (length > state.Length)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
 		var source = buffer.AsSpan(offset, length);
-		var target = stream.Span.Slice(0, length);
+		var target = state.Span.Slice(0, length);
 		source.CopyTo(target);
 
-		Advance(ref stream, length);
+		Advance(ref state, length);
 	}
 
 	/// <inheritdoc />
 	public Task<Memory<byte>> WriteAsync(
-		Memory<byte> stream,
+		Memory<byte> state,
 		byte[] buffer, int offset, int length,
 		CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
-		Write(ref stream, buffer, offset, length);
-		return Task.FromResult(stream);
+		Write(ref state, buffer, offset, length);
+		return Task.FromResult(state);
 	}
+
+	/// <inheritdoc />
+	public bool CanFlush
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => false;
+	}
+
+	/// <inheritdoc />
+	public void Flush(ref Memory<byte> state) { }
+
+	/// <inheritdoc />
+	public Task<Memory<byte>> FlushAsync(Memory<byte> state, CancellationToken token) => 
+		Task.FromResult(state);
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Internal;
@@ -38,57 +39,71 @@ public unsafe class UnsafeByteSpanAdapter:
 {
 	/// <inheritdoc />
 	public int Read(
-		ref UnsafeByteSpan stream,
+		ref UnsafeByteSpan state,
 		byte[] buffer, int offset, int length)
 	{
-		var remainingLength = stream.Length;
+		var remainingLength = state.Length;
 		length = Math.Min(remainingLength, length);
 		if (length <= 0) return 0;
 
 		fixed (byte* target = &buffer[offset])
-			Mem.Copy(target, stream.Ptr, length);
+			Mem.Copy(target, state.Ptr, length);
 
-		stream.Advance(length);
+		state.Advance(length);
 		
 		return length;
 	}
 
 	/// <inheritdoc />
 	public Task<ReadResult<UnsafeByteSpan>> ReadAsync(
-		UnsafeByteSpan stream,
+		UnsafeByteSpan state,
 		byte[] buffer, int offset, int length,
 		CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
-		var loaded = Read(ref stream, buffer, offset, length);
-		return Task.FromResult(ReadResult.Create(stream, loaded));
+		var loaded = Read(ref state, buffer, offset, length);
+		return Task.FromResult(ReadResult.Create(state, loaded));
 	}
 
 	/// <inheritdoc />
 	public void Write(
-		ref UnsafeByteSpan stream,
+		ref UnsafeByteSpan state,
 		byte[] buffer, int offset, int length)
 	{
 		if (length <= 0) return;
 
-		var remainingLength = stream.Length;
+		var remainingLength = state.Length;
 		if (length > remainingLength)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
 		fixed (byte* source = &buffer[offset])
-			Mem.Copy(stream.Ptr, source, length);
+			Mem.Copy(state.Ptr, source, length);
 		
-		stream.Advance(length);
+		state.Advance(length);
 	}
 
 	/// <inheritdoc />
 	public Task<UnsafeByteSpan> WriteAsync(
-		UnsafeByteSpan stream, 
-		byte[] buffer, int offset, int length, 
+		UnsafeByteSpan state, 
+		byte[] buffer, int offset, int length,
 		CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
-		Write(ref stream, buffer, offset, length);
-		return Task.FromResult(stream);
+		Write(ref state, buffer, offset, length);
+		return Task.FromResult(state);
 	}
+	
+	/// <inheritdoc />
+	public bool CanFlush
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => false;
+	}
+
+	/// <inheritdoc />
+	public void Flush(ref UnsafeByteSpan state) { }
+	
+	/// <inheritdoc />
+	public Task<UnsafeByteSpan> FlushAsync(UnsafeByteSpan state, CancellationToken token) => 
+		Task.FromResult(state);
 }

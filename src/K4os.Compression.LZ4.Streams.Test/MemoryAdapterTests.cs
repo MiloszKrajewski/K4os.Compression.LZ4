@@ -26,17 +26,17 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
 
-		var encoder = new FrameEncoder<MemoryAdapter, Memory<byte>>(
-			new MemoryAdapter(),
+		var encoder = new FrameEncoder<ByteMemoryAdapter, Memory<byte>>(
+			new ByteMemoryAdapter(),
 			new Memory<byte>(compressedBytes),
 			d => d.CreateEncoder(),
 			DefaultSettings);
 
 		WriteAllBytes(originalBytes, encoder);
-		var compressedLength = compressedBytes.Length - encoder.Stream.Length;
+		var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
 
-		var decoder = new FrameDecoder<MemoryAdapter, ReadOnlyMemory<byte>>(
-			new MemoryAdapter(),
+		var decoder = new FrameDecoder<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
+			new ByteMemoryAdapter(),
 			new ReadOnlyMemory<byte>(compressedBytes, 0, compressedLength),
 			d => d.CreateDecoder());
 
@@ -64,8 +64,8 @@ public class MemoryAdapterTests
 
 		WriteAllBytes(originalBytes, encoder);
 
-		var decoder = new FrameDecoder<MemoryAdapter, ReadOnlyMemory<byte>>(
-			new MemoryAdapter(),
+		var decoder = new FrameDecoder<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
+			new ByteMemoryAdapter(),
 			compressedBytes.WrittenMemory,
 			d => d.CreateDecoder());
 
@@ -94,7 +94,7 @@ public class MemoryAdapterTests
 				DefaultSettings);
 
 			WriteAllBytes(originalBytes, encoder);
-			var compressedLength = compressedBytes.Length - encoder.Stream.Length;
+			var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
 
 			var decoder = new FrameDecoder<UnsafeByteSpanAdapter, UnsafeByteSpan>(
 				new UnsafeByteSpanAdapter(),
@@ -117,14 +117,14 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
 
-		var encoder = new FrameEncoder<MemoryAdapter, Memory<byte>>(
-			new MemoryAdapter(),
+		var encoder = new FrameEncoder<ByteMemoryAdapter, Memory<byte>>(
+			new ByteMemoryAdapter(),
 			new Memory<byte>(compressedBytes),
 			d => d.CreateEncoder(),
 			DefaultSettings);
 
 		WriteAllBytes(originalBytes, encoder);
-		var compressedLength = compressedBytes.Length - encoder.Stream.Length;
+		var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
 
 		var decoder = new FrameDecoder<ByteSequenceAdapter, ReadOnlySequence<byte>>(
 			new ByteSequenceAdapter(),

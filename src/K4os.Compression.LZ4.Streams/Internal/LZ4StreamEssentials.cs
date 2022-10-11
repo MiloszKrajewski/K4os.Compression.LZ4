@@ -5,16 +5,18 @@ using System.Threading.Tasks;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
-public abstract class LZ4StreamEssentials: Stream
+public abstract class LZ4StreamEssentials<T>: Stream
 {
-	private readonly Stream _inner;
+	private readonly T _innerResource;
 	private readonly bool _leaveOpen;
 
-	private protected LZ4StreamEssentials(Stream inner, bool leaveOpen)
+	protected LZ4StreamEssentials(T innerResource, bool leaveOpen)
 	{
-		_inner = inner;
+		_innerResource = innerResource;
 		_leaveOpen = leaveOpen;
 	}
+
+	protected T InnerResource => _innerResource;
 
 	private protected NotImplementedException NotImplemented(string operation) =>
 		new($"Feature {operation} has not been implemented in {GetType().Name}");
@@ -24,28 +26,28 @@ public abstract class LZ4StreamEssentials: Stream
 
 	private protected static ArgumentException InvalidValue(string description) =>
 		new(description);
-	
-	/// <inheritdoc />
-	public override bool CanRead => _inner.CanRead;
 
 	/// <inheritdoc />
-	public override bool CanWrite => _inner.CanWrite;
+	public override bool CanRead => false;
 
 	/// <inheritdoc />
-	public override bool CanTimeout => _inner.CanTimeout;
+	public override bool CanWrite => false;
+
+	/// <inheritdoc />
+	public override bool CanTimeout => false;
 
 	/// <inheritdoc />
 	public override int ReadTimeout
 	{
-		get => _inner.ReadTimeout;
-		set => _inner.ReadTimeout = value;
+		get => throw NotImplemented("ReadTimeout");
+		set => throw NotImplemented("ReadTimeout");
 	}
 
 	/// <inheritdoc />
 	public override int WriteTimeout
 	{
-		get => _inner.WriteTimeout;
-		set => _inner.WriteTimeout = value;
+		get => throw NotImplemented("WriteTimeout");
+		set => throw NotImplemented("WriteTimeout");
 	}
 
 	/// <inheritdoc />
@@ -59,16 +61,14 @@ public abstract class LZ4StreamEssentials: Stream
 	}
 
 	/// <inheritdoc />
-	public override long Length => 
+	public override long Length =>
 		throw NotImplemented("GetLength");
 
 	/// <inheritdoc />
-	public override void Flush() => 
-		_inner.Flush();
+	public override void Flush() { }
 
 	/// <inheritdoc />
-	public override Task FlushAsync(CancellationToken token) => 
-		_inner.FlushAsync(token);
+	public override Task FlushAsync(CancellationToken token) => Task.CompletedTask;
 
 	/// <inheritdoc />
 	public override long Seek(long offset, SeekOrigin origin) =>
@@ -90,15 +90,21 @@ public abstract class LZ4StreamEssentials: Stream
 	public override Task<int> ReadAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
 		throw InvalidOperation("ReadAsync");
-	
+
 	/// <inheritdoc />
 	protected override void Dispose(bool disposing)
 	{
-		if (!_leaveOpen) 
-			_inner.Dispose();
+		if (!_leaveOpen)
+		{
+			if (_innerResource is IDisposable disposable)
+			{
+				disposable.Dispose();
+			}
+		}
+
 		base.Dispose(disposing);
 	}
-	
+
 	/// <inheritdoc />
 	public override void WriteByte(byte value) =>
 		throw InvalidOperation("WriteByte");
@@ -111,11 +117,11 @@ public abstract class LZ4StreamEssentials: Stream
 	public override Task WriteAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
 		throw InvalidOperation("WriteAsync");
-	
+
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 
 	/// <inheritdoc />
-	public override int Read(Span<byte> buffer) => 
+	public override int Read(Span<byte> buffer) =>
 		throw InvalidOperation("Read");
 
 	/// <inheritdoc />
@@ -124,7 +130,7 @@ public abstract class LZ4StreamEssentials: Stream
 		throw InvalidOperation("ReadAsync");
 
 	/// <inheritdoc />
-	public override void Write(ReadOnlySpan<byte> buffer) => 
+	public override void Write(ReadOnlySpan<byte> buffer) =>
 		throw InvalidOperation("Write");
 
 	/// <inheritdoc />
@@ -135,10 +141,20 @@ public abstract class LZ4StreamEssentials: Stream
 	/// <inheritdoc />
 	public override async ValueTask DisposeAsync()
 	{
-		if (!_leaveOpen) 
-			await _inner.DisposeAsync();
+		if (!_leaveOpen)
+		{
+			if (_innerResource is IAsyncDisposable asyncDisposable)
+			{
+				await asyncDisposable.DisposeAsync();
+			}
+			else if (_innerResource is IDisposable disposable)
+			{
+				disposable.Dispose();
+			}
+		}
+
 		await base.DisposeAsync();
 	}
-	
+
 	#endif
 }
