@@ -48,11 +48,13 @@ namespace K4os.Compression.LZ4
 			UnpickleCore(header, source, output);
 			return output;
 		}
-
+		
 		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
 		/// <param name="source">Input buffer.</param>
 		/// <param name="writer">Where the decompressed data is written.</param>
-		public static void Unpickle(ReadOnlySpan<byte> source, IBufferWriter<byte> writer)
+		public static void Unpickle<TBufferWriter>(
+			ReadOnlySpan<byte> source, TBufferWriter writer)
+			where TBufferWriter: IBufferWriter<byte>
 		{
 			if (writer is null) 
 				throw new ArgumentNullException(nameof(writer));
@@ -66,6 +68,13 @@ namespace K4os.Compression.LZ4
 			UnpickleCore(header, source, output);
 			writer.Advance(size);
 		}
+
+
+		/// <summary>Decompresses previously pickled buffer (see: <see cref="LZ4Pickler"/>.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="writer">Where the decompressed data is written.</param>
+		public static void Unpickle(ReadOnlySpan<byte> source, IBufferWriter<byte> writer) => 
+			Unpickle<IBufferWriter<byte>>(source, writer);
 
 		/// <summary>
 		/// Returns the uncompressed size of a chunk of compressed data.

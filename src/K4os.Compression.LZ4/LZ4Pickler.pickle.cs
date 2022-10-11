@@ -104,15 +104,16 @@ namespace K4os.Compression.LZ4
 				return result;
 			}
 		}
-
+		
 		/// <summary>Compresses input buffer into self-contained package.</summary>
 		/// <param name="source">Input buffer.</param>
 		/// <param name="writer">Where the compressed data is written.</param>
 		/// <param name="level">Compression level.</param>
 		/// <returns>Output buffer.</returns>
-		public static void Pickle(
-			ReadOnlySpan<byte> source, IBufferWriter<byte> writer,
+		public static void Pickle<TBufferWriter>(
+			ReadOnlySpan<byte> source, TBufferWriter writer,
 			LZ4Level level = LZ4Level.L00_FAST)
+			where TBufferWriter: IBufferWriter<byte>
 		{
 			if (writer is null) 
 				throw new ArgumentNullException(nameof(writer));
@@ -145,6 +146,16 @@ namespace K4os.Compression.LZ4
 				writer.Advance(offset + encodedLength);
 			}
 		}
+
+		/// <summary>Compresses input buffer into self-contained package.</summary>
+		/// <param name="source">Input buffer.</param>
+		/// <param name="writer">Where the compressed data is written.</param>
+		/// <param name="level">Compression level.</param>
+		/// <returns>Output buffer.</returns>
+		public static void Pickle(
+			ReadOnlySpan<byte> source, IBufferWriter<byte> writer,
+			LZ4Level level = LZ4Level.L00_FAST) =>
+			Pickle<IBufferWriter<byte>>(source, writer, level);
 
 		// ReSharper disable once UnusedParameter.Local
 		private static int GetPessimisticHeaderSize(int version, int sourceLength) =>
