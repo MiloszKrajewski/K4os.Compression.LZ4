@@ -11,7 +11,7 @@ using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
-public partial class FrameEncoder<TStreamWriter, TStreamState>
+public partial class LZ4FrameWriter<TStreamWriter, TStreamState>
 {
 	private async Task WriteBlock(Token token, BlockInfo block)
 	{

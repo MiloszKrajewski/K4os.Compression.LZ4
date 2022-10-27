@@ -33,7 +33,7 @@ public unsafe record struct UnsafeByteSpan(UIntPtr Bytes, int Length)
 /// <summary>
 /// LZ4 stream reader/writer adapter for <see cref="UnsafeByteSpan"/>.
 /// </summary>
-public unsafe class UnsafeByteSpanAdapter:
+public unsafe class ByteSpanAdapter:
 	IStreamReader<UnsafeByteSpan>,
 	IStreamWriter<UnsafeByteSpan>
 {

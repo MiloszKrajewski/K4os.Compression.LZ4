@@ -13,8 +13,8 @@ namespace K4os.Compression.LZ4.Streams.Frames;
 /// <summary>
 /// LZ4 Decompression stream handling.
 /// </summary>
-public partial class FrameDecoder<TStreamReader, TStreamState>:
-	IFrameDecoder
+public partial class LZ4FrameReader<TStreamReader, TStreamState>:
+	ILZ4FrameReader
 	where TStreamReader: IStreamReader<TStreamState>
 {
 	private readonly TStreamReader _reader;
@@ -35,7 +35,7 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 	/// <param name="reader">Inner stream.</param>
 	/// <param name="stream">Inner stream initial state.</param>
 	/// <param name="decoderFactory">Decoder factory.</param>
-	public FrameDecoder(
+	public LZ4FrameReader(
 		TStreamReader reader,
 		TStreamState stream,
 		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory)
@@ -178,29 +178,43 @@ public partial class FrameDecoder<TStreamReader, TStreamState>:
 	{
 		if (!disposing) return;
 
-		CloseFrame();
-		_stash.Dispose();
+		try
+		{
+			CloseFrame();
+		}
+		finally
+		{
+			_stash.Dispose();
+			ReleaseResources();
+		}
 	}
 
+	protected virtual void ReleaseResources() {  }
+	
 	/// <inheritdoc />
 	public void Dispose()
 	{
 		Dispose(true);
-		GC.SuppressFinalize(this);
 	}
 	
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	
 	/// <inheritdoc />
-	public virtual ValueTask DisposeAsync()
+	public virtual async ValueTask DisposeAsync()
 	{
-		CloseFrame();
-		_stash.Dispose();
-		GC.SuppressFinalize(this);
-		// ValueTask.CompletedTask not is .NET Standard
-		return new ValueTask(Task.CompletedTask); 
+		try
+		{
+			CloseFrame();
+		}
+		finally
+		{
+			_stash.Dispose();
+			await ReleaseResourcesAsync();
+		}
 	}
 	
+	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
+
 	#endif
 	
 	// ReSharper disable once UnusedParameter.Local

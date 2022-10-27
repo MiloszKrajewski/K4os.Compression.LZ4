@@ -13,8 +13,8 @@ namespace K4os.Compression.LZ4.Streams.Frames;
 /// <summary>
 /// LZ4 stream encoder. 
 /// </summary>
-public partial class FrameEncoder<TStreamWriter, TStreamState>:
-	IFrameEncoder
+public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
+	ILZ4FrameWriter
 	where TStreamWriter: IStreamWriter<TStreamState>
 {
 	private readonly TStreamWriter _writer;
@@ -34,7 +34,7 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>:
 	/// <param name="stream">Inner stream initial state.</param>
 	/// <param name="encoderFactory">LZ4 Encoder factory.</param>
 	/// <param name="descriptor">LZ4 settings.</param>
-	public FrameEncoder(
+	public LZ4FrameWriter(
 		TStreamWriter writer, TStreamState stream,
 		Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 		ILZ4Descriptor descriptor)
@@ -210,27 +210,44 @@ public partial class FrameEncoder<TStreamWriter, TStreamState>:
 	{
 		if (!disposing) return;
 
-		CloseFrame();
-		_stash.Dispose();
+		try
+		{
+			CloseFrame();
+		}
+		finally
+		{
+			_stash.Dispose();
+			ReleaseResources();
+		}
 	}
 
 	public void Dispose()
 	{
 		Dispose(true);
-		GC.SuppressFinalize(this);
 	}
+	
+	protected virtual void ReleaseResources() {  }
 
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 
 	/// <inheritdoc />
-	public async ValueTask DisposeAsync()
+	public virtual async ValueTask DisposeAsync()
 	{
-		await CloseFrameAsync();
-		GC.SuppressFinalize(this);
+		try
+		{
+			await CloseFrameAsync();
+		}
+		finally
+		{
+			_stash.Dispose();
+			await ReleaseResourcesAsync();
+		}
 	}
-
+	
+	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
+	
 	#endif
-
+	
 	// ReSharper disable once UnusedParameter.Local
 	private void FlushMeta(EmptyToken _, bool eof = false)
 	{

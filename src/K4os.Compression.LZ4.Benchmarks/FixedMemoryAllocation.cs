@@ -27,7 +27,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 		}
 
 		[Benchmark]
-		public unsafe void UseSharedPool()
+		public unsafe void UseSharedPoolAndPinning()
 		{
 			byte* ptr = null;
 			byte[] arr = null;

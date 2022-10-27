@@ -29,12 +29,12 @@ public class FrameRountripTests
 
 		await PumpData(
 			random, bytes,
-			() => new FrameEncoder<BufferWriterAdapter<BufferWriter>, BufferWriter>(
-				new BufferWriterAdapter<BufferWriter>(),
+			() => new LZ4FrameWriter<ByteBufferAdapter<BufferWriter>, BufferWriter>(
+				new ByteBufferAdapter<BufferWriter>(),
 				buffer,
 				d => d.CreateEncoder(),
 				descriptor),
-			() => new FrameDecoder<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
+			() => new LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
 				new ByteMemoryAdapter(),
 				buffer.WrittenMemory,
 				d => d.CreateDecoder()));
@@ -55,12 +55,12 @@ public class FrameRountripTests
 
 		await PumpData(
 			random, bytes,
-			() => new FrameEncoder<BufferWriterAdapter<BufferWriter>, BufferWriter>(
-				new BufferWriterAdapter<BufferWriter>(),
+			() => new LZ4FrameWriter<ByteBufferAdapter<BufferWriter>, BufferWriter>(
+				new ByteBufferAdapter<BufferWriter>(),
 				buffer,
 				d => d.CreateEncoder(),
 				descriptor),
-			() => new FrameDecoder<ByteSequenceAdapter, ReadOnlySequence<byte>>(
+			() => new LZ4FrameReader<ByteSequenceAdapter, ReadOnlySequence<byte>>(
 				new ByteSequenceAdapter(),
 				new ReadOnlySequence<byte>(buffer.WrittenMemory),
 				d => d.CreateDecoder()));
@@ -78,12 +78,12 @@ public class FrameRountripTests
 
 		await PumpData(
 			random, bytes,
-			() => new FrameEncoder<BufferWriterAdapter<BufferWriter>, BufferWriter>(
-				new BufferWriterAdapter<BufferWriter>(),
+			() => new LZ4FrameWriter<ByteBufferAdapter<BufferWriter>, BufferWriter>(
+				new ByteBufferAdapter<BufferWriter>(),
 				buffer,
 				d => d.CreateEncoder(),
 				descriptor),
-			() => new FrameDecoder<ByteSequenceAdapter, ReadOnlySequence<byte>>(
+			() => new LZ4FrameReader<ByteSequenceAdapter, ReadOnlySequence<byte>>(
 				new ByteSequenceAdapter(),
 				ByteSegment.BuildSequence(buffer.WrittenMemory, () => random.Next(Mem.K64)),
 				d => d.CreateDecoder()));
@@ -101,12 +101,12 @@ public class FrameRountripTests
 
 		await PumpData(
 			random, bytes,
-			() => new FrameEncoder<StreamAdapter, EmptyState>(
+			() => new LZ4FrameWriter<StreamAdapter, EmptyState>(
 				new StreamAdapter(stream),
 				default,
 				d => d.CreateEncoder(),
 				descriptor),
-			() => new FrameDecoder<StreamAdapter, EmptyState>(
+			() => new LZ4FrameReader<StreamAdapter, EmptyState>(
 				new StreamAdapter(Tools.Rewind(stream)),
 				default,
 				d => d.CreateDecoder()));
@@ -126,12 +126,12 @@ public class FrameRountripTests
 
 		await PumpData(
 			random, bytes,
-			() => new FrameEncoder<PipeWriterAdapter, EmptyState>(
+			() => new LZ4FrameWriter<PipeWriterAdapter, EmptyState>(
 				new PipeWriterAdapter(pipe.Writer),
 				default,
 				d => d.CreateEncoder(),
 				descriptor),
-			() => new FrameDecoder<PipeReaderAdapter, ReadOnlySequence<byte>>(
+			() => new LZ4FrameReader<PipeReaderAdapter, ReadOnlySequence<byte>>(
 				new PipeReaderAdapter(pipe.Reader),
 				ReadOnlySequence<byte>.Empty, 
 				d => d.CreateDecoder()));
@@ -142,8 +142,8 @@ public class FrameRountripTests
 	private static async Task PumpData(
 		Random random,
 		byte[] buffer,
-		Func<IFrameEncoder> encoderFactory,
-		Func<IFrameDecoder> decoderFactory)
+		Func<ILZ4FrameWriter> encoderFactory,
+		Func<ILZ4FrameReader> decoderFactory)
 	{
 		var encoder = encoderFactory();
 
@@ -163,7 +163,7 @@ public class FrameRountripTests
 	}
 
 	private static async Task<int> JitterRead(
-		IFrameDecoder decoder, Random random, byte[] buffer)
+		ILZ4FrameReader reader, Random random, byte[] buffer)
 	{
 		var length = buffer.Length;
 		var position = 0;
@@ -173,8 +173,7 @@ public class FrameRountripTests
 			if (length <= 0) break;
 
 			var chunk = random.Next(1, Math.Min(0x1000, length));
-			var read = await FrameCodecExtensions.ReadManyBytesAsync(
-				decoder, buffer.AsMemory(position, chunk), true);
+			var read = await reader.ReadManyBytesAsync(buffer.AsMemory(position, chunk), true);
 			if (read == 0) break;
 
 			position += read;
@@ -185,21 +184,21 @@ public class FrameRountripTests
 	}
 
 	private static async Task JitterWrite(
-		IFrameEncoder encoder, Random random, ReadOnlyMemory<byte> buffer)
+		ILZ4FrameWriter writer, Random random, ReadOnlyMemory<byte> buffer)
 	{
 		var length = buffer.Length;
 		var position = 0;
 
-		await encoder.OpenFrameAsync();
+		await writer.OpenFrameAsync();
 
 		while (length > 0)
 		{
 			var chunk = random.Next(1, Math.Min(0x1000, length));
-			await encoder.WriteManyBytesAsync(buffer.Slice(position, chunk));
+			await writer.WriteManyBytesAsync(buffer.Slice(position, chunk));
 			length -= chunk;
 			position += chunk;
 		}
 
-		await encoder.CloseFrameAsync();
+		await writer.CloseFrameAsync();
 	}
 }

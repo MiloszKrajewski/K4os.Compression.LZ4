@@ -6,14 +6,14 @@ using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
-public class FrameEncoderAsStream: LZ4StreamEssentials<IFrameEncoder>
+public class FrameEncoderAsStream: LZ4StreamEssentials<ILZ4FrameWriter>
 {
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
-	/// <param name="encoder">Underlying frame encoder.</param>
-	/// <param name="leaveOpen">Indicates <paramref name="encoder"/> should be left
+	/// <param name="writer">Underlying frame encoder.</param>
+	/// <param name="leaveOpen">Indicates <paramref name="writer"/> should be left
 	/// open after disposing.</param>
-	public FrameEncoderAsStream(IFrameEncoder encoder, bool leaveOpen = false):
-		base(encoder, leaveOpen) { }
+	public FrameEncoderAsStream(ILZ4FrameWriter writer, bool leaveOpen = false):
+		base(writer, leaveOpen) { }
 
 	/// <inheritdoc />
 	public override bool CanWrite => true;

@@ -15,7 +15,7 @@ namespace K4os.Compression.LZ4.Streams.Adapters;
 /// pubternal - exposed as public but still very likely to change.
 /// </summary>
 /// <typeparam name="TBufferWriter">Type implementing <see cref="IBufferWriter{T}"/></typeparam>
-public readonly struct BufferWriterAdapter<TBufferWriter>:
+public readonly struct ByteBufferAdapter<TBufferWriter>:
 	IStreamWriter<TBufferWriter>
 	where TBufferWriter: IBufferWriter<byte>
 {

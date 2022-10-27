@@ -6,12 +6,12 @@ using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
-public class FrameDecoderAsStream: LZ4StreamEssentials<IFrameDecoder>
+public class FrameDecoderAsStream: LZ4StreamEssentials<ILZ4FrameReader>
 {
 	private readonly bool _interactive;
 
-	public FrameDecoderAsStream(IFrameDecoder decoder, bool leaveOpen, bool interactive):
-		base(decoder, leaveOpen)
+	public FrameDecoderAsStream(ILZ4FrameReader reader, bool leaveOpen, bool interactive):
+		base(reader, leaveOpen)
 	{
 		_interactive = interactive;
 	}
