@@ -26,7 +26,7 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
 
-		var encoder = new FrameEncoder<ByteMemoryAdapter, Memory<byte>>(
+		var encoder = new LZ4FrameWriter<ByteMemoryAdapter, Memory<byte>>(
 			new ByteMemoryAdapter(),
 			new Memory<byte>(compressedBytes),
 			d => d.CreateEncoder(),
@@ -35,7 +35,7 @@ public class MemoryAdapterTests
 		WriteAllBytes(originalBytes, encoder);
 		var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
 
-		var decoder = new FrameDecoder<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
+		var decoder = new LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
 			new ByteMemoryAdapter(),
 			new ReadOnlyMemory<byte>(compressedBytes, 0, compressedLength),
 			d => d.CreateDecoder());
@@ -56,15 +56,15 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new BufferWriter();
 
-		var encoder = new FrameEncoder<BufferWriterAdapter<BufferWriter>, BufferWriter>(
-			new BufferWriterAdapter<BufferWriter>(),
+		var encoder = new LZ4FrameWriter<ByteBufferAdapter<BufferWriter>, BufferWriter>(
+			new ByteBufferAdapter<BufferWriter>(),
 			compressedBytes,
 			d => d.CreateEncoder(),
 			DefaultSettings);
 
 		WriteAllBytes(originalBytes, encoder);
 
-		var decoder = new FrameDecoder<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
+		var decoder = new LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
 			new ByteMemoryAdapter(),
 			compressedBytes.WrittenMemory,
 			d => d.CreateDecoder());
@@ -87,8 +87,8 @@ public class MemoryAdapterTests
 
 		fixed (byte* compressedPtr = compressedBytes)
 		{
-			var encoder = new FrameEncoder<UnsafeByteSpanAdapter, UnsafeByteSpan>(
-				new UnsafeByteSpanAdapter(),
+			var encoder = new LZ4FrameWriter<ByteSpanAdapter, UnsafeByteSpan>(
+				new ByteSpanAdapter(),
 				new UnsafeByteSpan(new UIntPtr(compressedPtr), compressedBytes.Length),
 				d => d.CreateEncoder(),
 				DefaultSettings);
@@ -96,8 +96,8 @@ public class MemoryAdapterTests
 			WriteAllBytes(originalBytes, encoder);
 			var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
 
-			var decoder = new FrameDecoder<UnsafeByteSpanAdapter, UnsafeByteSpan>(
-				new UnsafeByteSpanAdapter(),
+			var decoder = new LZ4FrameReader<ByteSpanAdapter, UnsafeByteSpan>(
+				new ByteSpanAdapter(),
 				new UnsafeByteSpan(new UIntPtr(compressedPtr), compressedLength),
 				d => d.CreateDecoder());
 
@@ -117,7 +117,7 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
 
-		var encoder = new FrameEncoder<ByteMemoryAdapter, Memory<byte>>(
+		var encoder = new LZ4FrameWriter<ByteMemoryAdapter, Memory<byte>>(
 			new ByteMemoryAdapter(),
 			new Memory<byte>(compressedBytes),
 			d => d.CreateEncoder(),
@@ -126,7 +126,7 @@ public class MemoryAdapterTests
 		WriteAllBytes(originalBytes, encoder);
 		var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
 
-		var decoder = new FrameDecoder<ByteSequenceAdapter, ReadOnlySequence<byte>>(
+		var decoder = new LZ4FrameReader<ByteSequenceAdapter, ReadOnlySequence<byte>>(
 			new ByteSequenceAdapter(),
 			ByteSegment.BuildSequence(compressedBytes.AsMemory(0, compressedLength), () => 1337),
 			d => d.CreateDecoder());
@@ -136,27 +136,27 @@ public class MemoryAdapterTests
 		Tools.SameBytes(originalBytes.AsSpan(), decompressedBytes.Span);
 	}
 
-	private static void WriteAllBytes(ReadOnlyMemory<byte> buffer, IFrameEncoder encoder)
+	private static void WriteAllBytes(ReadOnlyMemory<byte> buffer, ILZ4FrameWriter writer)
 	{
 		while (true)
 		{
 			var chunk = Math.Min(buffer.Length, 4096);
 			if (chunk <= 0) break;
 
-			encoder.WriteManyBytes(buffer.Span.Slice(0, chunk));
+			writer.WriteManyBytes(buffer.Span.Slice(0, chunk));
 			buffer = buffer.Slice(chunk);
 		}
 
-		encoder.CloseFrame();
+		writer.CloseFrame();
 	}
 
-	private static ReadOnlyMemory<byte> ReadAllBytes(IFrameDecoder decoder)
+	private static ReadOnlyMemory<byte> ReadAllBytes(ILZ4FrameReader reader)
 	{
 		const int chunk = 4096;
 		var writer = BufferWriter.New();
 		while (true)
 		{
-			var bytes = decoder.ReadManyBytes(writer.GetSpan(chunk));
+			var bytes = reader.ReadManyBytes(writer.GetSpan(chunk));
 			if (bytes <= 0) break;
 
 			writer.Advance(bytes);

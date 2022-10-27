@@ -11,33 +11,33 @@ using System.IO.Pipelines;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
-public class ByteSpanFrameDecoder: FrameDecoder<UnsafeByteSpanAdapter, UnsafeByteSpan>
+public class ByteSpanLZ4FrameReader: LZ4FrameReader<ByteSpanAdapter, UnsafeByteSpan>
 {
-	public ByteSpanFrameDecoder(
+	public ByteSpanLZ4FrameReader(
 		UnsafeByteSpan span, Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory):
-		base(new UnsafeByteSpanAdapter(), span, decoderFactory) { }
+		base(new ByteSpanAdapter(), span, decoderFactory) { }
 }
 
-public class ByteMemoryFrameDecoder: FrameDecoder<ByteMemoryAdapter, ReadOnlyMemory<byte>>
+public class ByteMemoryLZ4FrameReader: LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>
 {
-	public ByteMemoryFrameDecoder(
+	public ByteMemoryLZ4FrameReader(
 		ReadOnlyMemory<byte> memory, Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory):
 		base(new ByteMemoryAdapter(), memory, decoderFactory) { }
 }
 
-public class ByteSequenceFrameDecoder: FrameDecoder<ByteSequenceAdapter, ReadOnlySequence<byte>>
+public class ByteSequenceLZ4FrameReader: LZ4FrameReader<ByteSequenceAdapter, ReadOnlySequence<byte>>
 {
-	public ByteSequenceFrameDecoder(
+	public ByteSequenceLZ4FrameReader(
 		ReadOnlySequence<byte> sequence, Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory):
 		base(new ByteSequenceAdapter(), sequence, decoderFactory) { }
 }
 
-public class StreamFrameDecoder: FrameDecoder<StreamAdapter, EmptyState>
+public class StreamLZ4FrameReader: LZ4FrameReader<StreamAdapter, EmptyState>
 {
 	private readonly Stream _stream;
 	private readonly bool _leaveOpen;
 
-	public StreamFrameDecoder(
+	public StreamLZ4FrameReader(
 		Stream stream, bool leaveOpen, Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory):
 		base(new StreamAdapter(stream), default, decoderFactory)
 	{
@@ -66,13 +66,12 @@ public class StreamFrameDecoder: FrameDecoder<StreamAdapter, EmptyState>
 
 #if NET5_0_OR_GREATER
 
-public class PipeFrameDecoder:
-	FrameDecoder<PipeReaderAdapter, ReadOnlySequence<byte>>
+public class PipeLZ4FrameReader: LZ4FrameReader<PipeReaderAdapter, ReadOnlySequence<byte>>
 {
 	private readonly PipeReader _pipe;
 	private readonly bool _leaveOpen;
 
-	public PipeFrameDecoder(
+	public PipeLZ4FrameReader(
 		PipeReader pipe, bool leaveOpen, Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory):
 		base(new PipeReaderAdapter(pipe), ReadOnlySequence<byte>.Empty, decoderFactory)
 	{

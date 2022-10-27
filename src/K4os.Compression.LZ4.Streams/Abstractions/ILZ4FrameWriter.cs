@@ -7,7 +7,7 @@ namespace K4os.Compression.LZ4.Streams.Abstractions;
 /// <summary>
 /// Generic interface for LZ4 frame/stream writer.
 /// </summary>
-public interface IFrameEncoder:
+public interface ILZ4FrameWriter:
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	IAsyncDisposable,
 	#endif

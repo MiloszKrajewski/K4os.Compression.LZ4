@@ -11,7 +11,7 @@ namespace K4os.Compression.LZ4.Streams;
 
 public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 {
-	private readonly FrameEncoder<StreamAdapter, EmptyState> _encoder;
+	private readonly LZ4FrameWriter<StreamAdapter, EmptyState> _writer;
 
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="inner">Inner stream.</param>
@@ -27,45 +27,45 @@ public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 		bool leaveOpen = false):
 		base(inner, leaveOpen)
 	{
-		_encoder = new FrameEncoder<StreamAdapter, EmptyState>(
+		_writer = new LZ4FrameWriter<StreamAdapter, EmptyState>(
 			new StreamAdapter(inner), default, encoderFactory, descriptor);
 	}
 
 	protected override void Dispose(bool disposing)
 	{
-		_encoder.Dispose();
+		_writer.Dispose();
 		base.Dispose(disposing);
 	}
 	
 	/// <inheritdoc />
 	public override void WriteByte(byte value) =>
-		_encoder.WriteOneByte(value);
+		_writer.WriteOneByte(value);
 
 	/// <inheritdoc />
 	public override void Write(byte[] buffer, int offset, int count) =>
-		_encoder.WriteManyBytes(buffer.AsSpan(offset, count));
+		_writer.WriteManyBytes(buffer.AsSpan(offset, count));
 
 	/// <inheritdoc />
 	public override Task WriteAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
-		_encoder.WriteManyBytesAsync(token, buffer.AsMemory(offset, count));
+		_writer.WriteManyBytesAsync(token, buffer.AsMemory(offset, count));
 	
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 
 	public override ValueTask DisposeAsync()
 	{
-		_encoder.Dispose();
+		_writer.Dispose();
 		return base.DisposeAsync();
 	}
 
 	/// <inheritdoc />
 	public override void Write(ReadOnlySpan<byte> buffer) =>
-		_encoder.WriteManyBytes(buffer);
+		_writer.WriteManyBytes(buffer);
 
 	/// <inheritdoc />
 	public override ValueTask WriteAsync(
 		ReadOnlyMemory<byte> buffer, CancellationToken token = default) =>
-		new(_encoder.WriteManyBytesAsync(token, buffer));
+		new(_writer.WriteManyBytesAsync(token, buffer));
 
 	#endif
 
@@ -73,9 +73,9 @@ public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 	public override bool CanRead => false;
 
 	/// <summary>Length of the stream and number of bytes written so far.</summary>
-	public override long Length => _encoder.GetBytesWritten();
+	public override long Length => _writer.GetBytesWritten();
 
 	/// <summary>Read-only position in the stream. Trying to set it will throw
 	/// <see cref="InvalidOperationException"/>.</summary>
-	public override long Position => _encoder.GetBytesWritten();
+	public override long Position => _writer.GetBytesWritten();
 }

@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Streams;
 
 public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 {
-	private readonly StreamFrameDecoder _decoder;
+	private readonly StreamLZ4FrameReader _reader;
 	private readonly bool _interactive;
 	
 	public LZ4DecoderStream(
@@ -20,22 +20,22 @@ public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 		bool interactive = false):
 		base(inner, leaveOpen)
 	{
-		_decoder = new StreamFrameDecoder(inner, true, decoderFactory);
+		_reader = new StreamLZ4FrameReader(inner, true, decoderFactory);
 		_interactive = interactive;
 	}
 
 	/// <inheritdoc />
 	public override int ReadByte() => 
-		_decoder.ReadOneByte();
+		_reader.ReadOneByte();
 
 	/// <inheritdoc />
 	public override int Read(byte[] buffer, int offset, int count) =>
-		_decoder.ReadManyBytes(buffer.AsSpan(offset, count), _interactive);
+		_reader.ReadManyBytes(buffer.AsSpan(offset, count), _interactive);
 
 	/// <inheritdoc />
 	public override Task<int> ReadAsync(
 		byte[] buffer, int offset, int count, CancellationToken token) =>
-		_decoder.ReadManyBytesAsync(token, buffer.AsMemory(offset, count), _interactive);
+		_reader.ReadManyBytesAsync(token, buffer.AsMemory(offset, count), _interactive);
 
 	/// <inheritdoc />
 	public override bool CanWrite => false;
@@ -46,18 +46,18 @@ public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 	/// It will also require synchronous stream access, so it wont work if AllowSynchronousIO
 	/// is <c>false</c>.
 	/// </summary>
-	public override long Length => _decoder.GetFrameLength() ?? -1;
+	public override long Length => _reader.GetFrameLength() ?? -1;
 
 	/// <summary>
 	/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
 	/// not have <c>Seek</c> capability.
 	/// </summary>
-	public override long Position => _decoder.GetBytesRead();
+	public override long Position => _reader.GetBytesRead();
 	
 	/// <inheritdoc />
 	protected override void Dispose(bool disposing)
 	{
-		if (disposing) _decoder.Dispose();
+		if (disposing) _reader.Dispose();
 		base.Dispose(disposing);
 	}
 	
@@ -65,17 +65,17 @@ public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 	
 	/// <inheritdoc />
 	public override int Read(Span<byte> buffer) =>
-		_decoder.ReadManyBytes(buffer, _interactive);
+		_reader.ReadManyBytes(buffer, _interactive);
 
 	/// <inheritdoc />
 	public override ValueTask<int> ReadAsync(
 		Memory<byte> buffer, CancellationToken token = default) =>
-		new(_decoder.ReadManyBytesAsync(token, buffer, _interactive));
+		new(_reader.ReadManyBytesAsync(token, buffer, _interactive));
 
 	/// <inheritdoc />
 	public override async ValueTask DisposeAsync()
 	{
-		await _decoder.DisposeAsync().Weave();
+		await _reader.DisposeAsync().Weave();
 		await base.DisposeAsync().Weave();
 	}
 	

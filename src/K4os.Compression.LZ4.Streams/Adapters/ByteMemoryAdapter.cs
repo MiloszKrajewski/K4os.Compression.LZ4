@@ -10,7 +10,7 @@ namespace K4os.Compression.LZ4.Streams.Adapters;
 /// Stream adapter for <see cref="ReadOnlyMemory{T}"/> and <see cref="Memory{T}"/>.
 /// This class implements <see cref="IStreamWriter{TStreamState}"/> for <see cref="Memory{T}"/>
 /// but should be used only in some niche situations, as it is not easy to find out
-/// how many bytes has been written, use <see cref="BufferWriterAdapter{TBufferWriter}"/>
+/// how many bytes has been written, use <see cref="ByteBufferAdapter{TBufferWriter}"/>
 /// instead.
 /// Please note, whole <c>K4os.Compression.LZ4.Streams.Adapters</c> namespace should be considered
 /// pubternal - exposed as public but still very likely to change.
