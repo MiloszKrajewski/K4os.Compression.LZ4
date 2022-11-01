@@ -11,7 +11,9 @@ using LZ4Context = LL.LZ4_streamHC_t;
 /// </summary>
 public unsafe class LZ4HighChainEncoder: LZ4EncoderBase
 {
-	private readonly LZ4Context* _context;
+	private PinnedMemory _contextPin;
+
+	private LZ4Context* Context => _contextPin.Reference<LZ4Context>();
 
 	/// <summary>Creates new instance of <see cref="LZ4HighChainEncoder"/></summary>
 	/// <param name="level">Compression level.</param>
@@ -22,24 +24,24 @@ public unsafe class LZ4HighChainEncoder: LZ4EncoderBase
 	{
 		if (level < LZ4Level.L03_HC) level = LZ4Level.L03_HC;
 		if (level > LZ4Level.L12_MAX) level = LZ4Level.L12_MAX;
-		_context = LL.LZ4_createStreamHC();
-		LL.LZ4_resetStreamHC_fast(_context, (int) level);
+		PinnedMemory.Alloc<LZ4Context>(out _contextPin, false);
+		LL.LZ4_initStreamHC(Context);
+		LL.LZ4_resetStreamHC_fast(Context, (int) level);
 	}
 
 	/// <inheritdoc />
 	protected override void ReleaseUnmanaged()
 	{
 		base.ReleaseUnmanaged();
-		LL.LZ4_freeStreamHC(_context);
+		_contextPin.Free();
 	}
 
 	/// <inheritdoc />
 	protected override int EncodeBlock(
 		byte* source, int sourceLength, byte* target, int targetLength) =>
-		LLxx.LZ4_compress_HC_continue(
-			_context, source, target, sourceLength, targetLength);
+		LLxx.LZ4_compress_HC_continue(Context, source, target, sourceLength, targetLength);
 
 	/// <inheritdoc />
 	protected override int CopyDict(byte* target, int length) =>
-		LL.LZ4_saveDictHC(_context, target, length);
+		LL.LZ4_saveDictHC(Context, target, length);
 }

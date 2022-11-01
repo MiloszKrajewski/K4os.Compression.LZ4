@@ -189,6 +189,9 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 		}
 	}
 
+	/// <summary>
+	/// Releases unmanaged resources. 
+	/// </summary>
 	protected virtual void ReleaseResources() {  }
 	
 	/// <inheritdoc />
@@ -213,6 +216,10 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 		}
 	}
 	
+	/// <summary>
+	/// Releases unmanaged resources.
+	/// </summary>
+	/// <returns>Task indicating operation is finished.</returns>
 	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
 
 	#endif

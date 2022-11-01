@@ -32,6 +32,27 @@ namespace K4os.Compression.LZ4.Engine
 		{
 			LZ4_streamHCPtr->favorDecSpeed = (favor != 0);
 		}
+		
+		/*
+		Memory allocation has been moved to array pool, but I keep these methods for reference.
+		
+		public static LZ4_streamHC_t* LZ4_createStreamHC()
+		{
+			LZ4_streamHC_t* LZ4_streamHCPtr = (LZ4_streamHC_t*) Mem.Alloc(sizeof(LZ4_streamHC_t));
+			if (LZ4_streamHCPtr == null) return null;
+
+			LZ4_initStreamHC(LZ4_streamHCPtr);
+			return LZ4_streamHCPtr;
+		}
+		
+		public static int LZ4_freeStreamHC(LZ4_streamHC_t* LZ4_streamHCPtr)
+		{
+			if (LZ4_streamHCPtr == null) return 0;
+
+			Mem.Free(LZ4_streamHCPtr);
+			return 0;
+		}
+		*/
 
 		public static LZ4_streamHC_t* LZ4_initStreamHC(void* buffer, int size)
 		{
@@ -51,23 +72,6 @@ namespace K4os.Compression.LZ4.Engine
 		public static LZ4_streamHC_t* LZ4_initStreamHC(LZ4_streamHC_t* stream) =>
 			LZ4_initStreamHC(stream, sizeof(LZ4_streamHC_t));
 		
-		public static LZ4_streamHC_t* LZ4_createStreamHC()
-		{
-			LZ4_streamHC_t* LZ4_streamHCPtr = (LZ4_streamHC_t*) Mem.Alloc(sizeof(LZ4_streamHC_t));
-			if (LZ4_streamHCPtr == null) return null;
-
-			LZ4_initStreamHC(LZ4_streamHCPtr);
-			return LZ4_streamHCPtr;
-		}
-
-		public static int LZ4_freeStreamHC(LZ4_streamHC_t* LZ4_streamHCPtr)
-		{
-			if (LZ4_streamHCPtr == null) return 0;
-
-			Mem.Free(LZ4_streamHCPtr);
-			return 0;
-		}
-
 		public static void LZ4_resetStreamHC_fast(
 			LZ4_streamHC_t* LZ4_streamHCPtr, int compressionLevel)
 		{

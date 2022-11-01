@@ -34,9 +34,9 @@ public class FrameRountripTests
 				buffer,
 				d => d.CreateEncoder(),
 				descriptor),
-			() => new LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
-				new ByteMemoryAdapter(),
-				buffer.WrittenMemory,
+			() => new LZ4FrameReader<ByteMemoryReadAdapter, int>(
+				new ByteMemoryReadAdapter(buffer.WrittenMemory),
+				0,
 				d => d.CreateDecoder()));
 	}
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Encoders;
@@ -10,12 +11,15 @@ namespace K4os.Compression.LZ4.Encoders;
 /// </summary>
 public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 {
-	private readonly byte* _inputBuffer;
+	private PinnedMemory _inputBufferPin;
+	
 	private readonly int _inputLength;
 	private readonly int _blockSize;
 
 	private int _inputIndex;
 	private int _inputPointer;
+	
+	private byte* InputBuffer => _inputBufferPin.Pointer;
 
 	/// <summary>Creates new instance of encoder.</summary>
 	/// <param name="chaining">Needs to be <c>true</c> if using dependent blocks.</param>
@@ -30,7 +34,7 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 		_blockSize = blockSize;
 		_inputLength = dictSize + (1 + extraBlocks) * blockSize + 32;
 		_inputIndex = _inputPointer = 0;
-		_inputBuffer = (byte*) Mem.Alloc(_inputLength + 8);
+		PinnedMemory.Alloc(out _inputBufferPin, _inputLength + 8, false);
 	}
 
 	/// <inheritdoc />
@@ -52,7 +56,7 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 			return 0;
 
 		var chunk = Math.Min(spaceLeft, length);
-		Mem.Move(_inputBuffer + _inputPointer, source, chunk);
+		Mem.Move(InputBuffer + _inputPointer, source, chunk);
 		_inputPointer += chunk;
 
 		return chunk;
@@ -67,7 +71,7 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 		if (sourceLength <= 0)
 			return 0;
 
-		var encoded = EncodeBlock(_inputBuffer + _inputIndex, sourceLength, target, length);
+		var encoded = EncodeBlock(InputBuffer + _inputIndex, sourceLength, target, length);
 
 		if (encoded <= 0)
 			throw new InvalidOperationException(
@@ -75,7 +79,7 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 
 		if (allowCopy && encoded >= sourceLength)
 		{
-			Mem.Move(target, _inputBuffer + _inputIndex, sourceLength);
+			Mem.Move(target, InputBuffer + _inputIndex, sourceLength);
 			encoded = -sourceLength;
 		}
 
@@ -90,7 +94,7 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 		if (_inputIndex + _blockSize <= _inputLength)
 			return;
 
-		_inputIndex = _inputPointer = CopyDict(_inputBuffer, _inputPointer);
+		_inputIndex = _inputPointer = CopyDict(InputBuffer, _inputPointer);
 	}
 
 	/// <summary>Encodes single block using appropriate algorithm.</summary>
@@ -112,6 +116,6 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 	protected override void ReleaseUnmanaged()
 	{
 		base.ReleaseUnmanaged();
-		Mem.Free(_inputBuffer);
+		_inputBufferPin.Free();
 	}
 }

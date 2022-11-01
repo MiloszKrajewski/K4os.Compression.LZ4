@@ -30,7 +30,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>
 		/*await*/ WriteData(token, block);
 
 		_stash.TryPoke4(BlockChecksum(block));
-		/*await*/ FlushMeta(token);
+		/*await*/ FlushMeta(token, true);
 	}
 
 	private void WriteOneByte(Token token, byte value) =>
@@ -89,6 +89,6 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>
 
 		_stash.Poke4(0);
 		_stash.TryPoke4(ContentChecksum());
-		/*await*/ FlushMeta(token);
+		/*await*/ FlushMeta(token, true);
 	}
 }

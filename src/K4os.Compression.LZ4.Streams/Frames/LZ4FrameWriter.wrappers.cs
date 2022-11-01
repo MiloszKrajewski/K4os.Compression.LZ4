@@ -1,20 +1,31 @@
 using System;
 using System.Buffers;
 using System.IO;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
+using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
 
 #if NET5_0_OR_GREATER
 using System.IO.Pipelines;
+using System.Threading.Tasks;
 #endif
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
+/// <summary>
+/// <see cref="ILZ4FrameWriter"/> implementation for <see cref="IBufferWriter{T}"/>
+/// </summary>
+/// <typeparam name="TBufferWriter">Type of buffer writer.</typeparam>
 public class ByteBufferLZ4FrameWriter<TBufferWriter>:
 	LZ4FrameWriter<ByteBufferAdapter<TBufferWriter>, TBufferWriter>
 	where TBufferWriter: IBufferWriter<byte>
 {
+	/// <summary>
+	/// Creates new instance of <see cref="ByteBufferLZ4FrameWriter{TBufferWriter}"/>.
+	/// </summary>
+	/// <param name="stream">Buffer writer to write to.</param>
+	/// <param name="encoderFactory">Encoder factory.</param>
+	/// <param name="descriptor">Frame descriptor.</param>
 	public ByteBufferLZ4FrameWriter(
 		TBufferWriter stream,
 		Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
@@ -22,8 +33,17 @@ public class ByteBufferLZ4FrameWriter<TBufferWriter>:
 		base(new ByteBufferAdapter<TBufferWriter>(), stream, encoderFactory, descriptor) { }
 }
 
+/// <summary>
+/// <see cref="ILZ4FrameWriter"/> implementation for <see cref="IBufferWriter{T}"/>
+/// </summary>
 public class ByteBufferLZ4FrameWriter: ByteBufferLZ4FrameWriter<IBufferWriter<byte>>
 {
+	/// <summary>
+	/// Creates new instance of <see cref="ByteBufferLZ4FrameWriter"/>.
+	/// </summary>
+	/// <param name="stream">Buffer writer to write to.</param>
+	/// <param name="encoderFactory">Encoder factory.</param>
+	/// <param name="descriptor">Frame descriptor.</param>
 	public ByteBufferLZ4FrameWriter(
 		IBufferWriter<byte> stream,
 		Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
@@ -31,22 +51,22 @@ public class ByteBufferLZ4FrameWriter: ByteBufferLZ4FrameWriter<IBufferWriter<by
 		base(stream, encoderFactory, descriptor) { }
 }
 
-public class ByteMemoryLZ4FrameWriter: LZ4FrameWriter<ByteMemoryAdapter, Memory<byte>>
+public class ByteMemoryLZ4FrameWriter: LZ4FrameWriter<ByteMemoryWriteAdapter, int>
 {
 	public ByteMemoryLZ4FrameWriter(
 		Memory<byte> stream,
 		Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 		ILZ4Descriptor descriptor): base(
-		new ByteMemoryAdapter(), stream, encoderFactory, descriptor) { }
+		new ByteMemoryWriteAdapter(stream), 0, encoderFactory, descriptor) { }
 }
 
-public class ByteSpanLZ4FrameWriter: LZ4FrameWriter<ByteSpanAdapter, UnsafeByteSpan>
+public class ByteSpanLZ4FrameWriter: LZ4FrameWriter<ByteSpanAdapter, int>
 {
 	public ByteSpanLZ4FrameWriter(
 		UnsafeByteSpan stream,
 		Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 		ILZ4Descriptor descriptor):
-		base(new ByteSpanAdapter(), stream, encoderFactory, descriptor) { }
+		base(new ByteSpanAdapter(stream), 0, encoderFactory, descriptor) { }
 }
 
 public class StreamLZ4FrameWriter: LZ4FrameWriter<StreamAdapter, EmptyState>

@@ -28,7 +28,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private byte[] _buffer;
 
 	private long _bytesWritten;
-	
+
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="writer">Inner stream.</param>
 	/// <param name="stream">Inner stream initial state.</param>
@@ -174,38 +174,51 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		blockSize <= Mem.M4 ? 7 :
 		throw InvalidBlockSize(blockSize);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public long GetBytesWritten() => _bytesWritten;
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void WriteOneByte(byte value) =>
 		WriteOneByte(EmptyToken.Value, value);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task WriteOneByteAsync(CancellationToken token, byte value) =>
 		WriteOneByte(token, value);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void WriteManyBytes(ReadOnlySpan<byte> buffer) =>
 		WriteManyBytes(EmptyToken.Value, buffer);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task WriteManyBytesAsync(CancellationToken token, ReadOnlyMemory<byte> buffer) =>
 		WriteManyBytes(token, buffer);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool OpenFrame() => OpenFrame(EmptyToken.Value);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task<bool> OpenFrameAsync(CancellationToken token = default) => OpenFrame(token);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void CloseFrame() => CloseFrame(EmptyToken.Value);
 
+	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Task CloseFrameAsync(CancellationToken token = default) =>
 		CloseFrame(token);
 
+	/// <summary>
+	/// Disposes the stream and releases all resources.
+	/// </summary>
+	/// <param name="disposing"><c>true</c> if called by user; <c>false</c> when called by garbag collector.</param>
 	protected virtual void Dispose(bool disposing)
 	{
 		if (!disposing) return;
@@ -221,15 +234,16 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		}
 	}
 
-	public void Dispose()
-	{
-		Dispose(true);
-	}
-	
-	protected virtual void ReleaseResources() {  }
+	/// <inheritdoc />
+	public void Dispose() { Dispose(true); }
+
+	/// <summary>
+	/// Releases all unmanaged resources.
+	/// </summary>
+	protected virtual void ReleaseResources() { }
 
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-
+	
 	/// <inheritdoc />
 	public virtual async ValueTask DisposeAsync()
 	{
@@ -244,15 +258,19 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		}
 	}
 	
+	/// <summary>
+	/// Releases all unmanaged resources.
+	/// </summary>
+	/// <returns>Task indicating completion of the operation.</returns>
 	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
-	
+
 	#endif
-	
+
 	// ReSharper disable once UnusedParameter.Local
 	private void FlushMeta(EmptyToken _, bool eof = false)
 	{
 		var length = _stash.Flush();
-		
+
 		if (length > 0)
 			_writer.Write(ref _stream, _stash.Data, 0, length);
 
@@ -263,10 +281,10 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private async Task FlushMeta(CancellationToken token, bool eof = false)
 	{
 		var length = _stash.Flush();
-		
+
 		if (length > 0)
 			_stream = await _writer.WriteAsync(_stream, _stash.Data, 0, length, token);
-		
+
 		if (eof && _writer.CanFlush)
 			_stream = await _writer.FlushAsync(_stream, token);
 	}
@@ -283,7 +301,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 			.WriteAsync(_stream, block.Buffer, block.Offset, block.Length, token)
 			.Weave();
 	}
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	// ReSharper disable once UnusedParameter.Local
 	private Span<byte> OneByteBuffer(in EmptyToken _, byte value) =>

@@ -150,7 +150,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
-		public static void* CloneAnyArray<T>(T[] array)
+		public static void* CloneAnyArray<T>(T[] array) where T: unmanaged
 		{
 			var length = Unsafe.SizeOf<T>() * array.Length;
 			var target = Alloc(length);
@@ -166,14 +166,8 @@ namespace K4os.Compression.LZ4.Internal
 		/// Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
-		public static int* CloneArray(int[] array) => (int*)CloneAnyArray(array);
+		public static T* CloneArray<T>(T[] array) where T: unmanaged => (T*)CloneAnyArray(array);
 
-		/// <summary>Clones managed array to unmanaged one.
-		/// Allows quicker yet less safe unchecked access.</summary>
-		/// <param name="array">Input array.</param>
-		/// <returns>Cloned array.</returns>
-		public static uint* CloneArray(uint[] array) => (uint*)CloneAnyArray(array);
-		
 		/// <summary>Reads exactly 1 byte from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>Byte at given address.</returns>

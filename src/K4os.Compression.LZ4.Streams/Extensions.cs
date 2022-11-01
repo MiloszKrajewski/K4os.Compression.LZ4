@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,9 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public static class Extensions
 {
+	internal static ReadOnlySpan<T> AsReadOnly<T>(this Span<T> span) => span;
+	internal static ReadOnlyMemory<T> AsReadOnly<T>(this Memory<T> memory) => memory;
+	
 	private static int ExtraBlocks(int blockSize, int extraMemory) =>
 		Math.Max(extraMemory > 0 ? blockSize : 0, extraMemory) / blockSize;
 
@@ -61,6 +65,12 @@ public static class Extensions
 //			settings.BlockSize,
 //			ExtraBlocks(settings.BlockSize, settings.ExtraMemory));
 
+	/// <summary>
+	/// Create <see cref="ILZ4Decoder"/> using <see cref="ILZ4Descriptor"/>.
+	/// </summary>
+	/// <param name="descriptor">Descriptor.</param>
+	/// <param name="extraMemory">Extra memory (may improves speed, but creates memory pressure).</param>
+	/// <returns><see cref="ILZ4Decoder"/>.</returns>
 	public static ILZ4Decoder CreateDecoder(
 		this ILZ4Descriptor descriptor, int extraMemory = 0) =>
 		LZ4Decoder.Create(
@@ -68,6 +78,12 @@ public static class Extensions
 			descriptor.BlockSize,
 			ExtraBlocks(descriptor.BlockSize, extraMemory));
 
+	/// <summary>
+	/// Create <see cref="ILZ4Decoder"/> using <see cref="ILZ4Descriptor"/> and <see cref="LZ4DecoderSettings"/>.
+	/// </summary>
+	/// <param name="descriptor">Descriptor.</param>
+	/// <param name="settings">Settings.</param>
+	/// <returns><see cref="ILZ4Decoder"/>.</returns>
 	public static ILZ4Decoder CreateDecoder(
 		this ILZ4Descriptor descriptor, LZ4DecoderSettings settings) =>
 		LZ4Decoder.Create(
@@ -75,6 +91,11 @@ public static class Extensions
 			descriptor.BlockSize,
 			ExtraBlocks(descriptor.BlockSize, settings.ExtraMemory));
 
+	/// <summary>
+	/// Creates <see cref="ILZ4Descriptor"/> from <see cref="LZ4DecoderSettings"/>.
+	/// </summary>
+	/// <param name="settings">Settings.</param>
+	/// <returns>LZ4 Descriptor.</returns>
 	public static ILZ4Descriptor CreateDescriptor(
 		this LZ4EncoderSettings settings) =>
 		new LZ4Descriptor(
@@ -84,7 +105,7 @@ public static class Extensions
 			settings.BlockChecksum,
 			settings.Dictionary,
 			settings.BlockSize);
-	
+
 	/// <summary>Async version of <see cref="ILZ4FrameReader.OpenFrame"/>.</summary>
 	/// <param name="reader">Decoder.</param>
 	/// <returns><c>true</c> if frame was just opened,
@@ -99,7 +120,7 @@ public static class Extensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Task<long?> GetFrameLengthAsync(this ILZ4FrameReader reader) =>
 		reader.GetFrameLengthAsync(CancellationToken.None);
-	
+
 	/// <summary>Reads one byte from LZ4 stream.</summary>
 	/// <param name="reader">Decoder.</param>
 	/// <returns>A byte, or -1 if end of stream.</returns>
@@ -118,7 +139,7 @@ public static class Extensions
 	public static Task<int> ReadManyBytesAsync(
 		this ILZ4FrameReader reader, Memory<byte> buffer, bool interactive = false) =>
 		reader.ReadManyBytesAsync(CancellationToken.None, buffer, interactive);
-	
+
 	/// <summary>
 	/// Opens a stream by reading frame header. Please note, this methods can be called explicitly
 	/// but does not need to be called, it will be called automatically if needed. 
@@ -153,7 +174,14 @@ public static class Extensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Task CloseFrameAsync(this ILZ4FrameWriter writer) =>
 		writer.CloseFrameAsync(CancellationToken.None);
-	
+
+	/// <summary>
+	/// Copies all bytes from <see cref="ILZ4FrameReader"/> into <see cref="IBufferWriter{T}"/>.
+	/// </summary>
+	/// <param name="reader">Frame reader.</param>
+	/// <param name="buffer">Buffer writer.</param>
+	/// <param name="blockSize">Temporary buffer size.</param>
+	/// <typeparam name="TBufferWriter">Type of buffer writer.</typeparam>
 	public static void CopyTo<TBufferWriter>(
 		this ILZ4FrameReader reader, TBufferWriter buffer, int blockSize = 0)
 		where TBufferWriter: IBufferWriter<byte>
@@ -169,6 +197,13 @@ public static class Extensions
 		}
 	}
 
+	/// <summary>
+	/// Copies all bytes from <see cref="ILZ4FrameReader"/> into <see cref="IBufferWriter{T}"/>.
+	/// </summary>
+	/// <param name="reader">LZ4 frame reader.</param>
+	/// <param name="buffer">Buffer writer.</param>
+	/// <param name="blockSize">Temporary buffer size.</param>
+	/// <typeparam name="TBufferWriter">Type of buffer writer.</typeparam>
 	public static async Task CopyToAsync<TBufferWriter>(
 		this ILZ4FrameReader reader, TBufferWriter buffer, int blockSize = 0)
 		where TBufferWriter: IBufferWriter<byte>
@@ -184,13 +219,29 @@ public static class Extensions
 		}
 	}
 
+	/// <summary>
+	/// Wraps <see cref="ILZ4FrameReader"/> as <see cref="Stream"/>.
+	/// </summary>
+	/// <param name="reader">LZ4 frame reader.</param>
+	/// <param name="leaveOpen">Indicates that frame reader should be left open even if stream is
+	/// disposed.</param>
+	/// <param name="interactive">Indicates that data should be provided to reader as quick as
+	/// possible, instead of waiting for whole block to be read.</param>
+	/// <returns><see cref="FrameDecoderAsStream"/> stream wrapper.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static FrameDecoderAsStream AsStream(
 		this ILZ4FrameReader reader, bool leaveOpen = false, bool interactive = false) =>
 		new(reader, leaveOpen, interactive);
 
+	/// <summary>
+	/// Wraps <see cref="ILZ4FrameWriter"/> as <see cref="Stream"/>.
+	/// </summary>
+	/// <param name="writer">LZ4 frame writer.</param>
+	/// <param name="leaveOpen">Indicates that frame writer should be left open even if stream is
+	/// disposed.</param>
+	/// <returns><see cref="FrameEncoderAsStream"/> stream wrapper.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static FrameEncoderAsStream AsStream(
-		this ILZ4FrameWriter writer, bool leaveOpen = false) => 
+		this ILZ4FrameWriter writer, bool leaveOpen = false) =>
 		new(writer, leaveOpen);
 }
