@@ -20,14 +20,20 @@ public readonly struct PipeReaderAdapter: IStreamReader<ReadOnlySequence<byte>>
 {
 	private readonly PipeReader _reader;
 
-	public PipeReaderAdapter(PipeReader reader) { _reader = reader; }
+	/// <summary>
+	/// Creates new instance of <see cref="PipeReaderAdapter"/>.
+	/// </summary>
+	/// <param name="reader">Pipe reader.</param>
+	public PipeReaderAdapter(PipeReader reader) => _reader = reader;
 
+	/// <inheritdoc />
 	public int Read(
 		ref ReadOnlySequence<byte> state,
 		byte[] buffer, int offset, int length) =>
 		throw new NotImplementedException(
 			$"{nameof(PipeReader)} does not implement synchronous interface");
 
+	/// <inheritdoc />
 	public async Task<ReadResult<ReadOnlySequence<byte>>> ReadAsync(
 		ReadOnlySequence<byte> state,
 		byte[] buffer, int offset, int length,
@@ -39,7 +45,8 @@ public readonly struct PipeReaderAdapter: IStreamReader<ReadOnlySequence<byte>>
 		if (state.IsEmpty)
 		{
 			state = await HydrateSequence(_reader, length, token);
-			if (state.IsEmpty) return ReadResult.Create(ReadOnlySequence<byte>.Empty);
+			if (state.IsEmpty) // still 
+				return ReadResult.Create(ReadOnlySequence<byte>.Empty);
 		}
 
 		return ReadFromSequence(state, buffer.AsSpan(offset, length));

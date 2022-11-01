@@ -26,18 +26,19 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
 
-		var encoder = new LZ4FrameWriter<ByteMemoryAdapter, Memory<byte>>(
-			new ByteMemoryAdapter(),
-			new Memory<byte>(compressedBytes),
+		var encoder = new LZ4FrameWriter<ByteMemoryWriteAdapter, int>(
+			new ByteMemoryWriteAdapter(new Memory<byte>(compressedBytes)),
+			0,
 			d => d.CreateEncoder(),
 			DefaultSettings);
 
 		WriteAllBytes(originalBytes, encoder);
-		var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
+		var compressedLength = encoder.StreamState;
 
-		var decoder = new LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
-			new ByteMemoryAdapter(),
-			new ReadOnlyMemory<byte>(compressedBytes, 0, compressedLength),
+		var decoder = new LZ4FrameReader<ByteMemoryReadAdapter, int>(
+			new ByteMemoryReadAdapter(
+				new ReadOnlyMemory<byte>(compressedBytes, 0, compressedLength)),
+			0,
 			d => d.CreateDecoder());
 
 		var decompressedBytes = ReadAllBytes(decoder);
@@ -64,9 +65,9 @@ public class MemoryAdapterTests
 
 		WriteAllBytes(originalBytes, encoder);
 
-		var decoder = new LZ4FrameReader<ByteMemoryAdapter, ReadOnlyMemory<byte>>(
-			new ByteMemoryAdapter(),
-			compressedBytes.WrittenMemory,
+		var decoder = new LZ4FrameReader<ByteMemoryReadAdapter, int>(
+			new ByteMemoryReadAdapter(compressedBytes.WrittenMemory),
+			0,
 			d => d.CreateDecoder());
 
 		var decompressedBytes = ReadAllBytes(decoder);
@@ -87,18 +88,18 @@ public class MemoryAdapterTests
 
 		fixed (byte* compressedPtr = compressedBytes)
 		{
-			var encoder = new LZ4FrameWriter<ByteSpanAdapter, UnsafeByteSpan>(
-				new ByteSpanAdapter(),
-				new UnsafeByteSpan(new UIntPtr(compressedPtr), compressedBytes.Length),
+			var encoder = new LZ4FrameWriter<ByteSpanAdapter, int>(
+				new ByteSpanAdapter(UnsafeByteSpan.Create(compressedPtr, compressedBytes.Length)),
+				0,
 				d => d.CreateEncoder(),
 				DefaultSettings);
 
 			WriteAllBytes(originalBytes, encoder);
-			var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
+			var compressedLength = encoder.StreamState;
 
-			var decoder = new LZ4FrameReader<ByteSpanAdapter, UnsafeByteSpan>(
-				new ByteSpanAdapter(),
-				new UnsafeByteSpan(new UIntPtr(compressedPtr), compressedLength),
+			var decoder = new LZ4FrameReader<ByteSpanAdapter, int>(
+				new ByteSpanAdapter(UnsafeByteSpan.Create(compressedPtr, compressedLength)),
+				0,
 				d => d.CreateDecoder());
 
 			var decompressedBytes = ReadAllBytes(decoder);
@@ -117,14 +118,14 @@ public class MemoryAdapterTests
 
 		var compressedBytes = new byte[LZ4Codec.MaximumOutputSize(originalBytes.Length)];
 
-		var encoder = new LZ4FrameWriter<ByteMemoryAdapter, Memory<byte>>(
-			new ByteMemoryAdapter(),
-			new Memory<byte>(compressedBytes),
+		var encoder = new LZ4FrameWriter<ByteMemoryWriteAdapter, int>(
+			new ByteMemoryWriteAdapter(new Memory<byte>(compressedBytes)),
+			0,
 			d => d.CreateEncoder(),
 			DefaultSettings);
 
 		WriteAllBytes(originalBytes, encoder);
-		var compressedLength = compressedBytes.Length - encoder.StreamState.Length;
+		var compressedLength = encoder.StreamState;
 
 		var decoder = new LZ4FrameReader<ByteSequenceAdapter, ReadOnlySequence<byte>>(
 			new ByteSequenceAdapter(),

@@ -216,14 +216,11 @@ namespace K4os.Compression.LZ4.Engine
 			return dictSize;
 		}
 
+		/*
+		Memory allocation has been moved to array pool, but I keep these methods for reference.
+		 
 		public static LZ4_stream_t* LZ4_createStream() =>
 			(LZ4_stream_t*) Mem.AllocZero(sizeof(LZ4_stream_t));
-
-		public static LZ4_stream_t* LZ4_initStream(LZ4_stream_t* buffer)
-		{
-			Mem.Zero((byte*) buffer, sizeof(LZ4_stream_t));
-			return buffer;
-		}
 
 		public static void LZ4_freeStream(LZ4_stream_t* LZ4_stream)
 		{
@@ -236,6 +233,13 @@ namespace K4os.Compression.LZ4.Engine
 		public static void LZ4_freeStreamDecode(LZ4_streamDecode_t* LZ4_stream)
 		{
 			if (LZ4_stream != null) Mem.Free(LZ4_stream);
+		}
+		*/
+
+		public static LZ4_stream_t* LZ4_initStream(LZ4_stream_t* buffer)
+		{
+			Mem.Zero((byte*) buffer, sizeof(LZ4_stream_t));
+			return buffer;
 		}
 
 		public static void LZ4_setStreamDecode(

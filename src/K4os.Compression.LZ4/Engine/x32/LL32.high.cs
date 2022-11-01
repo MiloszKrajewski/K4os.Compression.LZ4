@@ -7,6 +7,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Internal;
 
 //------------------------------------------------------------------------------
 
@@ -1371,15 +1372,16 @@ namespace K4os.Compression.LZ4.Engine
 		public static int LZ4_compress_HC(
 			byte* src, byte* dst, int srcSize, int dstCapacity, int compressionLevel)
 		{
-			LZ4_streamHC_t* statePtr = (LZ4_streamHC_t*) Mem.Alloc(sizeof(LZ4_streamHC_t));
+			PinnedMemory.Alloc(out var contextPin, sizeof(LZ4_streamHC_t), false);
 			try
 			{
+				var contextPtr = contextPin.Reference<LZ4_streamHC_t>();
 				return LZ4_compress_HC_extStateHC(
-					statePtr, src, dst, srcSize, dstCapacity, compressionLevel);
+					contextPtr, src, dst, srcSize, dstCapacity, compressionLevel);
 			}
 			finally
 			{
-				Mem.Free(statePtr);
+				contextPin.Free();
 			}
 		}
 	}

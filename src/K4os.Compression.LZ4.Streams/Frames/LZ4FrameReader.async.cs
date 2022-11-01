@@ -93,7 +93,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
 
 		if (hasDictionary)
 			throw NotImplemented(
-				"Predefined dictionaries feature is not implemented");
+				"Predefined dictionaries feature is not implemented"); // Peek4(dictionaryId);
 
 		// ReSharper disable once ExpressionIsAlwaysNull
 		_descriptor = new LZ4Descriptor(

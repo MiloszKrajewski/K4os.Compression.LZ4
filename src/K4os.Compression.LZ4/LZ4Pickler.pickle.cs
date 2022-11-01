@@ -60,15 +60,14 @@ public static partial class LZ4Pickler
 		}
 		else
 		{
-			var buffer = Mem.Alloc(sourceLength);
+			PinnedMemory.Alloc(out var target, sourceLength, false);
 			try
 			{
-				var target = new Span<byte>(buffer, sourceLength);
-				return PickleWithBuffer(source, level, target);
+				return PickleWithBuffer(source, level, target.Span);
 			}
 			finally
 			{
-				Mem.Free(buffer);
+				target.Free();
 			}
 		}
 	}
