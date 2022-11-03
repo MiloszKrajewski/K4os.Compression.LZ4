@@ -299,6 +299,78 @@ Well, it does not handle predefined dictionaries but `lz4.exe` does not either. 
 not implemented yet (`ContentLength`, `ContentChecksum`, `BlockChecksum`) are just gracefully ignored but does 
 not cause decompression to fail.
 
+### Other stream-like data structures
+
+As per version 1.3-beta new stream abstractions has been added (note, it has both sync and async methods, but here I'm listing sync ones only):
+
+```csharp
+interface ILZ4FrameReader: IDisposable
+{
+	bool OpenFrame();
+	long? GetFrameLength();
+	int ReadOneByte();
+	int ReadManyBytes(Span<byte> buffer, bool interactive = false);
+	long GetBytesRead();
+	void CloseFrame();
+}
+
+interface ILZ4FrameWriter: IDisposable
+{
+	bool OpenFrame();
+	void WriteOneByte(byte value);
+	void WriteManyBytes(ReadOnlySpan<byte> buffer);
+	long GetBytesWritten();
+	void CloseFrame();
+}
+```
+
+This allows to adapt any stream-like data structure to LZ4 compression/decompression, which currently is:
+`Span` and `ReadOnlySpan` (limited support), `Memory` and `ReadOnlyMemory`, `ReadOnlySequence`, `BufferWriter`, 
+`Stream`, `PipeReader`, and `PipeWriter`.
+
+This mechanism is extendable so implementing stream-like approach for other data structures will be possible (although not trivial).
+
+Factory methods for creating `ILZ4FrameReader` and `ILZ4FrameWriter` are available on `LZFrame` class:
+
+```csharp
+static class LZ4Frame
+{
+    // Decode
+    
+	static void Decode<TBufferWriter>(
+		ReadOnlySpan<byte> source, TBufferWriter target, int extraMemory = 0);
+	static ByteMemoryLZ4FrameReader Decode(
+		ReadOnlyMemory<byte> memory, int extraMemory = 0);
+	static ByteSequenceLZ4FrameReader Decode(
+		ReadOnlySequence<byte> sequence, int extraMemory = 0);
+	static StreamLZ4FrameReader Decode(
+		Stream stream, int extraMemory = 0, bool leaveOpen = false);
+	static PipeLZ4FrameReader Decode(
+		PipeReader reader, int extraMemory = 0, bool leaveOpen = false);
+	
+	// Encode
+		
+	static int Encode(
+		ReadOnlySequence<byte> source, Span<byte> target, LZ4EncoderSettings? settings = default);
+	static int Encode(
+		Span<byte> source, Span<byte> target, LZ4EncoderSettings? settings = default);
+	static int Encode(
+		Action<ILZ4FrameWriter> source, Span<byte> target, LZ4EncoderSettings? settings = default);
+	static ByteSpanLZ4FrameWriter Encode(
+		byte* target, int length, LZ4EncoderSettings? settings = default);
+	static ByteMemoryLZ4FrameWriter Encode(
+		Memory<byte> target, LZ4EncoderSettings? settings = default);
+	static ByteBufferLZ4FrameWriter<TBufferWriter> Encode<TBufferWriter>(
+		TBufferWriter target, LZ4EncoderSettings? settings = default);
+	static ByteBufferLZ4FrameWriter Encode(
+		IBufferWriter<byte> target, LZ4EncoderSettings? settings = default);
+	static StreamLZ4FrameWriter Encode(
+		Stream target, LZ4EncoderSettings? settings = default, bool leaveOpen = false);
+	static PipeLZ4FrameWriter Encode(
+		PipeWriter target, LZ4EncoderSettings? settings = default, bool leaveOpen = false);
+}
+```
+
 ### Legacy (lz4net) compatibility
 
 There is a separate package for those who used lz4net before and still need to access files generated with it:
@@ -332,6 +404,17 @@ using (var target = LZ4Stream.Encode(File.Create(filename + ".new")))
 
 Code above will read old (lz4net) format and write to new format 
 ([lz4_Frame_format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md)).
+
+### Memory pooling
+
+I've added memory block pooling to most of the classes. It is enabled by default, but comes with potential danger: 
+this pooled memory gets pinned and may be problematic in some scenarios, for example with long lived streams.
+
+LZ4 is used most of the time for small packages, "in-and-out 20 minutes adventure", so pinning pooling memory is not a problem. 
+
+As usual: it depends.
+
+If you want to change the maximum pooled array use `PinnedMemory.MaxPooledSize`. You can set it to 0 to disable pooling.  
 
 ### ARMv7, IL2CPP, Unity
 

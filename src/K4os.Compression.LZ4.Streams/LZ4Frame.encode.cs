@@ -13,7 +13,7 @@ using System.IO.Pipelines;
 
 namespace K4os.Compression.LZ4.Streams;
 
-public static partial class LZ4Pipe
+public static partial class LZ4Frame
 {
 	private static LZ4EncoderSettings ToEncoderSettings(LZ4Level level, int extraMemory) =>
 		new() { CompressionLevel = level, ExtraMemory = extraMemory };

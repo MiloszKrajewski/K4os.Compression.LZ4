@@ -18,14 +18,14 @@ namespace K4os.Compression.LZ4.Streams;
 /// Please note, to avoid all the complexity of dealing with streams, it uses
 /// <see cref="ILZ4FrameReader"/> and <see cref="ILZ4FrameWriter"/> as stream abstractions.
 /// </summary>
-public static partial class LZ4Pipe
+public static partial class LZ4Frame
 {
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
 	/// <param name="source">Span to read from.</param>
 	/// <param name="target">Buffer to write to.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
 	public static unsafe void Decode<TBufferWriter>(
-		Span<byte> source, TBufferWriter target, int extraMemory = 0)
+		ReadOnlySpan<byte> source, TBufferWriter target, int extraMemory = 0)
 		where TBufferWriter: IBufferWriter<byte>
 	{
 		fixed (byte* source0 = source)
