@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
@@ -6,13 +7,16 @@ using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
-public class FrameEncoderAsStream: LZ4StreamEssentials<ILZ4FrameWriter>
+/// <summary>
+/// Adapter to make <see cref="ILZ4FrameWriter"/> look like <see cref="Stream"/>.
+/// </summary>
+public class LZ4FrameWriterAsStream: LZ4StreamEssentials<ILZ4FrameWriter>
 {
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="writer">Underlying frame encoder.</param>
 	/// <param name="leaveOpen">Indicates <paramref name="writer"/> should be left
 	/// open after disposing.</param>
-	public FrameEncoderAsStream(ILZ4FrameWriter writer, bool leaveOpen = false):
+	public LZ4FrameWriterAsStream(ILZ4FrameWriter writer, bool leaveOpen = false):
 		base(writer, leaveOpen) { }
 
 	/// <inheritdoc />

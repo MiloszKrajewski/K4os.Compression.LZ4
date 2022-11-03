@@ -10,17 +10,17 @@ namespace K4os.Compression.LZ4.Streams.Frames;
 /// <summary>
 /// <see cref="Stream"/> wrapper for <see cref="ILZ4FrameReader"/>.
 /// </summary>
-public class FrameDecoderAsStream: LZ4StreamEssentials<ILZ4FrameReader>
+public class LZ4FrameReaderAsStream: LZ4StreamEssentials<ILZ4FrameReader>
 {
 	private readonly bool _interactive;
 
 	/// <summary>
-	/// Creates new instance of <see cref="FrameDecoderAsStream"/>.
+	/// Creates new instance of <see cref="LZ4FrameReaderAsStream"/>.
 	/// </summary>
 	/// <param name="reader">LZ4 frame reader.</param>
 	/// <param name="leaveOpen">Leave underlying stream open after disposing this stream.</param>
 	/// <param name="interactive">Use interactive mode; return bytes as soon as they available.</param>
-	public FrameDecoderAsStream(ILZ4FrameReader reader, bool leaveOpen, bool interactive):
+	public LZ4FrameReaderAsStream(ILZ4FrameReader reader, bool leaveOpen, bool interactive):
 		base(reader, leaveOpen)
 	{
 		_interactive = interactive;

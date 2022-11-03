@@ -15,13 +15,7 @@ public unsafe struct PinnedMemory
 	/// <summary>
 	/// Maximum size of the buffer that can be pooled from shared array pool.
 	/// </summary>
-	public static int MaxPooledSize { get; set; } =
-		#if NET5_0_OR_GREATER
-		Mem.M1 // 1MB maximum for shared array pool for .NET 5+
-		#else
-		Mem.K256 // 256KB for older implementation (actually, I don't know what is the limit)
-		#endif
-		;
+	public static int MaxPooledSize { get; set; } = Mem.M1;
 
 	private byte* _pointer;
 	private byte[] _array;
@@ -80,12 +74,6 @@ public unsafe struct PinnedMemory
 		{
 			AllocateManaged(out memory, size, zero);
 		}
-
-		#warning remove me
-		if (!zero)
-		{
-			Mem.Fill(memory._pointer, 0x42, size);
-		}
 	}
 	
 	/// <summary>
@@ -115,9 +103,10 @@ public unsafe struct PinnedMemory
 	{
 		var array = ArrayPool<byte>.Shared.Rent(size);
 		var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-		if (zero) array.AsSpan(0, size).Clear();
+		var pointer = (byte*)handle.AddrOfPinnedObject();
+		if (zero) Mem.Zero(pointer, size);
 
-		memory._pointer = (byte*)handle.AddrOfPinnedObject();
+		memory._pointer = pointer;
 		memory._size = size;
 		memory._array = array;
 		memory._handle = handle;

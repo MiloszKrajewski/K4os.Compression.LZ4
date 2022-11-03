@@ -17,7 +17,7 @@ public static class Extensions
 {
 	internal static ReadOnlySpan<T> AsReadOnly<T>(this Span<T> span) => span;
 	internal static ReadOnlyMemory<T> AsReadOnly<T>(this Memory<T> memory) => memory;
-	
+
 	private static int ExtraBlocks(int blockSize, int extraMemory) =>
 		Math.Max(extraMemory > 0 ? blockSize : 0, extraMemory) / blockSize;
 
@@ -51,19 +51,6 @@ public static class Extensions
 			settings.CompressionLevel,
 			descriptor.BlockSize,
 			ExtraBlocks(descriptor.BlockSize, settings.ExtraMemory));
-
-//	/// <summary>
-//	/// Creates <see cref="ILZ4Encoder"/> using <see cref="ILZ4Descriptor"/> and <see cref="LZ4EncoderSettings"/>.
-//	/// </summary>
-//	/// <param name="settings">Encoder settings.</param>
-//	/// <returns>Encoder.</returns>
-//	public static ILZ4Encoder CreateEncoder(
-//		this LZ4EncoderSettings settings) =>
-//		LZ4Encoder.Create(
-//			settings.ChainBlocks,
-//			settings.CompressionLevel,
-//			settings.BlockSize,
-//			ExtraBlocks(settings.BlockSize, settings.ExtraMemory));
 
 	/// <summary>
 	/// Create <see cref="ILZ4Decoder"/> using <see cref="ILZ4Descriptor"/>.
@@ -178,44 +165,84 @@ public static class Extensions
 	/// <summary>
 	/// Copies all bytes from <see cref="ILZ4FrameReader"/> into <see cref="IBufferWriter{T}"/>.
 	/// </summary>
-	/// <param name="reader">Frame reader.</param>
-	/// <param name="buffer">Buffer writer.</param>
-	/// <param name="blockSize">Temporary buffer size.</param>
+	/// <param name="source">Frame reader.</param>
+	/// <param name="target">Buffer writer.</param>
+	/// <param name="blockSize">Chunk size.</param>
 	/// <typeparam name="TBufferWriter">Type of buffer writer.</typeparam>
 	public static void CopyTo<TBufferWriter>(
-		this ILZ4FrameReader reader, TBufferWriter buffer, int blockSize = 0)
+		this ILZ4FrameReader source, TBufferWriter target, int blockSize = 0)
 		where TBufferWriter: IBufferWriter<byte>
 	{
 		blockSize = Math.Max(blockSize, 4096);
 		while (true)
 		{
-			var span = buffer.GetSpan(blockSize);
-			var bytes = reader.ReadManyBytes(span, true);
+			var span = target.GetSpan(blockSize);
+			var bytes = source.ReadManyBytes(span, true);
 			if (bytes == 0) return;
 
-			buffer.Advance(bytes);
+			target.Advance(bytes);
 		}
 	}
 
 	/// <summary>
 	/// Copies all bytes from <see cref="ILZ4FrameReader"/> into <see cref="IBufferWriter{T}"/>.
 	/// </summary>
-	/// <param name="reader">LZ4 frame reader.</param>
-	/// <param name="buffer">Buffer writer.</param>
-	/// <param name="blockSize">Temporary buffer size.</param>
+	/// <param name="source">LZ4 frame reader.</param>
+	/// <param name="target">Buffer writer.</param>
+	/// <param name="blockSize">Chunk size.</param>
 	/// <typeparam name="TBufferWriter">Type of buffer writer.</typeparam>
 	public static async Task CopyToAsync<TBufferWriter>(
-		this ILZ4FrameReader reader, TBufferWriter buffer, int blockSize = 0)
+		this ILZ4FrameReader source, TBufferWriter target, int blockSize = 0)
 		where TBufferWriter: IBufferWriter<byte>
 	{
 		blockSize = Math.Max(blockSize, 4096);
 		while (true)
 		{
-			var span = buffer.GetMemory(blockSize);
-			var bytes = await reader.ReadManyBytesAsync(span, true);
+			var span = target.GetMemory(blockSize);
+			var bytes = await source.ReadManyBytesAsync(span, true);
 			if (bytes == 0) return;
 
-			buffer.Advance(bytes);
+			target.Advance(bytes);
+		}
+	}
+
+	/// <summary>
+	/// Copies all bytes from <see cref="ReadOnlySequence{T}"/> into <see cref="ILZ4FrameWriter"/>.
+	/// </summary>
+	/// <param name="target">Frame writer.</param>
+	/// <param name="source">Sequence of bytes.</param>
+	public static void CopyFrom(
+		this ILZ4FrameWriter target, ReadOnlySequence<byte> source)
+	{
+		while (true)
+		{
+			if (source.IsEmpty) break;
+
+			var bytes = source.First;
+			source = source.Slice(bytes.Length);
+			if (bytes.IsEmpty) continue;
+
+			target.WriteManyBytes(bytes.Span);
+		}
+	}
+
+	/// <summary>
+	/// Copies all bytes from <see cref="ReadOnlySequence{T}"/> into <see cref="ILZ4FrameWriter"/>.
+	/// </summary>
+	/// <param name="target">Frame writer.</param>
+	/// <param name="source">Sequence of bytes.</param>
+	public static async Task CopyFromAsync(
+		this ILZ4FrameWriter target, ReadOnlySequence<byte> source)
+	{
+		while (true)
+		{
+			if (source.IsEmpty) break;
+
+			var bytes = source.First;
+			source = source.Slice(bytes.Length);
+			if (bytes.IsEmpty) continue;
+
+			await target.WriteManyBytesAsync(bytes);
 		}
 	}
 
@@ -227,9 +254,9 @@ public static class Extensions
 	/// disposed.</param>
 	/// <param name="interactive">Indicates that data should be provided to reader as quick as
 	/// possible, instead of waiting for whole block to be read.</param>
-	/// <returns><see cref="FrameDecoderAsStream"/> stream wrapper.</returns>
+	/// <returns><see cref="LZ4FrameReaderAsStream"/> stream wrapper.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static FrameDecoderAsStream AsStream(
+	public static LZ4FrameReaderAsStream AsStream(
 		this ILZ4FrameReader reader, bool leaveOpen = false, bool interactive = false) =>
 		new(reader, leaveOpen, interactive);
 
@@ -239,9 +266,9 @@ public static class Extensions
 	/// <param name="writer">LZ4 frame writer.</param>
 	/// <param name="leaveOpen">Indicates that frame writer should be left open even if stream is
 	/// disposed.</param>
-	/// <returns><see cref="FrameEncoderAsStream"/> stream wrapper.</returns>
+	/// <returns><see cref="LZ4FrameWriterAsStream"/> stream wrapper.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static FrameEncoderAsStream AsStream(
+	public static LZ4FrameWriterAsStream AsStream(
 		this ILZ4FrameWriter writer, bool leaveOpen = false) =>
 		new(writer, leaveOpen);
 }

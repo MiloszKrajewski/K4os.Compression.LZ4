@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
+/// <summary>
+/// LZ4 stream essentials when wrapping another stream.
+/// You most likely should not use it but it needs to be public as it is inherited from.
+/// </summary>
 public abstract class LZ4StreamOnStreamEssentials: LZ4StreamEssentials<Stream>
 {
 	private protected LZ4StreamOnStreamEssentials(Stream innerStream, bool leaveOpen):

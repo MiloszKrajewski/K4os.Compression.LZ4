@@ -8,11 +8,21 @@ using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
 
+/// <summary>
+/// LZ4 frame decoder stream.
+/// </summary>
 public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 {
 	private readonly StreamLZ4FrameReader _reader;
 	private readonly bool _interactive;
 	
+	/// <summary>
+	/// Creates LZ4 decoder stream.
+	/// </summary>
+	/// <param name="inner">Inner stream, the stream compressed data is coming from..</param>
+	/// <param name="decoderFactory">Decoder factory.</param>
+	/// <param name="leaveOpen">Leave inner stream open after this stream is disposed.</param>
+	/// <param name="interactive">Interactive mode, provide bytes as soon as they are available; don't wait for full block.</param>
 	public LZ4DecoderStream(
 		Stream inner,
 		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,

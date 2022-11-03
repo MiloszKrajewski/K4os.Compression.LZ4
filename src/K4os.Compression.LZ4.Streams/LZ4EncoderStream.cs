@@ -3,15 +3,17 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
-using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Frames;
 using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
 
+/// <summary>
+/// LZ4 frame encoder stream.
+/// </summary>
 public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 {
-	private readonly LZ4FrameWriter<StreamAdapter, EmptyState> _writer;
+	private readonly StreamLZ4FrameWriter _writer;
 
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="inner">Inner stream.</param>
@@ -27,10 +29,10 @@ public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 		bool leaveOpen = false):
 		base(inner, leaveOpen)
 	{
-		_writer = new LZ4FrameWriter<StreamAdapter, EmptyState>(
-			new StreamAdapter(inner), default, encoderFactory, descriptor);
+		_writer = new StreamLZ4FrameWriter(inner, true, encoderFactory, descriptor);
 	}
 
+	/// <inheritdoc />
 	protected override void Dispose(bool disposing)
 	{
 		_writer.Dispose();
@@ -52,6 +54,7 @@ public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 	
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 
+	/// <inheritdoc />
 	public override ValueTask DisposeAsync()
 	{
 		_writer.Dispose();
