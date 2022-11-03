@@ -116,7 +116,7 @@ public class StreamLZ4FrameReader: LZ4FrameReader<StreamAdapter, EmptyState>
 /// <summary>
 /// <see cref="ILZ4FrameReader"/> implementation for <see cref="PipeReader"/>.
 /// </summary>
-public class PipeLZ4FrameReader: LZ4FrameReader<PipeReaderAdapter, ReadOnlySequence<byte>>
+public class PipeLZ4FrameReader: LZ4FrameReader<PipeReaderAdapter, EmptyState>
 {
 	private readonly PipeReader _pipe;
 	private readonly bool _leaveOpen;
@@ -129,7 +129,7 @@ public class PipeLZ4FrameReader: LZ4FrameReader<PipeReaderAdapter, ReadOnlySeque
 	/// <param name="decoderFactory">LZ4 decoder factory.</param>
 	public PipeLZ4FrameReader(
 		PipeReader pipe, bool leaveOpen, Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory):
-		base(new PipeReaderAdapter(pipe), ReadOnlySequence<byte>.Empty, decoderFactory)
+		base(new PipeReaderAdapter(pipe), default, decoderFactory)
 	{
 		_pipe = pipe;
 		_leaveOpen = leaveOpen;

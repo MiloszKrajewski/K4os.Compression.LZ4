@@ -1,9 +1,7 @@
 #if NET5_0_OR_GREATER
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
@@ -26,8 +24,12 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 	public PipeWriterAdapter(PipeWriter writer) { _writer = writer; }
 
 	/// <inheritdoc />
-	public void Write(ref EmptyState state, byte[] buffer, int offset, int length) => 
-		ThrowSyncInterfaceNotImplemented();
+	public void Write(ref EmptyState state, byte[] buffer, int offset, int length)
+	{
+		CheckSyncOverAsync();
+		state = WriteAsync(state, buffer, offset, length, CancellationToken.None)
+			.GetAwaiter().GetResult();
+	}
 
 	/// <inheritdoc />
 	public async Task<EmptyState> WriteAsync(
@@ -36,17 +38,17 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 		await _writer.WriteAsync(buffer.AsMemory(offset, length), token);
 		return state;
 	}
-	
-	/// <inheritdoc />
-	public bool CanFlush
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => !_writer.CanGetUnflushedBytes || _writer.UnflushedBytes > 0;
-	}
 
 	/// <inheritdoc />
-	public void Flush(ref EmptyState state) => 
-		ThrowSyncInterfaceNotImplemented();
+	public bool CanFlush => !_writer.CanGetUnflushedBytes || _writer.UnflushedBytes > 0;
+
+	/// <inheritdoc />
+	public void Flush(ref EmptyState state)
+	{
+		CheckSyncOverAsync();
+		state = FlushAsync(state, CancellationToken.None)
+			.GetAwaiter().GetResult();
+	}
 
 	/// <inheritdoc />
 	public async Task<EmptyState> FlushAsync(EmptyState state, CancellationToken token)
@@ -54,11 +56,13 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 		await _writer.FlushAsync(token);
 		return state;
 	}
-	
-	[DoesNotReturn]
-	private static void ThrowSyncInterfaceNotImplemented() =>
-		throw new NotImplementedException(
-			$"{nameof(PipeWriter)} does not implement synchronous interface");
+
+	private static void CheckSyncOverAsync()
+	{
+		if (SynchronizationContext.Current != null)
+			throw new InvalidOperationException(
+				"Asynchronous methods cannot be called synchronously when executed in SynchronizationContext.");
+	}
 }
 
 #endif

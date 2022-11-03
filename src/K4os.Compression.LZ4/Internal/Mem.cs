@@ -139,10 +139,8 @@ namespace K4os.Compression.LZ4.Internal
 		public static void* AllocZero(int size) =>
 			Zero((byte*) Alloc(size), size);
 
-		/// <summary>
-		/// Free memory allocated previously with <see cref="Alloc"/>.
-		/// </summary>
-		/// <param name="ptr"></param>
+		/// <summary>Free memory allocated previously with <see cref="Alloc"/>.</summary>
+		/// <param name="ptr">Pointer to allocated block.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Free(void* ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
 		
@@ -150,7 +148,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
-		public static void* CloneAnyArray<T>(T[] array) where T: unmanaged
+		public static T* CloneArray<T>(T[] array) where T: unmanaged
 		{
 			var length = Unsafe.SizeOf<T>() * array.Length;
 			var target = Alloc(length);
@@ -159,14 +157,8 @@ namespace K4os.Compression.LZ4.Internal
 			fixed (void* source = &source0)
 				Copy((byte*) target, (byte*) source, length);
 
-			return (int*) target;
+			return (T*)target;
 		}
-
-		/// <summary>Clones managed array to unmanaged one.
-		/// Allows quicker yet less safe unchecked access.</summary>
-		/// <param name="array">Input array.</param>
-		/// <returns>Cloned array.</returns>
-		public static T* CloneArray<T>(T[] array) where T: unmanaged => (T*)CloneAnyArray(array);
 
 		/// <summary>Reads exactly 1 byte from given address.</summary>
 		/// <param name="p">Address.</param>

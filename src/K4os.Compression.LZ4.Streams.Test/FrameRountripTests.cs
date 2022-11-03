@@ -114,8 +114,54 @@ public class FrameRountripTests
 	
 	#if NET5_0_OR_GREATER
 	
-	[Theory(Skip = "Not working yet")]
+	[Theory]
+	[InlineData(Mem.K64)]
+	[InlineData(Mem.K128)]
+	[InlineData(Mem.K256)]
+	[InlineData(Mem.M1)]
+	public async Task PipeReaderAndPipeWriter_Lorem(int size)
+	{
+		var bytes = new byte[size];
+		Lorem.Fill(bytes, 0, bytes.Length);
+		
+		var random = new Random(0);
+		var descriptor = new LZ4Descriptor(null, false, true, false, null, Mem.K64);
+
+		var pipe = new Pipe();
+
+		await PumpDataInParallel(
+			random, bytes,
+			() => new PipeLZ4FrameWriter(pipe.Writer, true, d => d.CreateEncoder(), descriptor),
+			() => new PipeLZ4FrameReader(pipe.Reader, true, d => d.CreateDecoder()));
+	}
+	
+	[Theory]
+	[InlineData(Mem.K32)]
+	[InlineData(Mem.K64)]
+	[InlineData(Mem.K128)]
+	[InlineData(Mem.K256)]
+	[InlineData(Mem.M1)]
+	public async Task PipeReaderAndPipeWriter_Random(int size)
+	{
+		var bytes = new byte[size];
+		new Random(0).NextBytes(bytes);
+		
+		var random = new Random(0);
+		var descriptor = new LZ4Descriptor(null, false, true, false, null, Mem.K64);
+
+		var pipe = new Pipe();
+
+		await PumpDataInParallel(
+			random, bytes,
+			() => new PipeLZ4FrameWriter(pipe.Writer, true, d => d.CreateEncoder(), descriptor),
+			() => new PipeLZ4FrameReader(pipe.Reader, true, d => d.CreateDecoder()));
+	}
+	
+	[Theory]
 	[InlineData(".corpus/mozilla")]
+	[InlineData(".corpus/dickens")]
+	[InlineData(".corpus/reymont")]
+	[InlineData(".corpus/x-ray")]
 	public async Task PipeReaderAndPipeWriter(string filename)
 	{
 		var bytes = LoadFile(filename);
@@ -124,17 +170,10 @@ public class FrameRountripTests
 
 		var pipe = new Pipe();
 
-		await PumpData(
+		await PumpDataInParallel(
 			random, bytes,
-			() => new LZ4FrameWriter<PipeWriterAdapter, EmptyState>(
-				new PipeWriterAdapter(pipe.Writer),
-				default,
-				d => d.CreateEncoder(),
-				descriptor),
-			() => new LZ4FrameReader<PipeReaderAdapter, ReadOnlySequence<byte>>(
-				new PipeReaderAdapter(pipe.Reader),
-				ReadOnlySequence<byte>.Empty, 
-				d => d.CreateDecoder()));
+			() => new PipeLZ4FrameWriter(pipe.Writer, true, d => d.CreateEncoder(), descriptor),
+			() => new PipeLZ4FrameReader(pipe.Reader, true, d => d.CreateDecoder()));
 	}
 
 	#endif
@@ -161,23 +200,46 @@ public class FrameRountripTests
 		var target = Tools.Adler32(buffer);
 		Assert.Equal(target, source);
 	}
+	
+	private static async Task PumpDataInParallel(
+		Random random,
+		byte[] sourceBuffer,
+		Func<ILZ4FrameWriter> encoderFactory,
+		Func<ILZ4FrameReader> decoderFactory)
+	{
+		var targetBuffer = new byte[sourceBuffer.Length];
+		
+		var encoder = encoderFactory();
+		var decoder = decoderFactory();
+		var source = Tools.Adler32(sourceBuffer);
+		
+		var writerTask = JitterWrite(encoder, random, sourceBuffer);
+		var readerTask = JitterRead(decoder, random, targetBuffer);
+		
+		await Task.WhenAll(readerTask, writerTask);
+		
+		var read = await readerTask;
+		Assert.Equal(targetBuffer.Length, read);
+		var target = Tools.Adler32(targetBuffer);
+		Assert.Equal(target, source);
+	}
 
 	private static async Task<int> JitterRead(
 		ILZ4FrameReader reader, Random random, byte[] buffer)
 	{
-		var length = buffer.Length;
 		var position = 0;
+		
+		var chunkBuffer = new byte[0x1000];
 
 		while (true)
 		{
-			if (length <= 0) break;
-
-			var chunk = random.Next(1, Math.Min(0x1000, length));
-			var read = await reader.ReadManyBytesAsync(buffer.AsMemory(position, chunk), true);
+			var chunk = random.Next(1, chunkBuffer.Length);
+			var read = await reader.ReadManyBytesAsync(chunkBuffer.AsMemory(0, chunk), true);
 			if (read == 0) break;
+			
+			chunkBuffer.AsMemory(0, read).CopyTo(buffer.AsMemory(position, read));
 
 			position += read;
-			length -= read;
 		}
 
 		return position;

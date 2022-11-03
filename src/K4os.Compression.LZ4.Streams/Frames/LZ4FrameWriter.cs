@@ -52,7 +52,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	/// level operations (like writing directly to unmanaged memory).
 	/// Please, do not use it directly, if don't know what you are doing. 
 	/// </summary>
-	public TStreamState StreamState => _stream;
+	protected TStreamState StreamState => _stream;
 
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	private bool TryStashFrame()

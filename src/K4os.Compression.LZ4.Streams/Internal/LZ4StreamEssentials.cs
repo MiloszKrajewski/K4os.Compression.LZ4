@@ -5,17 +5,27 @@ using System.Threading.Tasks;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
+/// <summary>
+/// Base class for all <see cref="Stream"/> compatible adapters.
+/// </summary>
+/// <typeparam name="T">Type of resource stream adapter if for.</typeparam>
 public abstract class LZ4StreamEssentials<T>: Stream
 {
 	private readonly T _innerResource;
 	private readonly bool _leaveOpen;
 
+	/// <summary>
+	/// Creates new instance of <see cref="LZ4StreamEssentials{T}"/>.
+	/// </summary>
+	/// <param name="innerResource">Wrapped resource.</param>
+	/// <param name="leaveOpen">Do not dispose inner resource after stream is disposed.</param>
 	protected LZ4StreamEssentials(T innerResource, bool leaveOpen)
 	{
 		_innerResource = innerResource;
 		_leaveOpen = leaveOpen;
 	}
 
+	/// <summary>Wrapped resource.</summary>
 	protected T InnerResource => _innerResource;
 
 	private protected NotImplementedException NotImplemented(string operation) =>

@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Buffers;
 using System.IO;
@@ -11,61 +13,65 @@ using System.IO.Pipelines;
 
 namespace K4os.Compression.LZ4.Streams;
 
-public static class LZ4Pipe
+/// <summary>
+/// LZ4 factory methods to encode/decode anything which can be represented as a stream-like object.
+/// Please note, to avoid all the complexity of dealing with streams, it uses
+/// <see cref="ILZ4FrameReader"/> and <see cref="ILZ4FrameWriter"/> as stream abstractions.
+/// </summary>
+public static partial class LZ4Pipe
 {
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
-	/// <param name="stream">Inner stream.</param>
-	/// <param name="buffer">Buffer writer to write to.</param>
+	/// <param name="source">Span to read from.</param>
+	/// <param name="target">Buffer to write to.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
-	/// <returns>Decompression stream.</returns>
 	public static unsafe void Decode<TBufferWriter>(
-		Span<byte> stream, TBufferWriter buffer, int extraMemory = 0)
+		Span<byte> source, TBufferWriter target, int extraMemory = 0)
 		where TBufferWriter: IBufferWriter<byte>
 	{
-		fixed (byte* stream0 = stream)
+		fixed (byte* source0 = source)
 		{
 			using var decoder = new ByteSpanLZ4FrameReader(
-				new UnsafeByteSpan(new UIntPtr(stream0), stream.Length), 
+				UnsafeByteSpan.Create(source0, source.Length),
 				i => i.CreateDecoder(extraMemory));
-			decoder.CopyTo(buffer);
+			decoder.CopyTo(target);
 		}
 	}
 
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
-	/// <param name="stream">Inner stream.</param>
+	/// <param name="memory">Stream to be decoded.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
 	/// <returns>Decompression stream.</returns>
 	public static ByteMemoryLZ4FrameReader Decode(
-		ReadOnlyMemory<byte> stream, int extraMemory = 0) =>
-		new(stream, i => i.CreateDecoder(extraMemory));
+		ReadOnlyMemory<byte> memory, int extraMemory = 0) =>
+		new(memory, i => i.CreateDecoder(extraMemory));
 
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
-	/// <param name="stream">Inner stream.</param>
+	/// <param name="sequence">Stream to be decoded.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
 	/// <returns>Decompression stream.</returns>
 	public static ByteSequenceLZ4FrameReader Decode(
-		ReadOnlySequence<byte> stream, int extraMemory = 0) =>
-		new(stream, i => i.CreateDecoder(extraMemory));
+		ReadOnlySequence<byte> sequence, int extraMemory = 0) =>
+		new(sequence, i => i.CreateDecoder(extraMemory));
 
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
-	/// <param name="stream">Inner stream.</param>
-	/// <param name="leaveOpen">Indicates if stream should stay open after disposing decoder.</param>
+	/// <param name="stream">Stream to be decoded.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
+	/// <param name="leaveOpen">Indicates if stream should stay open after disposing decoder.</param>
 	/// <returns>Decompression stream.</returns>
 	public static StreamLZ4FrameReader Decode(
-		Stream stream, bool leaveOpen = false, int extraMemory = 0) =>
+		Stream stream, int extraMemory = 0, bool leaveOpen = false) =>
 		new(stream, leaveOpen, i => i.CreateDecoder(extraMemory));
-	
+
 	#if NET5_0_OR_GREATER
-	
+
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
-	/// <param name="reader">Inner stream.</param>
-	/// <param name="leaveOpen">Indicates if stream should stay open after disposing decoder.</param>
+	/// <param name="reader">Stream to be decoded.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
+	/// <param name="leaveOpen">Indicates if stream should stay open after disposing decoder.</param>
 	/// <returns>Decompression stream.</returns>
 	public static PipeLZ4FrameReader Decode(
-		PipeReader reader, bool leaveOpen = false, int extraMemory = 0) =>
+		PipeReader reader, int extraMemory = 0, bool leaveOpen = false) =>
 		new(reader, leaveOpen, i => i.CreateDecoder(extraMemory));
-	
+
 	#endif
 }
