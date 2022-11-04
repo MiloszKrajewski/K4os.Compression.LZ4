@@ -11,7 +11,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 	public class FixedMemoryAllocation
 	{
 		// [Params(64, Mem.K1, Mem.K64, Mem.K512, Mem.M1, Mem.M4)]
-		[Params(64, Mem.K1, Mem.K64)]
+		[Params(128, Mem.K1, Mem.K64)]
 		public int Size { get; set; }
 
 		[Params(false, true)]
@@ -51,6 +51,26 @@ namespace K4os.Compression.LZ4.Benchmarks
 				if (arr != null) ArrayPool<byte>.Shared.Return(arr);
 			}
 		}
+		
+		[Benchmark]
+		public unsafe void UseManagedAndPinning()
+		{
+			byte* ptr;
+			byte[] arr = null;
+			GCHandle hndl = default;
+			try
+			{
+				arr = new byte[Size];
+				hndl = GCHandle.Alloc(arr, GCHandleType.Pinned);
+				ptr = (byte*)hndl.AddrOfPinnedObject().ToPointer();
+				Noop((IntPtr)ptr);
+			}
+			finally
+			{
+				hndl.Free();
+			}
+		}
+
 
 		[Benchmark]
 		public unsafe void UsePinnedMemory()

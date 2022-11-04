@@ -211,39 +211,51 @@ public static class Extensions
 	/// </summary>
 	/// <param name="target">Frame writer.</param>
 	/// <param name="source">Sequence of bytes.</param>
-	public static void CopyFrom(
+	public static int CopyFrom(
 		this ILZ4FrameWriter target, ReadOnlySequence<byte> source)
 	{
+		var total = 0;
+		
 		while (true)
 		{
 			if (source.IsEmpty) break;
 
 			var bytes = source.First;
-			source = source.Slice(bytes.Length);
+			var length = bytes.Length;
+			total += length;
+			source = source.Slice(length);
 			if (bytes.IsEmpty) continue;
 
 			target.WriteManyBytes(bytes.Span);
 		}
-	}
 
+		return total;
+	}
+	
 	/// <summary>
 	/// Copies all bytes from <see cref="ReadOnlySequence{T}"/> into <see cref="ILZ4FrameWriter"/>.
 	/// </summary>
 	/// <param name="target">Frame writer.</param>
 	/// <param name="source">Sequence of bytes.</param>
-	public static async Task CopyFromAsync(
+	public static async Task<int> CopyFromAsync(
 		this ILZ4FrameWriter target, ReadOnlySequence<byte> source)
 	{
+		var total = 0;
+		
 		while (true)
 		{
 			if (source.IsEmpty) break;
 
 			var bytes = source.First;
-			source = source.Slice(bytes.Length);
+			var length = bytes.Length;
+			total += length;
+			source = source.Slice(length);
 			if (bytes.IsEmpty) continue;
 
 			await target.WriteManyBytesAsync(bytes);
 		}
+
+		return total;
 	}
 
 	/// <summary>

@@ -24,16 +24,17 @@ public static partial class LZ4Frame
 	/// <param name="source">Span to read from.</param>
 	/// <param name="target">Buffer to write to.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
-	public static unsafe void Decode<TBufferWriter>(
+	public static unsafe TBufferWriter Decode<TBufferWriter>(
 		ReadOnlySpan<byte> source, TBufferWriter target, int extraMemory = 0)
 		where TBufferWriter: IBufferWriter<byte>
 	{
 		fixed (byte* source0 = source)
 		{
-			using var decoder = new ByteSpanLZ4FrameReader(
+			var decoder = new ByteSpanLZ4FrameReader(
 				UnsafeByteSpan.Create(source0, source.Length),
 				i => i.CreateDecoder(extraMemory));
-			decoder.CopyTo(target);
+			using (decoder) decoder.CopyTo(target);
+			return target;
 		}
 	}
 

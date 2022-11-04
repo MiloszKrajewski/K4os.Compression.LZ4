@@ -371,6 +371,72 @@ static class LZ4Frame
 }
 ```
 
+### Performance for small frames
+
+Lot of LZ4 usage are small frames, like network packets, or small files. As this is still work not finished,
+and there is more memory allocation than I would like, performance is getting much better.
+
+Please note, `LZPickler` is the fastest option, it is just not portable, as it has been developed by me, for my own needs.
+
+If you need to use `LZ4Frame` format (the official streaming format) you can find with new abstraction it can be much faster.
+So far, people needed to use `Stream` even if data was in memory already:
+
+```csharp
+using var source = new MemoryStream(_encoded);
+using var decoder = LZ4Stream.Decode(source);
+using var target = new MemoryStream();
+decoder.CopyTo(target);
+_decoded = target.ToArray();
+```
+
+Not it is simpler, and faster:
+
+```csharp
+_decode = LZ4Frame.Decode(_encoded.AsSpan(), new ArrayBufferWriter<byte>()).WrittenMemory.ToArray();
+```
+
+[`ArrayBufferWriter<T>`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraybufferwriter-1?view=net-6.0) 
+is a go to implementation of `IBufferWriter<T>`, but you may want specialized implementation, if performance is critical.
+It is quite fast, but it seems is relatively relaxed about allocating memory. 
+If you want to reduce GC usage, implement your own `IBufferWriter<T>` and test it.
+
+Below decoding small blocks:
+
+```csharp
+using var source = new MemoryStream(_encoded);
+using var decoder = LZ4Stream.Decode(source);
+_ = decoder.Read(_decoded, 0, _decoded.Length);
+```
+
+vs
+
+```csharp
+using var decoder = LZ4Frame.Decode(_encoded);
+_ = decoder.ReadManyBytes(_decoded.AsSpan());
+```
+
+shows that frame reader is much faster, and is allocating less memory, also please note no Gen1 or Get2 allocations.
+
+```
+BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.1889/21H2/November2021Update)
+AMD Ryzen 5 3600, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=6.0.300
+  [Host]     : .NET 5.0.17 (5.0.1722.21314), X64 RyuJIT AVX2
+  DefaultJob : .NET 5.0.17 (5.0.1722.21314), X64 RyuJIT AVX2
+
+
+|         Method | Size |       Mean |    Error |   StdDev | Ratio |   Gen0 |   Gen1 |   Gen2 | Allocated | Alloc Ratio |
+|--------------- |----- |-----------:|---------:|---------:|------:|-------:|-------:|-------:|----------:|------------:|
+|      UseStream |  128 | 1,173.6 ns | 23.23 ns | 52.44 ns |  1.00 | 1.2703 | 1.2074 | 1.2074 |     517 B |        1.00 |
+| UseFrameReader |  128 |   466.2 ns |  2.00 ns |  1.67 ns |  0.40 | 0.0525 |      - |      - |     440 B |        0.85 |
+|                |      |            |          |          |       |        |        |        |           |             |
+|      UseStream | 1024 | 1,593.2 ns | 20.90 ns | 19.55 ns |  1.00 | 1.6575 | 1.5945 | 1.5945 |     518 B |        1.00 |
+| UseFrameReader | 1024 |   756.7 ns |  7.08 ns |  6.27 ns |  0.47 | 0.0525 |      - |      - |     440 B |        0.85 |
+|                |      |            |          |          |       |        |        |        |           |             |
+|      UseStream | 8192 | 5,081.0 ns | 43.91 ns | 38.92 ns |  1.00 | 5.1956 | 5.1270 | 5.1270 |     535 B |        1.00 |
+| UseFrameReader | 8192 | 3,836.3 ns | 12.11 ns | 11.33 ns |  0.76 | 0.0458 |      - |      - |     440 B |        0.82 |
+```
+
 ### Legacy (lz4net) compatibility
 
 There is a separate package for those who used lz4net before and still need to access files generated with it:

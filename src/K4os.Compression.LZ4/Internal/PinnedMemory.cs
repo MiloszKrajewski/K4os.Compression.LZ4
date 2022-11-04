@@ -13,6 +13,11 @@ namespace K4os.Compression.LZ4.Internal;
 public unsafe struct PinnedMemory
 {
 	/// <summary>
+	/// Minimum size of the buffer that can be pooled from shared array pool.
+	/// </summary>
+	public static int MinPooledSize { get; set; } = 1024;
+	
+	/// <summary>
 	/// Maximum size of the buffer that can be pooled from shared array pool.
 	/// </summary>
 	public static int MaxPooledSize { get; set; } = Mem.M1;
@@ -70,9 +75,13 @@ public unsafe struct PinnedMemory
 		{
 			AllocateNative(out memory, size, zero);
 		}
+		else if (size < MinPooledSize)
+		{
+			AllocateNewManaged(out memory, size);
+		}
 		else
 		{
-			AllocateManaged(out memory, size, zero);
+			RentManagedFromPool(out memory, size, zero);
 		}
 	}
 	
@@ -99,7 +108,19 @@ public unsafe struct PinnedMemory
 		memory._handle = default;
 	}
 
-	private static void AllocateManaged(out PinnedMemory memory, int size, bool zero)
+	private static void AllocateNewManaged(out PinnedMemory memory, int size)
+	{
+		var array = new byte[size];
+		var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+		var pointer = (byte*)handle.AddrOfPinnedObject();
+
+		memory._pointer = pointer;
+		memory._size = size;
+		memory._array = null; // note: we have handle to release, but no array to return to pool
+		memory._handle = handle;
+	}
+	
+	private static void RentManagedFromPool(out PinnedMemory memory, int size, bool zero)
 	{
 		var array = ArrayPool<byte>.Shared.Rent(size);
 		var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
@@ -111,6 +132,7 @@ public unsafe struct PinnedMemory
 		memory._array = array;
 		memory._handle = handle;
 	}
+
 
 	/// <summary>Fill allocated block of memory with zeros.</summary>
 	public void Clear()
@@ -125,7 +147,7 @@ public unsafe struct PinnedMemory
 	/// </summary>
 	public void Free()
 	{
-		if (_array is not null)
+		if (_handle.IsAllocated)
 		{
 			// might have more logic at some point
 			ReleaseManaged();
@@ -134,20 +156,20 @@ public unsafe struct PinnedMemory
 		{
 			ReleaseNative();
 		}
+		ClearFields();
 	}
 
 	private void ReleaseManaged()
 	{
-		if (_handle.IsAllocated) _handle.Free();
-		ArrayPool<byte>.Shared.Return(_array);
-		ClearFields();
+		_handle.Free();
+		if (_array is not null) 
+			ArrayPool<byte>.Shared.Return(_array);
 	}
 
 	private void ReleaseNative()
 	{
 		GC.RemoveMemoryPressure(_size);
 		Mem.Free(_pointer);
-		ClearFields();
 	}
 
 	private void ClearFields()

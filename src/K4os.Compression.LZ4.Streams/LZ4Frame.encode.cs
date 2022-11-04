@@ -25,6 +25,76 @@ public static partial class LZ4Frame
 	/// <param name="target">Target buffer.</param>
 	/// <param name="settings">Compression settings.</param>
 	/// <returns>Number of bytes actually written.</returns>
+	public static TBufferWriter Encode<TBufferWriter>(
+		ReadOnlySequence<byte> source, TBufferWriter target,
+		LZ4EncoderSettings? settings = default)
+		where TBufferWriter: IBufferWriter<byte>
+	{
+		settings ??= LZ4EncoderSettings.Default;
+		var encoder = new ByteBufferLZ4FrameWriter<TBufferWriter>(
+			target,
+			i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
+			settings.CreateDescriptor());
+		using (encoder) encoder.CopyFrom(source);
+		return encoder.BufferWriter;
+	}
+	
+	/// <summary>
+	/// Compresses source bytes into target buffer. Returns number of bytes actually written. 
+	/// </summary>
+	/// <param name="source">Source bytes.</param>
+	/// <param name="target">Target buffer.</param>
+	/// <param name="settings">Compression settings.</param>
+	/// <returns>Number of bytes actually written.</returns>
+	public static TBufferWriter Encode<TBufferWriter>(
+		ReadOnlySpan<byte> source, TBufferWriter target,
+		LZ4EncoderSettings? settings = default)
+		where TBufferWriter: IBufferWriter<byte>
+	{
+		settings ??= LZ4EncoderSettings.Default;
+		var encoder = new ByteBufferLZ4FrameWriter<TBufferWriter>(
+			target,
+			i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
+			settings.CreateDescriptor());
+		using (encoder) encoder.WriteManyBytes(source);
+		return encoder.BufferWriter;
+	}
+
+	/// <summary>
+	/// Compresses source bytes into target buffer. Returns number of bytes actually written. 
+	/// </summary>
+	/// <param name="source">Source bytes.</param>
+	/// <param name="target">Target buffer.</param>
+	/// <param name="level">Compression level.</param>
+	/// <param name="extraMemory">Extra memory.</param>
+	/// <returns>Number of bytes actually written.</returns>
+	public static TBufferWriter Encode<TBufferWriter>(
+		ReadOnlySequence<byte> source, TBufferWriter target,
+		LZ4Level level, int extraMemory = 0)
+		where TBufferWriter: IBufferWriter<byte> =>
+		Encode(source, target, ToEncoderSettings(level, extraMemory));
+	
+	/// <summary>
+	/// Compresses source bytes into target buffer. Returns number of bytes actually written. 
+	/// </summary>
+	/// <param name="source">Source bytes.</param>
+	/// <param name="target">Target buffer.</param>
+	/// <param name="level">Compression level.</param>
+	/// <param name="extraMemory">Extra memory.</param>
+	/// <returns>Number of bytes actually written.</returns>
+	public static TBufferWriter Encode<TBufferWriter>(
+		ReadOnlySpan<byte> source, TBufferWriter target,
+		LZ4Level level, int extraMemory = 0)
+		where TBufferWriter: IBufferWriter<byte> =>
+		Encode(source, target, ToEncoderSettings(level, extraMemory));
+
+	/// <summary>
+	/// Compresses source bytes into target buffer. Returns number of bytes actually written. 
+	/// </summary>
+	/// <param name="source">Source bytes.</param>
+	/// <param name="target">Target buffer.</param>
+	/// <param name="settings">Compression settings.</param>
+	/// <returns>Number of bytes actually written.</returns>
 	public static unsafe int Encode(
 		ReadOnlySequence<byte> source, Span<byte> target,
 		LZ4EncoderSettings? settings = default)
@@ -124,7 +194,7 @@ public static partial class LZ4Frame
 	public static int Encode(
 		Action<ILZ4FrameWriter> source, Span<byte> target,
 		LZ4Level level, int extraMemory = 0) =>
-		Encode(source, target,ToEncoderSettings(level, extraMemory));
+		Encode(source, target, ToEncoderSettings(level, extraMemory));
 
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target buffer.
@@ -162,7 +232,7 @@ public static partial class LZ4Frame
 		byte* target, int length,
 		LZ4Level level, int extraMemory = 0) =>
 		Encode(target, length, ToEncoderSettings(level, extraMemory));
-	
+
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target buffer.
 	/// </summary>
@@ -170,16 +240,16 @@ public static partial class LZ4Frame
 	/// <param name="settings">Encoder settings.</param>
 	/// <returns>LZ4 frame writer.</returns>
 	public static ByteMemoryLZ4FrameWriter Encode(
-		Memory<byte> target, 
+		Memory<byte> target,
 		LZ4EncoderSettings? settings = default)
 	{
 		settings ??= LZ4EncoderSettings.Default;
 		return new ByteMemoryLZ4FrameWriter(
-			target, 
+			target,
 			i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
 			settings.CreateDescriptor());
 	}
-	
+
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target buffer.
 	/// </summary>
@@ -188,7 +258,7 @@ public static partial class LZ4Frame
 	/// <param name="extraMemory">Extra memory for encoder.</param>
 	/// <returns>LZ4 frame writer.</returns>
 	public static ByteMemoryLZ4FrameWriter Encode(
-		Memory<byte> target, 
+		Memory<byte> target,
 		LZ4Level level, int extraMemory = 0) =>
 		Encode(target, ToEncoderSettings(level, extraMemory));
 
@@ -224,7 +294,7 @@ public static partial class LZ4Frame
 		LZ4Level level, int extraMemory = 0)
 		where TBufferWriter: IBufferWriter<byte> =>
 		Encode(target, ToEncoderSettings(level, extraMemory));
-	
+
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target buffer.
 	/// </summary>
@@ -241,7 +311,7 @@ public static partial class LZ4Frame
 			i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
 			settings.CreateDescriptor());
 	}
-	
+
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target buffer.
 	/// </summary>
@@ -253,7 +323,7 @@ public static partial class LZ4Frame
 		IBufferWriter<byte> target,
 		LZ4Level level, int extraMemory = 0) =>
 		Encode(target, ToEncoderSettings(level, extraMemory));
-	
+
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target stream.
 	/// </summary>
@@ -273,7 +343,7 @@ public static partial class LZ4Frame
 			i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
 			settings.CreateDescriptor());
 	}
-	
+
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target stream.
 	/// </summary>
@@ -287,9 +357,8 @@ public static partial class LZ4Frame
 		LZ4Level level, int extraMemory = 0,
 		bool leaveOpen = false) =>
 		Encode(target, ToEncoderSettings(level, extraMemory), leaveOpen);
-	
+
 	#if NET5_0_OR_GREATER
-	
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target pipe.
 	/// </summary>
@@ -323,6 +392,6 @@ public static partial class LZ4Frame
 		LZ4Level level, int extraMemory = 0,
 		bool leaveOpen = false) =>
 		Encode(target, ToEncoderSettings(level, extraMemory), leaveOpen);
-	
+
 	#endif
 }

@@ -34,6 +34,9 @@ public class ByteBufferLZ4FrameWriter<TBufferWriter>:
 		Func<ILZ4Descriptor, ILZ4Encoder> encoderFactory,
 		ILZ4Descriptor descriptor):
 		base(new ByteBufferAdapter<TBufferWriter>(), stream, encoderFactory, descriptor) { }
+	
+	/// <summary>Current state of buffer writer.</summary>
+	public TBufferWriter BufferWriter => StreamState;
 }
 
 /// <summary>
