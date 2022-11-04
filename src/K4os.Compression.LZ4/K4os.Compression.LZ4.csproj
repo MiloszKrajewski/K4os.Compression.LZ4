@@ -10,7 +10,13 @@
     <Folder Include="Engine\x32" />
     <Folder Include="Internal\x32" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net462' or '$(TargetFramework)'=='netstandard2.0'">
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+  </ItemGroup>
   <Import Project="..\..\Common.targets" />
   <Import Project="..\..\Signing.targets" />
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
