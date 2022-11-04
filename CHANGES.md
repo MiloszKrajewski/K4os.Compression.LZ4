@@ -1,4 +1,4 @@
-## 1.3-beta (2022/11/03)
+## 1.3.0-beta (2022/11/03)
 * CHANGED: Dropped compatibility with .NET 4.5 and .NET Standard 1.6
 * ADDED: Added .NET 6.0 as a target
 * ADDED: FrameEncoder / FrameDecoder are now abstraction of stream
