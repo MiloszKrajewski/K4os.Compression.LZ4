@@ -2,10 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#if NET45 || DEBUG
-using System.Diagnostics.CodeAnalysis;
-#endif
-
 namespace K4os.Compression.LZ4.Internal
 {
 	/// <summary>Utility class with memory related functions.</summary>
@@ -48,11 +44,7 @@ namespace K4os.Compression.LZ4.Internal
 		public const int M4 = 4 * M1;
 
 		/// <summary>Empty byte array.</summary>
-#if NET45
-		public static readonly byte[] Empty = new byte[0];
-#else
 		public static readonly byte[] Empty = Array.Empty<byte>();
-#endif
 
 		/// <summary>Checks if process is ran in 32-bit mode.</summary>
 		public static bool System32
@@ -111,38 +103,9 @@ namespace K4os.Compression.LZ4.Internal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Move(byte* target, byte* source, int length)
 		{
-#if NET45 || DEBUG
-			EnsureNoCopyOverlap(target, source, length);
-#endif
-
-#if NET45
-			if (length <= 0) return;
-
-			CpBlk(target, source, (uint) length);
-#else
 			Buffer.MemoryCopy(source, target, length, length);
-#endif
 		}
 		
-#if NET45 || DEBUG
-
-		[SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local")]
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void EnsureNoCopyOverlap(byte* target, byte* source, int length)
-		{
-			// This is early warning: memmove/Move is not available on
-			// NET45 (it would need to be implemented manually with all
-			// handling potential memory misalignment which is not trivial)
-			// ...but it seems it might not be needed at all as we are not
-			// doing copying of overlapping block at all.
-			// This method is here to make sure 
-
-			if (target > source && source + length > target)
-				throw new InvalidOperationException("Unexpected memory overlap.");
-		}
-
-#endif
-
 		/// <summary>Allocated block of memory. It is NOT initialized with zeroes.</summary>
 		/// <param name="size">Size in bytes.</param>
 		/// <returns>Pointer to allocated block.</returns>
@@ -176,10 +139,8 @@ namespace K4os.Compression.LZ4.Internal
 		public static void* AllocZero(int size) =>
 			Zero((byte*) Alloc(size), size);
 
-		/// <summary>
-		/// Free memory allocated previously with <see cref="Alloc"/>.
-		/// </summary>
-		/// <param name="ptr"></param>
+		/// <summary>Free memory allocated previously with <see cref="Alloc"/>.</summary>
+		/// <param name="ptr">Pointer to allocated block.</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Free(void* ptr) => Marshal.FreeHGlobal(new IntPtr(ptr));
 		
@@ -187,7 +148,7 @@ namespace K4os.Compression.LZ4.Internal
 		/// Allows quicker yet less safe unchecked access.</summary>
 		/// <param name="array">Input array.</param>
 		/// <returns>Cloned array.</returns>
-		public static void* CloneAnyArray<T>(T[] array)
+		public static T* CloneArray<T>(T[] array) where T: unmanaged
 		{
 			var length = Unsafe.SizeOf<T>() * array.Length;
 			var target = Alloc(length);
@@ -196,21 +157,9 @@ namespace K4os.Compression.LZ4.Internal
 			fixed (void* source = &source0)
 				Copy((byte*) target, (byte*) source, length);
 
-			return (int*) target;
+			return (T*)target;
 		}
 
-		/// <summary>Clones managed array to unmanaged one.
-		/// Allows quicker yet less safe unchecked access.</summary>
-		/// <param name="array">Input array.</param>
-		/// <returns>Cloned array.</returns>
-		public static int* CloneArray(int[] array) => (int*)CloneAnyArray(array);
-
-		/// <summary>Clones managed array to unmanaged one.
-		/// Allows quicker yet less safe unchecked access.</summary>
-		/// <param name="array">Input array.</param>
-		/// <returns>Cloned array.</returns>
-		public static uint* CloneArray(uint[] array) => (uint*)CloneAnyArray(array);
-		
 		/// <summary>Reads exactly 1 byte from given address.</summary>
 		/// <param name="p">Address.</param>
 		/// <returns>Byte at given address.</returns>

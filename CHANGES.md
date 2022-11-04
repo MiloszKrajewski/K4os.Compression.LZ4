@@ -1,25 +1,39 @@
+## 1.3-beta (2022/11/03)
+* CHANGED: Dropped compatibility with .NET 4.5 and .NET Standard 1.6
+* ADDED: Added .NET 6.0 as a target
+* ADDED: FrameEncoder / FrameDecoder are now abstraction of stream
+* ADDED: Streaming (LZ4 Frame) support for Pipes (NET 5.0+)
+* ADDED #6: Streaming (LZ4 Frame) support for Span and Memory
+* ADDED #14: Streaming (LZ4 Frame) support for ReadOnlySequence, BufferWriter
+* FIXED #72: Added (again) System.Runtime.CompilerServices.Unsafe as dependency for .NET 4.6, .NET Standard 2.0, .NET Standard 2.1
+* FIXED #69: Added Pickle/Unpickle overload taking BufferWriter as generic argument not interface (potential performance improvement)
+* NOTE: I'm still unhappy with API, but it cannot be addressed without breaking changes, so while this version may receive some bugfixes, there is an overhaul on the horizon
+
+## 1.2.17 (2021/12/07)
+* ADDED: Forced K4os.Hash.xxHash 1.0.7
+
 ## 1.2.16 (2021/12/01)
-* Removed System.Memory as dependency for net standard 2.1 and net 5
+* REMOVED: System.Memory as dependency for .NET Standard 2.1 and .NET 5
 
 ## 1.2.15 (2021/10/22)
-* Added block decompression with external dictionary (#64)
-* Minor fixed to unit tests
+* ADDED #64: block decompression with external dictionary
+* FIXED: Minor fixed to unit tests
 
 ## 1.2.13 (2021/10/12)
-* Removed reference to System.Runtime.CompilerServices.Unsafe (which is transitive)
-* Added explicit release for netstandard 2.1
+* REMOVED: reference to System.Runtime.CompilerServices.Unsafe (which is transitive)
+* ADDED: explicit release for netstandard 2.1
 
 ## 1.2.12 (2021/08/01)
-* Added some testing with Tar*Stream from SharpZipLib
+* ADDED: some testing with Tar*Stream from SharpZipLib
 
 ## 1.2.10-beta (2021/01/29)
 * ADDED #14 (partial): support for IBufferWriter in LZ4Pickler
 
 ## 1.2.8-beta (2020/09/26)
-* Implicit reference to System.Runtime.CompilerServices.Unsafe
+* FIXED: Implicit reference to System.Runtime.CompilerServices.Unsafe
 
 ## 1.2.7 (2020/09/13)
-* LZ4Pickler is now memory alignment agnostic
+* FIXED: LZ4Pickler is now memory alignment agnostic
 
 ## 1.2.6 (2020/09/12)
 * FIXED #41: fixed nasty async reader bug (async vs struct)

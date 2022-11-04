@@ -16,20 +16,19 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 	{
 		public static void Decode(string encoded, string decoded, int chunkSize)
 		{
-			using (var input = File.OpenRead(encoded))
-			using (var output = File.Create(decoded))
-			using (var decode = new LZ4DecoderStream(
-				input, i => new LZ4ChainDecoder(i.BlockSize, 0)))
+			using var input = File.OpenRead(encoded);
+			using var output = File.Create(decoded);
+			using var decode = new LZ4DecoderStream(
+				input, i => new LZ4ChainDecoder(i.BlockSize, 0));
+			
+			var buffer = new byte[chunkSize];
+			while (true)
 			{
-				var buffer = new byte[chunkSize];
-				while (true)
-				{
-					var read = decode.Read(buffer, 0, buffer.Length);
-					if (read == 0)
-						break;
+				var read = decode.Read(buffer, 0, buffer.Length);
+				if (read == 0)
+					break;
 
-					output.Write(buffer, 0, read);
-				}
+				output.Write(buffer, 0, read);
 			}
 		}
 
@@ -38,21 +37,18 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 		{
 			var frameInfo = new LZ4Descriptor(
 				null, false, settings.Chaining, false, null, settings.BlockSize);
-			using (var input = File.OpenRead(original))
-			using (var output = File.Create(encoded))
-			using (var encode = new LZ4EncoderStream(
-				output, frameInfo, i => LZ4Encoder.Create(
-					i.Chaining, settings.Level, i.BlockSize, settings.ExtraBlocks)))
+			using var input = File.OpenRead(original);
+			using var output = File.Create(encoded);
+			using var encode = new LZ4EncoderStream(
+				output, frameInfo, i => i.CreateEncoder(settings.Level, settings.ExtraBlocks));
+			var buffer = new byte[chuckSize];
+			while (true)
 			{
-				var buffer = new byte[chuckSize];
-				while (true)
-				{
-					var read = input.Read(buffer, 0, buffer.Length);
-					if (read == 0)
-						break;
+				var read = input.Read(buffer, 0, buffer.Length);
+				if (read == 0)
+					break;
 
-					encode.Write(buffer, 0, read);
-				}
+				encode.Write(buffer, 0, read);
 			}
 		}
 	}

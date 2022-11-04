@@ -6,6 +6,12 @@ namespace TestHelpers
 {
 	public static class Tools
 	{
+		public static void Fill(this Random random, Span<byte> span)
+		{
+			for (var i = 0; i < span.Length; i++)
+				span[i] = (byte)random.Next();
+		}
+
 		public static unsafe uint Adler32(byte* data, int length)
 		{
 			const uint modAdler = 65521;
@@ -42,7 +48,7 @@ namespace TestHelpers
 		{
 			using (var file = File.OpenRead(filename))
 			{
-				length = length < 0 ? (int) (file.Length - index) : length;
+				length = length < 0 ? (int)(file.Length - index) : length;
 				var src = new byte[length];
 				file.Seek(index, SeekOrigin.Begin);
 				file.Read(src, 0, length);
@@ -69,6 +75,12 @@ namespace TestHelpers
 
 		public static Stream Slow(Stream stream, int threshold = 1) =>
 			new FakeNetworkStream(stream, threshold);
+
+		public static T Rewind<T>(T stream) where T: Stream
+		{
+			stream.Position = 0;
+			return stream;
+		}
 
 		public static void SameBytes(ReadOnlySpan<byte> source, ReadOnlySpan<byte> target)
 		{
@@ -134,9 +146,9 @@ namespace TestHelpers
 				}
 			}
 		}
-		
+
 		public static double NormExp(double value, double scale = 1.0) =>
-				((Math.Exp(value * scale) - 1) / (Math.Exp(scale) - 1));
+			((Math.Exp(value * scale) - 1) / (Math.Exp(scale) - 1));
 
 		public static double NextExp(this Random random, double scale = 1.0) =>
 			NormExp(random.NextDouble(), scale);

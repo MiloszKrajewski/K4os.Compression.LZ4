@@ -1,10 +1,8 @@
 storage none
-framework net45,net46,netstandard1.6,netstandard2.0,netstandard2.1,netcoreapp3.1,net5.0
+framework auto-detect
 source https://www.nuget.org/api/v2
 
 nuget K4os.Hash.xxHash
-nuget System.Memory framework: net45,net46,netstandard1.6,netstandard2.0
-
 nuget lz4net
 nuget SharpZipLib
 nuget BenchmarkDotNet
@@ -12,3 +10,10 @@ nuget BenchmarkDotNet
 nuget xunit
 nuget xunit.runner.visualstudio
 nuget Microsoft.NET.Test.Sdk
+
+# paket is not great with conditional dependencies
+# nuget is not great either, but has a little bit more support for conditional sections
+
+# nuget System.Memory framework: net462,netstandard2.0
+# nuget System.Runtime.CompilerServices.Unsafe framework: net462,netstandard2.0,netstandard2.1
+# nuget System.IO.Pipelines framework: net5.0,net6.0

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net45;net46;netstandard1.6;netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <PackageTags>compression lz4 lz4net</PackageTags>
   </PropertyGroup>
@@ -10,5 +10,4 @@
   </ItemGroup>
   <Import Project="..\..\Common.targets" />
   <Import Project="..\..\Signing.targets" />
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
