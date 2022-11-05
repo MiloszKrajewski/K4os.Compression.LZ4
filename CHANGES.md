@@ -1,5 +1,6 @@
 ## 1.3.2-beta (2022/11/05)
 * ADDED: retrofitted support for Pipes for older .NET versions
+* ADDED: enabled hardware CTZ for .NET 5 and above (it was .NET 5 only before)
 
 ## 1.3.0-beta (2022/11/03)
 * CHANGED: Dropped compatibility with .NET 4.5 and .NET Standard 1.6
