@@ -1,5 +1,3 @@
-#if NET5_0_OR_GREATER
-
 using System;
 using System.IO.Pipelines;
 using System.Threading;
@@ -64,5 +62,3 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 				"Asynchronous methods cannot be called synchronously when executed in SynchronizationContext.");
 	}
 }
-
-#endif

@@ -1,17 +1,11 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
+using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
-
-#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-using System.Threading.Tasks;
-#endif
-
-#if NET5_0_OR_GREATER
-using System.IO.Pipelines;
-#endif
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -134,20 +128,18 @@ public class StreamLZ4FrameWriter: LZ4FrameWriter<StreamAdapter, EmptyState>
 		if (!_leaveOpen) _stream.Dispose();
 		base.ReleaseResources();
 	}
-
-	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-
+	
 	/// <inheritdoc />
 	protected override async Task ReleaseResourcesAsync()
 	{
+		#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 		if (!_leaveOpen) await _stream.DisposeAsync();
+		#else
+		if (!_leaveOpen) _stream.Dispose();
+		#endif
 		await base.ReleaseResourcesAsync();
 	}
-	
-	#endif
 }
-
-#if NET5_0_OR_GREATER
 
 /// <summary>
 /// <see cref="ILZ4FrameWriter"/> implementation for <see cref="PipeWriter"/>.
@@ -189,5 +181,3 @@ public class PipeLZ4FrameWriter: LZ4FrameWriter<PipeWriterAdapter, EmptyState>
 		await base.ReleaseResourcesAsync();
 	}
 }
-
-#endif

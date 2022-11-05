@@ -241,6 +241,12 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	/// Releases all unmanaged resources.
 	/// </summary>
 	protected virtual void ReleaseResources() { }
+	
+	/// <summary>
+	/// Releases all unmanaged resources.
+	/// </summary>
+	/// <returns>Task indicating completion of the operation.</returns>
+	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
 
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	
@@ -258,12 +264,6 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		}
 	}
 	
-	/// <summary>
-	/// Releases all unmanaged resources.
-	/// </summary>
-	/// <returns>Task indicating completion of the operation.</returns>
-	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
-
 	#endif
 
 	// ReSharper disable once UnusedParameter.Local

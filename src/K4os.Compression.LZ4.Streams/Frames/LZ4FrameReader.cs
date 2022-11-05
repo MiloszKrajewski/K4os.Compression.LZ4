@@ -194,6 +194,12 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 	/// </summary>
 	protected virtual void ReleaseResources() {  }
 	
+	/// <summary>
+	/// Releases unmanaged resources.
+	/// </summary>
+	/// <returns>Task indicating operation is finished.</returns>
+	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
+	
 	/// <inheritdoc />
 	public void Dispose()
 	{
@@ -216,12 +222,6 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 		}
 	}
 	
-	/// <summary>
-	/// Releases unmanaged resources.
-	/// </summary>
-	/// <returns>Task indicating operation is finished.</returns>
-	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
-
 	#endif
 	
 	// ReSharper disable once UnusedParameter.Local

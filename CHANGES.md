@@ -1,3 +1,6 @@
+## 1.3.1-beta (2022/11/05)
+* ADDED: retrofitted support for Pipes for older .NET versions
+
 ## 1.3.0-beta (2022/11/03)
 * CHANGED: Dropped compatibility with .NET 4.5 and .NET Standard 1.6
 * ADDED: Added .NET 6.0 as a target

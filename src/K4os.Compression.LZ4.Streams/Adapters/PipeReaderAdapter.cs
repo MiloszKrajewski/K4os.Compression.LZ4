@@ -1,5 +1,3 @@
-#if NET5_0_OR_GREATER
-
 using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
@@ -86,10 +84,11 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 		return ReadResult.Create(default(EmptyState), totalRead);
 	}
 	
+	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	[DoesNotReturn]
+	#endif
 	private static void ThrowPendingReadsCancelled() =>
 		throw new OperationCanceledException(
 			$"Pending {nameof(PipeReader)} operations has been cancelled");
 }
 
-#endif
