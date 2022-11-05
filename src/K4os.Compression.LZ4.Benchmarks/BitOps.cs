@@ -35,7 +35,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 			DeBruijnBytePos64[
 				unchecked((ulong) ((long) val & -(long) val) * 0x0218A392CDABBD3Ful >> 58)];
 		
-		#if NETCOREAPP3_1 || NET5_0
+		#if NETCOREAPP3_1 || NET5_0_OR_GREATER
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static uint HW_CTZ_32(uint val) =>

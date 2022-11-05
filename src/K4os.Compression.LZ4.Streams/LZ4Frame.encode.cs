@@ -3,13 +3,10 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Frames;
-
-#if NET5_0_OR_GREATER
-using System.IO.Pipelines;
-#endif
 
 namespace K4os.Compression.LZ4.Streams;
 
@@ -358,7 +355,6 @@ public static partial class LZ4Frame
 		bool leaveOpen = false) =>
 		Encode(target, ToEncoderSettings(level, extraMemory), leaveOpen);
 
-	#if NET5_0_OR_GREATER
 	/// <summary>
 	/// Create LZ4 encoder that writes compressed data into target pipe.
 	/// </summary>
@@ -392,6 +388,4 @@ public static partial class LZ4Frame
 		LZ4Level level, int extraMemory = 0,
 		bool leaveOpen = false) =>
 		Encode(target, ToEncoderSettings(level, extraMemory), leaveOpen);
-
-	#endif
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
@@ -8,10 +9,6 @@ using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Frames;
 using TestHelpers;
 using Xunit;
-
-#if NET5_0_OR_GREATER
-using System.IO.Pipelines;
-#endif
 
 namespace K4os.Compression.LZ4.Streams.Test;
 
@@ -112,8 +109,6 @@ public class FrameRountripTests
 				d => d.CreateDecoder()));
 	}
 	
-	#if NET5_0_OR_GREATER
-	
 	[Theory]
 	[InlineData(Mem.K64)]
 	[InlineData(Mem.K128)]
@@ -175,8 +170,6 @@ public class FrameRountripTests
 			() => new PipeLZ4FrameWriter(pipe.Writer, true, d => d.CreateEncoder(), descriptor),
 			() => new PipeLZ4FrameReader(pipe.Reader, true, d => d.CreateDecoder()));
 	}
-
-	#endif
 
 	private static async Task PumpData(
 		Random random,

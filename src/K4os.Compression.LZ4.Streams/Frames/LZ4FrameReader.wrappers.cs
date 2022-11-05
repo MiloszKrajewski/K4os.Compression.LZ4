@@ -1,17 +1,11 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
+using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
-
-#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-using System.Threading.Tasks;
-#endif
-
-#if NET5_0_OR_GREATER
-using System.IO.Pipelines;
-#endif
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -111,8 +105,6 @@ public class StreamLZ4FrameReader: LZ4FrameReader<StreamAdapter, EmptyState>
 	#endif
 }
 
-#if NET5_0_OR_GREATER
-
 /// <summary>
 /// <see cref="ILZ4FrameReader"/> implementation for <see cref="PipeReader"/>.
 /// </summary>
@@ -135,26 +127,17 @@ public class PipeLZ4FrameReader: LZ4FrameReader<PipeReaderAdapter, EmptyState>
 		_leaveOpen = leaveOpen;
 	}
 
-	/// <summary>
-	/// Disposes the reader.
-	/// </summary>
-	/// <param name="disposing"><c>true</c> if user is disposing it; <c>false</c> if it has been triggered by garbage collector</param>
-	protected override void Dispose(bool disposing)
+	/// <inheritdoc />
+	protected override void ReleaseResources()
 	{
-		CloseFrame();
-		if (disposing && !_leaveOpen) _pipe.Complete();
-		base.Dispose(disposing);
+		if (!_leaveOpen) _pipe.Complete();
+		base.ReleaseResources();
 	}
-	
-	/// <summary>
-	/// Disposes the reader.
-	/// </summary>
-	public override async ValueTask DisposeAsync()
+
+	/// <inheritdoc />
+	protected override async Task ReleaseResourcesAsync()
 	{
-		CloseFrame();
 		if (!_leaveOpen) await _pipe.CompleteAsync();
-		await base.DisposeAsync();
+		await base.ReleaseResourcesAsync();
 	}
 }
-
-#endif

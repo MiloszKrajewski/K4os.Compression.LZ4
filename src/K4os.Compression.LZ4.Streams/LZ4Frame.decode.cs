@@ -3,13 +3,10 @@
 using System;
 using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Frames;
-
-#if NET5_0_OR_GREATER
-using System.IO.Pipelines;
-#endif
 
 namespace K4os.Compression.LZ4.Streams;
 
@@ -63,8 +60,6 @@ public static partial class LZ4Frame
 		Stream stream, int extraMemory = 0, bool leaveOpen = false) =>
 		new(stream, leaveOpen, i => i.CreateDecoder(extraMemory));
 
-	#if NET5_0_OR_GREATER
-
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
 	/// <param name="reader">Stream to be decoded.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
@@ -73,6 +68,4 @@ public static partial class LZ4Frame
 	public static PipeLZ4FrameReader Decode(
 		PipeReader reader, int extraMemory = 0, bool leaveOpen = false) =>
 		new(reader, leaveOpen, i => i.CreateDecoder(extraMemory));
-
-	#endif
 }

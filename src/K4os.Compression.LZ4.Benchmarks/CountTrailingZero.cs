@@ -34,7 +34,7 @@ namespace K4os.Compression.LZ4.Benchmarks
 			_output64 = BitOps.SW_CTZ_64(_input64);
 		}
 		
-		#if NETCOREAPP3_1 || NET5_0
+		#if NETCOREAPP3_1 || NET5_0_OR_GREATER
 		
 		[Benchmark]
 		public void Hardware32()
