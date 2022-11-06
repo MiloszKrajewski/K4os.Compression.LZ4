@@ -1,3 +1,6 @@
+## 1.3.3-beta (2022/11/06)
+* FIXED: (hopefully) System.Runtime.CompilerServices.Unsafe versioning issues
+
 ## 1.3.2-beta (2022/11/05)
 * ADDED: retrofitted support for Pipes for older .NET versions
 * ADDED: enabled hardware CTZ for .NET 5 and above (it was .NET 5 only before)
