@@ -59,7 +59,11 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 	private static async Task<ReadOnlySequence<byte>> ReadFromPipe(
 		PipeReader reader, int length, CancellationToken token)
 	{
+		#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 		var result = await reader.ReadAtLeastAsync(length, token);
+		#else
+		var result = await reader.ReadAsync(token);
+		#endif
 		if (result.IsCanceled) ThrowPendingReadsCancelled();
 		return result.Buffer;
 	}

@@ -38,7 +38,11 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 	}
 
 	/// <inheritdoc />
+	#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 	public bool CanFlush => !_writer.CanGetUnflushedBytes || _writer.UnflushedBytes > 0;
+	#else
+	public bool CanFlush => true;
+	#endif
 
 	/// <inheritdoc />
 	public void Flush(ref EmptyState state)
