@@ -30,11 +30,11 @@ public class LZ4EncoderSettings
 	/// </summary>
 	public int BlockSize { get; set; } = Mem.K64;
 
-	/// <summary>Indicates is content checksum is provided. Not implemented yet.</summary>
-	public bool ContentChecksum => false;
+	/// <summary>Indicates is content checksum should be included.</summary>
+	public bool ContentChecksum { get; set; } = false;
 
-	/// <summary>Indicates if block checksum is provided. Not implemented yet.</summary>
-	public bool BlockChecksum => false;
+	/// <summary>Indicates if block checksum should be included.</summary>
+	public bool BlockChecksum { get; set; } = false;
 
 	/// <summary>Dictionary id. Not implemented yet.</summary>
 	public uint? Dictionary => null;

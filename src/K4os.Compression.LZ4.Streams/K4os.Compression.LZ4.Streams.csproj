@@ -23,7 +23,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="K4os.Hash.xxHash" Version="1.0.7"/>
+    <PackageReference Include="K4os.Hash.xxHash" Version="1.0.8"/>
   </ItemGroup>
   <Import Project="..\..\Common.targets"/>
   <Import Project="..\..\Signing.targets"/>

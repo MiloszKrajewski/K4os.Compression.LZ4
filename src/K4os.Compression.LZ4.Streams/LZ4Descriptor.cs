@@ -44,4 +44,16 @@ public class LZ4Descriptor: ILZ4Descriptor
 		Dictionary = dictionary;
 		BlockSize = blockSize;
 	}
+
+	/// <summary>Creates new instance of <see cref="LZ4Descriptor"/>.</summary>
+	/// <param name="descriptor">Descriptor to copy.</param>
+	public LZ4Descriptor(ILZ4Descriptor descriptor)
+	{
+		ContentLength = descriptor.ContentLength;
+		ContentChecksum = descriptor.ContentChecksum;
+		Chaining = descriptor.Chaining;
+		BlockChecksum = descriptor.BlockChecksum;
+		Dictionary = descriptor.Dictionary;
+		BlockSize = descriptor.BlockSize;
+	}
 }

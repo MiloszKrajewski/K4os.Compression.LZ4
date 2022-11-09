@@ -7,6 +7,7 @@ using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
+using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -28,6 +29,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private byte[] _buffer;
 
 	private long _bytesWritten;
+	private XXH32.State _contentChecksum;
 
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="writer">Inner stream.</param>
@@ -92,6 +94,9 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		if (hasDictionary)
 			throw NotImplemented(
 				"Predefined dictionaries feature is not implemented"); // Stash4(dictionaryId);
+		
+		if (contentChecksum) 
+			InitializeContentChecksum();
 
 		var HC = (byte)(_stash.Digest(headerOffset) >> 8);
 
@@ -148,24 +153,22 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 
 	private static uint BlockLengthCode(in BlockInfo block) =>
 		(uint)block.Length | (block.Compressed ? 0 : 0x80000000);
+	
+	private void InitializeContentChecksum() => 
+		XXH32.Reset(ref _contentChecksum);
 
-	// ReSharper disable once UnusedParameter.Local
-	// NOTE: block will carry checksum one day
-	private uint? BlockChecksum(BlockInfo block)
-	{
-		if (_descriptor.BlockChecksum)
-			throw NotImplemented("BlockChecksum");
+	private void UpdateContentChecksum(ReadOnlySpan<byte> buffer) => 
+		XXH32.Update(ref _contentChecksum, buffer);
 
-		return null;
-	}
+	private uint? BlockChecksum(BlockInfo block) =>
+		_descriptor.BlockChecksum 
+			? XXH32.DigestOf(block.Buffer, block.Offset, block.Length)
+			: null;
 
-	private uint? ContentChecksum()
-	{
-		if (_descriptor.ContentChecksum)
-			throw NotImplemented("ContentChecksum");
-
-		return null;
-	}
+	private uint? ContentChecksum() => 
+		_descriptor.ContentChecksum 
+			? XXH32.Digest(_contentChecksum) 
+			: null;
 
 	private int MaxBlockSizeCode(int blockSize) =>
 		blockSize <= Mem.K64 ? 4 :

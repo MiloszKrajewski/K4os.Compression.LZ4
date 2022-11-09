@@ -12,20 +12,27 @@ namespace K4os.Compression.LZ4.Internal;
 /// </summary>
 public unsafe struct PinnedMemory
 {
+	[Flags]
+	private enum AllocMode
+	{
+		None = 0x00, Managed = 0x01, Pooled = 0x02,
+		ManagedPool = Managed | Pooled,
+	}
+
 	/// <summary>
 	/// Minimum size of the buffer that can be pooled from shared array pool.
 	/// </summary>
 	public static int MinPooledSize { get; set; } = 1024;
-	
+
 	/// <summary>
 	/// Maximum size of the buffer that can be pooled from shared array pool.
 	/// </summary>
 	public static int MaxPooledSize { get; set; } = Mem.M1;
 
 	private byte* _pointer;
-	private byte[] _array;
-	private int _size;
 	private GCHandle _handle;
+	private AllocMode _mode;
+	private int _size;
 
 	/// <summary>Pointer to block of bytes.</summary>
 	public readonly byte* Pointer
@@ -84,7 +91,7 @@ public unsafe struct PinnedMemory
 			RentManagedFromPool(out memory, size, zero);
 		}
 	}
-	
+
 	/// <summary>
 	/// Allocates pinned block of memory for one item from shared array pool.
 	/// </summary>
@@ -103,9 +110,9 @@ public unsafe struct PinnedMemory
 		GC.AddMemoryPressure(size);
 
 		memory._pointer = (byte*)bytes;
-		memory._size = size;
-		memory._array = null;
 		memory._handle = default;
+		memory._mode = AllocMode.None;
+		memory._size = size;
 	}
 
 	private static void AllocateNewManaged(out PinnedMemory memory, int size)
@@ -115,11 +122,11 @@ public unsafe struct PinnedMemory
 		var pointer = (byte*)handle.AddrOfPinnedObject();
 
 		memory._pointer = pointer;
-		memory._size = size;
-		memory._array = null; // note: we have handle to release, but no array to return to pool
 		memory._handle = handle;
+		memory._mode = AllocMode.Managed;
+		memory._size = size;
 	}
-	
+
 	private static void RentManagedFromPool(out PinnedMemory memory, int size, bool zero)
 	{
 		var array = ArrayPool<byte>.Shared.Rent(size);
@@ -128,11 +135,10 @@ public unsafe struct PinnedMemory
 		if (zero) Mem.Zero(pointer, size);
 
 		memory._pointer = pointer;
-		memory._size = size;
-		memory._array = array;
 		memory._handle = handle;
+		memory._mode = AllocMode.ManagedPool;
+		memory._size = size;
 	}
-
 
 	/// <summary>Fill allocated block of memory with zeros.</summary>
 	public void Clear()
@@ -156,14 +162,19 @@ public unsafe struct PinnedMemory
 		{
 			ReleaseNative();
 		}
+
 		ClearFields();
 	}
 
 	private void ReleaseManaged()
 	{
+		if ((_mode & AllocMode.ManagedPool) == AllocMode.ManagedPool)
+		{
+			var array = (byte[])_handle.Target;
+			if (array is not null) ArrayPool<byte>.Shared.Return(array);
+		}
+
 		_handle.Free();
-		if (_array is not null) 
-			ArrayPool<byte>.Shared.Return(_array);
 	}
 
 	private void ReleaseNative()
@@ -175,8 +186,8 @@ public unsafe struct PinnedMemory
 	private void ClearFields()
 	{
 		_pointer = null;
-		_size = 0;
-		_array = null;
 		_handle = default;
+		_mode = AllocMode.None;
+		_size = 0;
 	}
 }

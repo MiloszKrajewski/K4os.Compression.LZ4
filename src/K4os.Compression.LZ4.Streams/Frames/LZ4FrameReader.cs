@@ -7,6 +7,7 @@ using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
+using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -25,6 +26,9 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 
 	private ILZ4Descriptor _descriptor;
 	private ILZ4Decoder _decoder;
+	
+	private XXH32.State _contentChecksum;
+
 
 	private byte[] _buffer;
 	private int _decoded;
@@ -112,6 +116,27 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 		return false;
 	}
 
+	private void VerifyBlockChecksum(uint expected, int blockLength)
+	{
+		var actual = XXH32.DigestOf(_buffer, 0, blockLength);
+		if (actual != expected) throw InvalidChecksum("block");
+	}
+	
+	private void InitializeContentChecksum() => 
+		XXH32.Reset(ref _contentChecksum);
+	
+	private unsafe void UpdateContentChecksum(int read)
+	{
+		var span = new Span<byte>(_decoder.Peek(-read), read);
+		XXH32.Update(ref _contentChecksum, span);
+	}
+
+	private void VerifyContentChecksum(uint expected)
+	{
+		var actual = XXH32.Digest(in _contentChecksum);
+		if (expected != actual) throw InvalidChecksum("content");
+	}
+
 	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool OpenFrame() =>
@@ -168,6 +193,9 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 
 	private static InvalidDataException UnknownFrameVersion(int version) =>
 		new($"LZ4 frame version {version} is not supported");
+	
+	private static InvalidDataException InvalidChecksum(string type) =>
+		new($"Invalid {type} checksum");
 
 	/// <summary>
 	/// Disposes the decoder. Consecutive attempts to read will fail.
@@ -192,22 +220,19 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 	/// <summary>
 	/// Releases unmanaged resources. 
 	/// </summary>
-	protected virtual void ReleaseResources() {  }
-	
+	protected virtual void ReleaseResources() { }
+
 	/// <summary>
 	/// Releases unmanaged resources.
 	/// </summary>
 	/// <returns>Task indicating operation is finished.</returns>
 	protected virtual Task ReleaseResourcesAsync() => Task.CompletedTask;
-	
+
 	/// <inheritdoc />
-	public void Dispose()
-	{
-		Dispose(true);
-	}
-	
+	public void Dispose() { Dispose(true); }
+
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-	
+
 	/// <inheritdoc />
 	public virtual async ValueTask DisposeAsync()
 	{
@@ -221,9 +246,9 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 			await ReleaseResourcesAsync();
 		}
 	}
-	
+
 	#endif
-	
+
 	// ReSharper disable once UnusedParameter.Local
 	private int ReadMeta(EmptyToken _, int length, bool optional = false)
 	{
@@ -244,7 +269,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 	}
 
 	// ReSharper disable once UnusedParameter.Local
-	private void ReadData(EmptyToken _, int length) => 
+	private void ReadData(EmptyToken _, int length) =>
 		_reader.TryReadBlock(ref _stream, _buffer, 0, length, false);
 
 	private async Task ReadData(CancellationToken token, int length) =>
