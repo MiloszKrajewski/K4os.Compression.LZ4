@@ -40,6 +40,8 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 				throw new InvalidOperationException("Cannot start LZ4.exe");
 
 			process.WaitForExit();
+			if (process.ExitCode != 0)
+				throw new InvalidOperationException("LZ4.exe reported an error");
 		}
 	}
 }

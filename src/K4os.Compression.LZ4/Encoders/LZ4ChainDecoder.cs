@@ -101,6 +101,18 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 
 		Mem.Move(target, OutputBuffer + offset, length);
 	}
+	
+	/// <inheritdoc />
+	public byte* Peek(int offset)
+	{
+		ThrowIfDisposed();
+
+		offset = _outputIndex + offset; // NOTE: negative value
+		if (offset < 0 || offset > _outputIndex)
+			throw new InvalidOperationException();
+		
+		return OutputBuffer + offset;
+	}
 
 	private void Prepare(int blockSize)
 	{

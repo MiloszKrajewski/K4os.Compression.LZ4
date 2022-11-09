@@ -101,6 +101,9 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
 		if (hasDictionary)
 			throw NotImplemented(
 				"Predefined dictionaries feature is not implemented"); // Peek4(dictionaryId);
+		
+		if (contentChecksum)
+			InitializeContentChecksum();
 
 		// ReSharper disable once ExpressionIsAlwaysNull
 		_descriptor = new LZ4Descriptor(
@@ -120,7 +123,8 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
 		if (blockLength == 0)
 		{
 			if (_descriptor.ContentChecksum)
-				_ = /*await*/ Peek4(token);
+				VerifyContentChecksum(/*await*/ Peek4(token));
+
 			CloseFrame();
 			return 0;
 		}
@@ -131,9 +135,11 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
 		/*await*/ ReadData(token, blockLength);
 
 		if (_descriptor.BlockChecksum)
-			_ = /*await*/ Peek4(token);
+			VerifyBlockChecksum(/*await*/ Peek4(token), blockLength);
 
-		return InjectOrDecode(blockLength, uncompressed);
+		var read = InjectOrDecode(blockLength, uncompressed);
+		UpdateContentChecksum(read);
+		return read;
 	}
 
 	private /*async*/ long? GetFrameLength(Token token)

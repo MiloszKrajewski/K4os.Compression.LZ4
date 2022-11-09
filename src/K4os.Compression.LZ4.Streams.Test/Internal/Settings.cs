@@ -7,7 +7,10 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 	{
 		public static LZ4Settings ParseSettings(string options)
 		{
-			var result = new LZ4Settings { Chaining = false };
+			var result = new LZ4Settings {
+				Chaining = false,
+				ContentChecksum = true,
+			};
 
 			foreach (var option in options.Split(' '))
 			{
@@ -29,7 +32,10 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 						result.Chaining = true;
 						break;
 					case "-BX":
-						// ignored to be implemented
+						result.BlockChecksum = true;
+						break;
+					case "--no-frame-crc":
+						result.ContentChecksum = false;
 						break;
 					case "-B4":
 						result.BlockSize = Mem.K64;

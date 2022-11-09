@@ -10,6 +10,8 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 		public int BlockSize { get; set; } = Mem.K64;
 		public int ExtraBlocks { get; set; } = 0;
 		public bool Chaining { get; set; } = true;
+		public bool BlockChecksum { get; set; } = false;
+		public bool ContentChecksum { get; set; } = false;
 	}
 
 	public class TestedLZ4
@@ -36,7 +38,8 @@ namespace K4os.Compression.LZ4.Streams.Test.Internal
 			string original, string encoded, int chuckSize, LZ4Settings settings)
 		{
 			var frameInfo = new LZ4Descriptor(
-				null, false, settings.Chaining, false, null, settings.BlockSize);
+				null, settings.ContentChecksum, settings.Chaining, settings.BlockChecksum, 
+				null, settings.BlockSize);
 			using var input = File.OpenRead(original);
 			using var output = File.Create(encoded);
 			using var encode = new LZ4EncoderStream(

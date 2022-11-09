@@ -1,3 +1,6 @@
+## 1.3.4-beta (2022/11/09)
+* ADDED: block and content checksum support
+
 ## 1.3.3-beta (2022/11/06)
 * FIXED: (hopefully) System.Runtime.CompilerServices.Unsafe versioning issues
 

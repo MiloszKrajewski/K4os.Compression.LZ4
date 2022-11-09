@@ -43,4 +43,12 @@ public interface ILZ4Decoder: IDisposable
 	/// Please note, it should be negative value.</param>
 	/// <param name="length">Number of bytes to read.</param>
 	unsafe void Drain(byte* target, int offset, int length);
+	
+	/// <summary>
+	/// Peeks at previously decoded bytes. Please note, <paramref name="offset"/> should be
+	/// negative number, pointing to bytes before current head. 
+	/// </summary>
+	/// <param name="offset">Offset in source buffer relatively to current head.
+	/// Please note, it should be negative value.</param>
+	unsafe byte* Peek(int offset);
 }

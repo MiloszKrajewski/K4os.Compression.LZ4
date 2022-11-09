@@ -54,8 +54,7 @@ public static partial class LZ4Pickler
 
 		if (sourceLength <= MAX_STACKALLOC)
 		{
-			var buffer = stackalloc byte[MAX_STACKALLOC];
-			var target = new Span<byte>(buffer, MAX_STACKALLOC);
+			Span<byte> target = stackalloc byte[MAX_STACKALLOC];
 			return PickleWithBuffer(source, level, target);
 		}
 		else
