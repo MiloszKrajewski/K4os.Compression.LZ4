@@ -423,7 +423,7 @@ AMD Ryzen 5 3600, 1 CPU, 12 logical and 6 physical cores
 .NET SDK=6.0.300
   [Host]     : .NET 5.0.17 (5.0.1722.21314), X64 RyuJIT AVX2
   DefaultJob : .NET 5.0.17 (5.0.1722.21314), X64 RyuJIT AVX2
-
+```
 
 |         Method | Size |       Mean |    Error |   StdDev | Ratio |   Gen0 |   Gen1 |   Gen2 | Allocated | Alloc Ratio |
 |--------------- |----- |-----------:|---------:|---------:|------:|-------:|-------:|-------:|----------:|------------:|
@@ -435,7 +435,6 @@ AMD Ryzen 5 3600, 1 CPU, 12 logical and 6 physical cores
 |                |      |            |          |          |       |        |        |        |           |             |
 |      UseStream | 8192 | 5,081.0 ns | 43.91 ns | 38.92 ns |  1.00 | 5.1956 | 5.1270 | 5.1270 |     535 B |        1.00 |
 | UseFrameReader | 8192 | 3,836.3 ns | 12.11 ns | 11.33 ns |  0.76 | 0.0458 |      - |      - |     440 B |        0.82 |
-```
 
 ### Legacy (lz4net) compatibility
 
