@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -12,18 +11,6 @@ namespace K4os.Compression.LZ4.Internal;
 /// </summary>
 public unsafe struct PinnedMemory
 {
-	[Flags]
-	private enum AllocMode
-	{
-		None = 0x00, Managed = 0x01, Pooled = 0x02,
-		ManagedPool = Managed | Pooled,
-	}
-
-	/// <summary>
-	/// Minimum size of the buffer that can be pooled from shared array pool.
-	/// </summary>
-	public static int MinPooledSize { get; set; } = 1024;
-
 	/// <summary>
 	/// Maximum size of the buffer that can be pooled from shared array pool.
 	/// </summary>
@@ -31,7 +18,6 @@ public unsafe struct PinnedMemory
 
 	private byte* _pointer;
 	private GCHandle _handle;
-	private AllocMode _mode;
 	private int _size;
 
 	/// <summary>Pointer to block of bytes.</summary>
@@ -82,10 +68,6 @@ public unsafe struct PinnedMemory
 		{
 			AllocateNative(out memory, size, zero);
 		}
-		else if (size < MinPooledSize)
-		{
-			AllocateNewManaged(out memory, size);
-		}
 		else
 		{
 			RentManagedFromPool(out memory, size, zero);
@@ -103,7 +85,6 @@ public unsafe struct PinnedMemory
 		Alloc(out memory, sizeof(T), zero);
 	}
 
-	// ReSharper disable once UnusedParameter.Local
 	private static void AllocateNative(out PinnedMemory memory, int size, bool zero)
 	{
 		var bytes = zero ? Mem.AllocZero(size) : Mem.Alloc(size);
@@ -111,32 +92,17 @@ public unsafe struct PinnedMemory
 
 		memory._pointer = (byte*)bytes;
 		memory._handle = default;
-		memory._mode = AllocMode.None;
-		memory._size = size;
-	}
-
-	private static void AllocateNewManaged(out PinnedMemory memory, int size)
-	{
-		var array = new byte[size];
-		var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-		var pointer = (byte*)handle.AddrOfPinnedObject();
-
-		memory._pointer = pointer;
-		memory._handle = handle;
-		memory._mode = AllocMode.Managed;
 		memory._size = size;
 	}
 
 	private static void RentManagedFromPool(out PinnedMemory memory, int size, bool zero)
 	{
-		var array = ArrayPool<byte>.Shared.Rent(size);
+		var array = BufferPool.Alloc(size, zero);
 		var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
 		var pointer = (byte*)handle.AddrOfPinnedObject();
-		if (zero) Mem.Zero(pointer, size);
 
 		memory._pointer = pointer;
 		memory._handle = handle;
-		memory._mode = AllocMode.ManagedPool;
 		memory._size = size;
 	}
 
@@ -168,13 +134,9 @@ public unsafe struct PinnedMemory
 
 	private void ReleaseManaged()
 	{
-		if ((_mode & AllocMode.ManagedPool) == AllocMode.ManagedPool)
-		{
-			var array = (byte[])_handle.Target;
-			if (array is not null) ArrayPool<byte>.Shared.Return(array);
-		}
-
+		var array = _handle.IsAllocated ? (byte[])_handle.Target : null;
 		_handle.Free();
+		BufferPool.Free(array);
 	}
 
 	private void ReleaseNative()
@@ -187,7 +149,6 @@ public unsafe struct PinnedMemory
 	{
 		_pointer = null;
 		_handle = default;
-		_mode = AllocMode.None;
 		_size = 0;
 	}
 }

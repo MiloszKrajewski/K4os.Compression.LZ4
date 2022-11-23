@@ -8,23 +8,23 @@
     <PackageTags>compression lz4 stream</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj"/>
+    <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(TargetFramework)'=='net462' or '$(TargetFramework)'=='netstandard2.0'">
       <ItemGroup>
-        <PackageReference Include="System.IO.Pipelines" Version="5.0.2"/>
+        <PackageReference Include="System.IO.Pipelines" Version="5.0.2" />
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="System.IO.Pipelines" Version="6.0.3"/>
+        <PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
       </ItemGroup>
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <PackageReference Include="K4os.Hash.xxHash" Version="1.0.8"/>
+    <PackageReference Include="K4os.Hash.xxHash" Version="1.0.8" />
   </ItemGroup>
-  <Import Project="..\..\Common.targets"/>
-  <Import Project="..\..\Signing.targets"/>
+  <Import Project="..\..\Common.targets" />
+  <Import Project="..\..\Signing.targets" />
 </Project>
