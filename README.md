@@ -378,8 +378,8 @@ and there is more memory allocation than I would like, performance is getting mu
 
 Please note, `LZPickler` is the fastest option, it is just not portable, as it has been developed by me, for my own needs.
 
-If you need to use `LZ4Frame` format (the official streaming format) you can find with new abstraction it can be much faster.
-So far, people needed to use `Stream` even if data was in memory already:
+If you need to use `LZ4Frame` format (the official streaming format) you will by pleased to know that that 
+with new abstraction it can be much faster. So far, people needed to use `Stream` even if data was in memory already:
 
 ```csharp
 using var source = new MemoryStream(_encoded);
@@ -389,14 +389,14 @@ decoder.CopyTo(target);
 _decoded = target.ToArray();
 ```
 
-Not it is simpler, and faster:
+Now it is simpler, and faster:
 
 ```csharp
 _decode = LZ4Frame.Decode(_encoded.AsSpan(), new ArrayBufferWriter<byte>()).WrittenMemory.ToArray();
 ```
 
 [`ArrayBufferWriter<T>`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraybufferwriter-1?view=net-6.0) 
-is a go to implementation of `IBufferWriter<T>`, but you may want specialized implementation, if performance is critical.
+is a go-to implementation of `IBufferWriter<T>`, but you may want specialized implementation, if performance is critical.
 It is quite fast, but it seems is relatively relaxed about allocating memory. 
 If you want to reduce GC usage, implement your own `IBufferWriter<T>` and test it.
 
