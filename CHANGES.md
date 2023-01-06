@@ -1,3 +1,6 @@
+## 1.3.5 (2023/01/06)
+* NOTE: just a release without beta tag
+
 ## 1.3.4-beta (2022/11/09)
 * ADDED: block and content checksum support
 

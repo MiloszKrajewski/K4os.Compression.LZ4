@@ -16,6 +16,10 @@ namespace K4os.Compression.LZ4.Benchmarks
 
 		[Params(false, true)]
 		public bool Clear { get; set; }
+		
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		// ReSharper disable once UnusedParameter.Local
+		private static void Noop<T>(T _) { }
 
 		[Benchmark]
 		public unsafe void UseAllocHGlobal()
@@ -86,10 +90,6 @@ namespace K4os.Compression.LZ4.Benchmarks
 				pin.Free();
 			}
 		}
-
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		// ReSharper disable once UnusedParameter.Local
-		private static void Noop<T>(T _) { }
 
 		[Benchmark]
 		public void UsePinnedHeap()
