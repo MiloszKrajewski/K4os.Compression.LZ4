@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Hashing;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +8,6 @@ using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
-using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -29,7 +29,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private byte[] _buffer;
 
 	private long _bytesWritten;
-	private XXH32.State _contentChecksum;
+	private XxHash32 _contentChecksum;
 
 	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
 	/// <param name="writer">Inner stream.</param>
@@ -155,19 +155,19 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		(uint)block.Length | (block.Compressed ? 0 : 0x80000000);
 	
 	private void InitializeContentChecksum() => 
-		XXH32.Reset(ref _contentChecksum);
+		(_contentChecksum ??= new XxHash32()).Reset();
 
-	private void UpdateContentChecksum(ReadOnlySpan<byte> buffer) => 
-		XXH32.Update(ref _contentChecksum, buffer);
+	private void UpdateContentChecksum(ReadOnlySpan<byte> buffer) =>
+		_contentChecksum?.Append(buffer);
 
 	private uint? BlockChecksum(BlockInfo block) =>
 		_descriptor.BlockChecksum 
-			? XXH32.DigestOf(block.Buffer, block.Offset, block.Length)
+			? XxHash32.HashToUInt32(block.Buffer.AsSpan(block.Offset, block.Length))
 			: null;
 
 	private uint? ContentChecksum() => 
 		_descriptor.ContentChecksum 
-			? XXH32.Digest(_contentChecksum) 
+			? _contentChecksum.GetCurrentHashAsUInt32() 
 			: null;
 
 	private int MaxBlockSizeCode(int blockSize) =>

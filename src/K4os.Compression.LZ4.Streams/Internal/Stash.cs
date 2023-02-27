@@ -1,9 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.IO.Hashing;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using K4os.Compression.LZ4.Internal;
-using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
@@ -147,6 +147,5 @@ internal struct Stash
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public uint Digest(int offset = 0) =>
-		XXH32.DigestOf(AsSpan(offset));
-
+		XxHash32.HashToUInt32(AsSpan(offset));
 }

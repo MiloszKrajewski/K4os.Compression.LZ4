@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Hashing;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams;
-using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Roundtrip
 {
@@ -87,17 +87,17 @@ namespace K4os.Compression.LZ4.Roundtrip
 
 		private static uint Checksum(Stream file)
 		{
-			var hash = new XXH32();
+			var hash = new XxHash32();
 			var buffer = new byte[0x10000];
 			while (true)
 			{
 				var read = file.Read(buffer, 0, buffer.Length);
 				if (read == 0) break;
 
-				hash.Update(buffer, 0, read);
+				hash.Append(buffer.AsSpan(0, read));
 			}
 
-			return hash.Digest();
+			return hash.GetCurrentHashAsUInt32();
 		}
 	}
 }

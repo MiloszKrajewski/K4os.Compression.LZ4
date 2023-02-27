@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Hashing;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +8,6 @@ using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
-using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -27,7 +27,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 	private ILZ4Descriptor _descriptor;
 	private ILZ4Decoder _decoder;
 	
-	private XXH32.State _contentChecksum;
+	private XxHash32 _contentChecksum;
 
 
 	private byte[] _buffer;
@@ -118,22 +118,22 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 
 	private void VerifyBlockChecksum(uint expected, int blockLength)
 	{
-		var actual = XXH32.DigestOf(_buffer, 0, blockLength);
+		var actual = XxHash32.HashToUInt32(_buffer.AsSpan(0, blockLength));
 		if (actual != expected) throw InvalidChecksum("block");
 	}
-	
-	private void InitializeContentChecksum() => 
-		XXH32.Reset(ref _contentChecksum);
+
+	private void InitializeContentChecksum() =>
+		(_contentChecksum ??= new XxHash32()).Reset();
 	
 	private unsafe void UpdateContentChecksum(int read)
 	{
 		var span = new Span<byte>(_decoder.Peek(-read), read);
-		XXH32.Update(ref _contentChecksum, span);
+		_contentChecksum?.Append(span);
 	}
 
 	private void VerifyContentChecksum(uint expected)
 	{
-		var actual = XXH32.Digest(in _contentChecksum);
+		var actual = _contentChecksum.GetCurrentHashAsUInt32();
 		if (expected != actual) throw InvalidChecksum("content");
 	}
 
