@@ -335,7 +335,7 @@ Factory methods for creating `ILZ4FrameReader` and `ILZ4FrameWriter` are availab
 ```csharp
 static class LZ4Frame
 {
-    // Decode
+	// Decode
     
 	static void Decode<TBufferWriter>(
 		ReadOnlySpan<byte> source, TBufferWriter target, int extraMemory = 0);
