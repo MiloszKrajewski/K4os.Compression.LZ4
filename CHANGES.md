@@ -1,3 +1,6 @@
+## 1.3.6 (2023/08/15)
+* FIXED: Issue #85 (sync operation in DisposeAsync)
+
 ## 1.3.5 (2023/01/06)
 * NOTE: just a release without beta tag
 
