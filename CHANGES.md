@@ -1,5 +1,5 @@
 ## 1.3.6 (2023/08/15)
-* FIXED: Issue #85 (sync operation in DisposeAsync)
+* FIXED #85: removed call to Dispose from DisposeAsync in LZ4EncoderStream
 
 ## 1.3.5 (2023/01/06)
 * NOTE: just a release without beta tag
