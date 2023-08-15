@@ -5,6 +5,7 @@ using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
+using K4os.Compression.LZ4.Streams.Internal;
 using ReadResult = K4os.Compression.LZ4.Streams.Abstractions.ReadResult;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;
@@ -52,7 +53,7 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 		if (length <= 0)
 			return ReadResult.Create(state);
 
-		var sequence = await ReadFromPipe(_reader, length, token);
+		var sequence = await ReadFromPipe(_reader, length, token).Weave();
 		return ReadFromSequence(_reader, sequence, buffer.AsSpan(offset, length));
 	}
 
@@ -60,9 +61,9 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 		PipeReader reader, int length, CancellationToken token)
 	{
 		#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-		var result = await reader.ReadAtLeastAsync(length, token);
+		var result = await reader.ReadAtLeastAsync(length, token).Weave();
 		#else
-		var result = await reader.ReadAsync(token);
+		var result = await reader.ReadAsync(token).Weave();
 		#endif
 		if (result.IsCanceled) ThrowPendingReadsCancelled();
 		return result.Buffer;

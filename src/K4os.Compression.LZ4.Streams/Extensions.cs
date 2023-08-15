@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Frames;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
 
@@ -199,7 +200,7 @@ public static class Extensions
 		while (true)
 		{
 			var span = target.GetMemory(blockSize);
-			var bytes = await source.ReadManyBytesAsync(span, true);
+			var bytes = await source.ReadManyBytesAsync(span, true).Weave();
 			if (bytes == 0) return;
 
 			target.Advance(bytes);
@@ -252,7 +253,7 @@ public static class Extensions
 			source = source.Slice(length);
 			if (bytes.IsEmpty) continue;
 
-			await target.WriteManyBytesAsync(bytes);
+			await target.WriteManyBytesAsync(bytes).Weave();
 		}
 
 		return total;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 		[Theory]
 		[InlineData(".corpus/dickens", "-1 -BD -B4 -BX")]
 		[InlineData(".corpus/mozilla", "-1 -BD -B7")]
+		[SuppressMessage("ReSharper", "UseAwaitUsing")]
 		public async Task UseDecoderWithCopyAsync(string original, string options)
 		{
 			original = Tools.FindFile(original);
@@ -23,7 +25,7 @@ namespace K4os.Compression.LZ4.Streams.Test
 				ReferenceLZ4.Encode(options, original, compressed);
 
 				await Task.CompletedTask;
-				
+
 				using (var src = LZ4Stream.Decode(File.OpenRead(compressed)))
 				using (var dst = File.Create(decompressed))
 				{

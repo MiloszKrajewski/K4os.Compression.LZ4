@@ -243,7 +243,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 		finally
 		{
 			_stash.Dispose();
-			await ReleaseResourcesAsync();
+			await ReleaseResourcesAsync().Weave();
 		}
 	}
 

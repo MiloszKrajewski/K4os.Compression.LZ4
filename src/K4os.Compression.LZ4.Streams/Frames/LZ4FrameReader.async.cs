@@ -142,7 +142,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
 	}
 
 	private async Task<int> ReadOneByte(Token token) =>
-		await ReadManyBytes(token, _stash.OneByteBuffer(token)) > 0
+		await ReadManyBytes(token, _stash.OneByteBuffer(token)).Weave() > 0
 			? _stash.OneByteValue()
 			: -1;
 
