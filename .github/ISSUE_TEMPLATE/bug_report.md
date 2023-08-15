@@ -24,10 +24,10 @@ A clear and concise description of what you expected to happen.
 A clear and concise description of what actually happens.
 
 **Environment**
- - CPU: _ [Intel, ARM, Samsung, 32/64 bit]
- - OS: _ [Windows, MacOS, Android]
- - .NET: _ [Version, Framework, Core, Mono, Unity, Xamarin]
- - LZ4: _ [Version, Alpha/Beta]
+ - CPU: [Intel, ARM, Samsung, 32/64 bit]
+ - OS: [Windows, MacOS, Android]
+ - .NET: [Version, Framework, Core, Mono, Unity, Xamarin]
+ - LZ4: [Version, Alpha/Beta]
 
 **Additional context**
 Add any other context about the problem here.
