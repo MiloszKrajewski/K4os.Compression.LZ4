@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;
 
@@ -33,7 +34,7 @@ public readonly struct StreamAdapter:
 	/// <inheritdoc />
 	public async Task<ReadResult<EmptyState>> ReadAsync(
 		EmptyState state, byte[] buffer, int offset, int length, CancellationToken token) =>
-		ReadResult.Create(state, await _stream.ReadAsync(buffer, offset, length, token));
+		ReadResult.Create(state, await _stream.ReadAsync(buffer, offset, length, token).Weave());
 
 	/// <inheritdoc />
 	public void Write(ref EmptyState state, byte[] buffer, int offset, int length) =>
@@ -45,7 +46,7 @@ public readonly struct StreamAdapter:
 		byte[] buffer, int offset, int length,
 		CancellationToken token)
 	{
-		await _stream.WriteAsync(buffer, offset, length, token);
+		await _stream.WriteAsync(buffer, offset, length, token).Weave();
 		return state;
 	}
 	

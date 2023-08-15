@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.IO;
 using System.Threading;
@@ -12,22 +14,23 @@ namespace K4os.Compression.LZ4.Streams.Internal;
 public abstract class LZ4StreamEssentials<T>: Stream
 {
 	private readonly T _innerResource;
-	private readonly bool _leaveOpen;
+	private readonly bool _doNotDispose;
+	private bool _alreadyDisposed;
 
 	/// <summary>
 	/// Creates new instance of <see cref="LZ4StreamEssentials{T}"/>.
 	/// </summary>
 	/// <param name="innerResource">Wrapped resource.</param>
-	/// <param name="leaveOpen">Do not dispose inner resource after stream is disposed.</param>
-	protected LZ4StreamEssentials(T innerResource, bool leaveOpen)
+	/// <param name="doNotDispose">Do not dispose inner resource after stream is disposed.</param>
+	protected LZ4StreamEssentials(T innerResource, bool doNotDispose)
 	{
 		_innerResource = innerResource;
-		_leaveOpen = leaveOpen;
+		_doNotDispose = doNotDispose;
 	}
 
 	/// <summary>Wrapped resource.</summary>
 	protected T InnerResource => _innerResource;
-
+    
 	private protected NotImplementedException NotImplemented(string operation) =>
 		new($"Feature {operation} has not been implemented in {GetType().Name}");
 
@@ -104,12 +107,14 @@ public abstract class LZ4StreamEssentials<T>: Stream
 	/// <inheritdoc />
 	protected override void Dispose(bool disposing)
 	{
-		if (!_leaveOpen)
+		if (ShouldDisposeInner(disposing))
 		{
 			if (_innerResource is IDisposable disposable)
 			{
 				disposable.Dispose();
 			}
+
+			_alreadyDisposed = true;
 		}
 
 		base.Dispose(disposing);
@@ -151,20 +156,25 @@ public abstract class LZ4StreamEssentials<T>: Stream
 	/// <inheritdoc />
 	public override async ValueTask DisposeAsync()
 	{
-		if (!_leaveOpen)
+		if (ShouldDisposeInner())
 		{
 			if (_innerResource is IAsyncDisposable asyncDisposable)
 			{
-				await asyncDisposable.DisposeAsync();
+				await asyncDisposable.DisposeAsync().Weave();
 			}
 			else if (_innerResource is IDisposable disposable)
 			{
 				disposable.Dispose();
 			}
+
+			_alreadyDisposed = true;
 		}
 
-		await base.DisposeAsync();
+		await base.DisposeAsync().Weave();
 	}
 
 	#endif
+	
+	private bool ShouldDisposeInner(bool disposing = true) => 
+		disposing && !_doNotDispose && !_alreadyDisposed;
 }

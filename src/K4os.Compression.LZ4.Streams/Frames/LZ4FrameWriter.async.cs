@@ -62,7 +62,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>
 
 		try
 		{
-			await WriteFrameTail(token);
+			await WriteFrameTail(token).Weave();
 
 			if (_buffer is not null)
 				ReleaseBuffer(_buffer);

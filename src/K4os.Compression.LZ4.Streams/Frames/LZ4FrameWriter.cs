@@ -258,12 +258,12 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	{
 		try
 		{
-			await CloseFrameAsync();
+			await CloseFrameAsync().Weave();
 		}
 		finally
 		{
 			_stash.Dispose();
-			await ReleaseResourcesAsync();
+			await ReleaseResourcesAsync().Weave();
 		}
 	}
 	
@@ -286,10 +286,10 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		var length = _stash.Flush();
 
 		if (length > 0)
-			_stream = await _writer.WriteAsync(_stream, _stash.Data, 0, length, token);
+			_stream = await _writer.WriteAsync(_stream, _stash.Data, 0, length, token).Weave();
 
 		if (eof && _writer.CanFlush)
-			_stream = await _writer.FlushAsync(_stream, token);
+			_stream = await _writer.FlushAsync(_stream, token).Weave();
 	}
 
 	// ReSharper disable once UnusedParameter.Local

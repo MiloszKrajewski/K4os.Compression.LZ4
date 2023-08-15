@@ -18,10 +18,11 @@ public class LZ4FrameReaderAsStream: LZ4StreamEssentials<ILZ4FrameReader>
 	/// Creates new instance of <see cref="LZ4FrameReaderAsStream"/>.
 	/// </summary>
 	/// <param name="reader">LZ4 frame reader.</param>
-	/// <param name="leaveOpen">Leave underlying stream open after disposing this stream.</param>
+	/// <param name="doNotDispose">Indicates to not dispose <paramref name="reader"/> after disposing this stream.</param>
 	/// <param name="interactive">Use interactive mode; return bytes as soon as they available.</param>
-	public LZ4FrameReaderAsStream(ILZ4FrameReader reader, bool leaveOpen, bool interactive):
-		base(reader, leaveOpen)
+	public LZ4FrameReaderAsStream(
+		ILZ4FrameReader reader, bool doNotDispose = false, bool interactive = false):
+		base(reader, doNotDispose)
 	{
 		_interactive = interactive;
 	}
@@ -58,15 +59,8 @@ public class LZ4FrameReaderAsStream: LZ4StreamEssentials<ILZ4FrameReader>
 	public override long Position =>
 		InnerResource.GetBytesRead();
 
-	/// <inheritdoc />
-	protected override void Dispose(bool disposing)
-	{
-		if (disposing) InnerResource.Dispose();
-		base.Dispose(disposing);
-	}
-
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-
+	
 	/// <inheritdoc />
 	public override int Read(Span<byte> buffer) =>
 		InnerResource.ReadManyBytes(buffer, _interactive);
@@ -75,13 +69,6 @@ public class LZ4FrameReaderAsStream: LZ4StreamEssentials<ILZ4FrameReader>
 	public override ValueTask<int> ReadAsync(
 		Memory<byte> buffer, CancellationToken token = default) =>
 		new(InnerResource.ReadManyBytesAsync(token, buffer, _interactive));
-
-	/// <inheritdoc />
-	public override async ValueTask DisposeAsync()
-	{
-		await InnerResource.DisposeAsync().Weave();
-		await base.DisposeAsync().Weave();
-	}
 
 	#endif
 }

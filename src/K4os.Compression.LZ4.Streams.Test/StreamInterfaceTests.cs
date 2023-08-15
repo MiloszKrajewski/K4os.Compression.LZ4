@@ -63,7 +63,9 @@ namespace K4os.Compression.LZ4.Streams.Test
 			for (var i = 0; i < 1000; i++)
 				lz4.Dispose();
 
-			Assert.True(test.Disposed > 1);
+			// Dispose can be called more than once,
+			// but did not crash (that's the important part)
+			Assert.True(test.Disposed >= 1);
 		}
 
 		[Fact]

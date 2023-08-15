@@ -35,7 +35,7 @@ public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 	/// <inheritdoc />
 	protected override void Dispose(bool disposing)
 	{
-		_writer.Dispose();
+		if (disposing) _writer.Dispose();
 		base.Dispose(disposing);
 	}
 	
@@ -55,10 +55,10 @@ public class LZ4EncoderStream: LZ4StreamOnStreamEssentials
 	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 
 	/// <inheritdoc />
-	public override ValueTask DisposeAsync()
+	public override async ValueTask DisposeAsync()
 	{
-		_writer.Dispose();
-		return base.DisposeAsync();
+		await _writer.DisposeAsync().Weave();
+		await base.DisposeAsync().Weave();
 	}
 
 	/// <inheritdoc />

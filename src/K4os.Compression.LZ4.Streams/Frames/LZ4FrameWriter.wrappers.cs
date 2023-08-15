@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
@@ -133,11 +134,11 @@ public class StreamLZ4FrameWriter: LZ4FrameWriter<StreamAdapter, EmptyState>
 	protected override async Task ReleaseResourcesAsync()
 	{
 		#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-		if (!_leaveOpen) await _stream.DisposeAsync();
+		if (!_leaveOpen) await _stream.DisposeAsync().Weave();
 		#else
 		if (!_leaveOpen) _stream.Dispose();
 		#endif
-		await base.ReleaseResourcesAsync();
+		await base.ReleaseResourcesAsync().Weave();
 	}
 }
 
@@ -177,7 +178,7 @@ public class PipeLZ4FrameWriter: LZ4FrameWriter<PipeWriterAdapter, EmptyState>
 	/// <inheritdoc />
 	protected override async Task ReleaseResourcesAsync()
 	{
-		if (!_leaveOpen) await _pipe.CompleteAsync();
-		await base.ReleaseResourcesAsync();
+		if (!_leaveOpen) await _pipe.CompleteAsync().Weave();
+		await base.ReleaseResourcesAsync().Weave();
 	}
 }

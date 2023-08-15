@@ -16,18 +16,14 @@ internal static class Extensions
 	public static ConfiguredTaskAwaitable Weave(this Task task) =>
 		task.ConfigureAwait(false);
 
-	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-		
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ConfiguredValueTaskAwaitable<T> Weave<T>(this ValueTask<T> task) =>
 		task.ConfigureAwait(false);
-		
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ConfiguredValueTaskAwaitable Weave(this ValueTask task) =>
 		task.ConfigureAwait(false);
 
-	#endif
-		
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ReadOnlySpan<byte> ToSpan(this ReadOnlySpan<byte> span) => span;
 

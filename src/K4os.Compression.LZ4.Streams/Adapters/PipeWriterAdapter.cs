@@ -3,6 +3,7 @@ using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;
 
@@ -33,7 +34,7 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 	public async Task<EmptyState> WriteAsync(
 		EmptyState state, byte[] buffer, int offset, int length, CancellationToken token)
 	{
-		await _writer.WriteAsync(buffer.AsMemory(offset, length), token);
+		await _writer.WriteAsync(buffer.AsMemory(offset, length), token).Weave();
 		return state;
 	}
 
@@ -55,7 +56,7 @@ public readonly struct PipeWriterAdapter: IStreamWriter<EmptyState>
 	/// <inheritdoc />
 	public async Task<EmptyState> FlushAsync(EmptyState state, CancellationToken token)
 	{
-		await _writer.FlushAsync(token);
+		await _writer.FlushAsync(token).Weave();
 		return state;
 	}
 
