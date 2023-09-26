@@ -40,7 +40,7 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength, dictionary, dictionaryLength),
 				Algorithm.X32 => LL32.LZ4_decompress_safe_usingDict(
 					source, target, sourceLength, targetLength, dictionary, dictionaryLength),
-				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe))
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe_usingDict))
 			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
