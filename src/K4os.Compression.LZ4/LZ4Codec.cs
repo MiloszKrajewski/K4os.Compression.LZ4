@@ -112,6 +112,25 @@ public static class LZ4Codec
 			
 		return decoded <= 0 ? -1 : decoded;
 	}
+	
+	/// <summary>Decompresses data from given buffer, stopping at <paramref name="targetLength"/>.</summary>
+	/// <param name="source">Input buffer.</param>
+	/// <param name="sourceLength">Input buffer length.</param>
+	/// <param name="target">Output buffer.</param>
+	/// <param name="targetLength">Output buffer length. Decoding stops at this amount.</param>
+	/// <returns>Number of bytes written, or negative value if output buffer is too small.</returns>
+	public static unsafe int DecodePartial(
+		byte* source, int sourceLength,
+		byte* target, int targetLength)
+	{
+		if (sourceLength <= 0)
+			return 0;
+
+		var decoded = LLxx.LZ4_decompress_safe_partial(
+			source, target, sourceLength, targetLength);
+			
+		return decoded <= 0 ? -1 : decoded;
+	}
 
 	/// <summary>Decompresses data from given buffer.</summary>
 	/// <param name="source">Input buffer.</param>
@@ -136,6 +155,22 @@ public static class LZ4Codec
 		return decoded <= 0 ? -1 : decoded;
 	}
 
+	/// <summary>Decompresses data from given buffer, stopping at <paramref name="target"/> buffer length.</summary>
+	/// <param name="source">Input buffer.</param>
+	/// <param name="target">Output buffer. Decoding stops at end of buffer.</param>
+	/// <returns>Number of bytes written, or negative value if output buffer is too small.</returns>
+	public static unsafe int DecodePartial(
+		ReadOnlySpan<byte> source, Span<byte> target)
+	{
+		var sourceLength = source.Length;
+		if (sourceLength <= 0)
+			return 0;
+
+		fixed (byte* sourceP = source)
+		fixed (byte* targetP = target)
+			return DecodePartial(sourceP, sourceLength, targetP, target.Length);
+	}
+	
 	/// <summary>Decompresses data from given buffer.</summary>
 	/// <param name="source">Input buffer.</param>
 	/// <param name="target">Output buffer.</param>

@@ -30,6 +30,19 @@ namespace K4os.Compression.LZ4.Engine
 					source, target, sourceLength, targetLength),
 				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe))
 			};
+		
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public static int LZ4_decompress_safe_partial(
+			byte* source, byte* target, int sourceLength, int targetLength) =>
+			// Note from original LZ4 docs (since K4os.Compression.LZ4 is a source faithful port)
+			// this function effectively stops decoding on reaching targetOutputSize, so dstCapacity is kind of redundant.
+			LL.Algorithm switch {
+				Algorithm.X64 => LL64.LZ4_decompress_safe_partial(
+					source, target, sourceLength, targetLength, targetLength),
+				Algorithm.X32 => LL32.LZ4_decompress_safe_partial(
+					source, target, sourceLength, targetLength, targetLength),
+				_ => throw AlgorithmNotImplemented(nameof(LZ4_decompress_safe_partial))
+			};
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public static int LZ4_decompress_safe_usingDict(
