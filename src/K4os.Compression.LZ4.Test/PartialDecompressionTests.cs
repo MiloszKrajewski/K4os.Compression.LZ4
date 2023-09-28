@@ -36,7 +36,7 @@ public class PartialDecompressionTests
         Check(encoded, encodedLength, encoded.Length - encodedLength, 0xCD);
 
         // Partially decode the file.
-        var decodedLength = LZ4Codec.DecodePartial(
+        var decodedLength = LZ4Codec.PartialDecode(
             encoded.AsSpan(0, encodedLength),
             decoded.AsSpan(0, numToDecompress));
 
