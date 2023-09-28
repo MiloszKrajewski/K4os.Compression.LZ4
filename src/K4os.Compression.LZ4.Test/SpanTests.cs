@@ -82,23 +82,21 @@ namespace K4os.Compression.LZ4.Test
 			Check(decoded, offset + decodedLength, offset, 0xCD);
 			Check(decoded, offset, decodedLength, source);
 		}
-
-		private static void Fill(byte[] buffer, byte value)
-		{
-			for (var i = 0; i < buffer.Length; i++)
-				buffer[i] = value;
-		}
+		
+		private static void Fill(byte[] buffer, byte value) => buffer.AsSpan().Fill(value); // vectorised on newer runtimes
 
 		private void Check(byte[] buffer, int offset, int length, byte value)
 		{
 			for (var i = offset; i < offset + length; i++)
-				Assert.True(buffer[i] == value, $"Value overriden @ {i}");
+				if (buffer[i] != value)
+					Assert.Fail($"Value overriden @ {i}");
 		}
 
 		private void Check(byte[] buffer, int offset, int length, byte[] source)
 		{
 			for (var i = offset; i < offset + length; i++)
-				Assert.True(buffer[i] == source[i], $"Value different @ {i}");
+				if (buffer[i] != source[i])
+					Assert.Fail($"Value different @ {i}");
 		}
 	}
 }
