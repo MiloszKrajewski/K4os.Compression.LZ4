@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Test;
+namespace K4os.Compression.LZ4.Tests;
 
 // NOTE: you should not test framework, but I needed to verify how it works
 public class FrameworkTests

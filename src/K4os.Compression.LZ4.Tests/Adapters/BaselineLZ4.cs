@@ -1,9 +1,9 @@
 using System;
 
-namespace K4os.Compression.LZ4.Test.Adapters
+namespace K4os.Compression.LZ4.Tests.Adapters
 {
-	using LZ4Level = K4os.Compression.LZ4.vPrev.LZ4Level;
-	using LZ4Codec = K4os.Compression.LZ4.vPrev.LZ4Codec;
+	using LZ4Level = vPrev.LZ4Level;
+	using LZ4Codec = vPrev.LZ4Codec;
 
 	public class BaselineLZ4
 	{

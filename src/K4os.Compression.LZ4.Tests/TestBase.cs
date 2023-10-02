@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading;
 using Xunit.Abstractions;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class TestBase
 	{

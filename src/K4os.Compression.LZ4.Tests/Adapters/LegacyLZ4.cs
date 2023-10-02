@@ -1,4 +1,4 @@
-namespace K4os.Compression.LZ4.Test.Adapters
+namespace K4os.Compression.LZ4.Tests.Adapters
 {
 	using LZ4Codec = global::LZ4.LZ4Codec;
 

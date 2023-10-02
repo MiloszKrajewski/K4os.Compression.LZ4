@@ -1,10 +1,9 @@
 using System;
-using System.IO;
 using System.Linq;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class Issue43
 	{

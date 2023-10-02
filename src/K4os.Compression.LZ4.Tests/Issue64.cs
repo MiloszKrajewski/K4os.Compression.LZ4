@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -7,7 +6,7 @@ using K4os.Compression.LZ4.Internal;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class Issue64
 	{

@@ -2,11 +2,11 @@
 // ReSharper disable CommentTypo
 
 using System;
-using K4os.Compression.LZ4.Test.Adapters;
+using K4os.Compression.LZ4.Tests.Adapters;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class ChecksumBlockTests
 	{

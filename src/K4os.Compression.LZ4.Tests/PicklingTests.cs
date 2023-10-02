@@ -1,11 +1,10 @@
 using System;
 using System.Buffers;
-using System.IO;
 using K4os.Compression.LZ4.Internal;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class PicklingTests
 	{
@@ -76,7 +75,7 @@ namespace K4os.Compression.LZ4.Test
 			var pickled = pickledWriter.WrittenSpan;
 
 			Assert.Throws<ArgumentNullException>(
-				() => LZ4Pickler.Unpickle(pickledWriter.WrittenSpan, (IBufferWriter<byte>)null));
+				() => LZ4Pickler.Unpickle(pickledWriter.WrittenSpan, default(IBufferWriter<byte>)));
 			LZ4Pickler.Unpickle(pickled, unpickledWriter);
 			var unpickled = unpickledWriter.WrittenSpan;
 

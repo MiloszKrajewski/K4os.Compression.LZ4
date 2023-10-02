@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Engine;
 using K4os.Compression.LZ4.Internal;
@@ -9,7 +8,7 @@ using Xunit.Abstractions;
 
 // ReSharper disable InlineOutVariableDeclaration
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public unsafe class LZ4EncoderTests
 	{

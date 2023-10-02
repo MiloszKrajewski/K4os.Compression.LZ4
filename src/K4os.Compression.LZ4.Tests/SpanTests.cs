@@ -5,7 +5,7 @@ using Xunit;
 
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class SpanTests
 	{

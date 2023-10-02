@@ -1,10 +1,9 @@
-﻿using System.IO;
-using System.Text;
+﻿using System.Text;
 using K4os.Compression.LZ4.Encoders;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Test
+namespace K4os.Compression.LZ4.Tests
 {
 	public class StreamingRoundtripTests
 	{

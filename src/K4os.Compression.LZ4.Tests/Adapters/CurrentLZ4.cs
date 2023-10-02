@@ -1,6 +1,6 @@
 using System;
 
-namespace K4os.Compression.LZ4.Test.Adapters
+namespace K4os.Compression.LZ4.Tests.Adapters
 {
 	public class CurrentLZ4
 	{
