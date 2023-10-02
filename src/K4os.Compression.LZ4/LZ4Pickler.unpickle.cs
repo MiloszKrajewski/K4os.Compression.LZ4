@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
@@ -56,8 +55,7 @@ public static partial class LZ4Pickler
 		ReadOnlySpan<byte> source, TBufferWriter writer)
 		where TBufferWriter: IBufferWriter<byte>
 	{
-		if (writer is null) 
-			throw new ArgumentNullException(nameof(writer));
+		writer.Required(nameof(writer));
 
 		var sourceLength = source.Length;
 		if (sourceLength == 0) return;
