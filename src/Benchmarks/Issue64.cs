@@ -10,7 +10,7 @@ namespace Benchmarks
 {
 	public class Issue64
 	{
-		private byte[] _source;
+		private byte[] _source = null!;
 
 		private static byte[] LoadBytes(string name) =>
 			File.ReadAllBytes(Tools.FindFile(@$"./assets/issue64/{name}"));

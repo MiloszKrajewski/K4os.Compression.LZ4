@@ -8,8 +8,8 @@ namespace Benchmarks
 {
 	public class BlockDecompression
 	{
-		private byte[] _source;
-		private byte[] _target;
+		private byte[] _source = null!;
+		private byte[] _target = null!;
 		
 		/*
 		|     Method |     Mean |     Error |    StdDev |

@@ -5,6 +5,7 @@ open System.IO
 open System.Net
 open System.Text.RegularExpressions
 open System.Diagnostics
+open System.Runtime.InteropServices
 
 open Fake.Core
 open Fake.IO
@@ -86,13 +87,14 @@ module Regex =
         match pattern.Match(text) with | m when m.Success -> Some m | _ -> None
 
 module Shell =
-    let mono = "Mono.Runtime" |> Type.GetType |> isNull |> not
+    // let linux = "Mono.Runtime" |> Type.GetType |> isNull |> not
+    let linux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
     let delete filename = File.delete filename
     let deleteAll filenames = File.deleteAll filenames
     let runAt directory executable arguments =
         let command = $"%s{String.quote executable} %s{arguments}"
         Log.info $"> %s{command} @ %s{Path.toRelativeFromCurrent directory}"
-        let comspec, comspecArgs = if mono then "bash", "-c" else Environment.environVarOrFail "COMSPEC", "/c"
+        let comspec, comspecArgs = if linux then ("sh", "-c") else (Environment.environVarOrFail "COMSPEC", "/c")
         let info = ProcessStartInfo(comspec, $"%s{comspecArgs} \"%s{command}\"", UseShellExecute = false, WorkingDirectory = directory)
         let proc = Process.Start(info)
         proc.WaitForExit()

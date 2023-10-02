@@ -19,7 +19,7 @@ namespace Benchmarks
 		
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		// ReSharper disable once UnusedParameter.Local
-		private static void Noop<T>(T _) { }
+		private static void Noop<T>(T? _) { }
 
 		[Benchmark]
 		public unsafe void UseAllocHGlobal()
@@ -39,7 +39,7 @@ namespace Benchmarks
 		public unsafe void UseSharedPoolAndPinning()
 		{
 			byte* ptr;
-			byte[] arr = null;
+			byte[]? arr = null;
 			GCHandle hndl = default;
 			try
 			{
@@ -60,7 +60,7 @@ namespace Benchmarks
 		public unsafe void UseManagedAndPinning()
 		{
 			byte* ptr;
-			byte[] arr = null;
+			byte[] arr;
 			GCHandle hndl = default;
 			try
 			{
@@ -94,7 +94,7 @@ namespace Benchmarks
 		[Benchmark]
 		public void UsePinnedHeap()
 		{
-			byte[] arr = null;
+			byte[]? arr = null;
 			try
 			{
 				arr = Clear

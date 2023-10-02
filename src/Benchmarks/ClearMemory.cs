@@ -7,7 +7,7 @@ namespace Benchmarks
 {
 	public class ClearMemory
 	{
-		private byte[] _buffer;
+		private byte[] _buffer = null!;
 
 		[Params(127, 1023, 65535)]
 		public int Size { get; set; }

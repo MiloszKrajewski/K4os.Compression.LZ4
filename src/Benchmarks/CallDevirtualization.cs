@@ -5,8 +5,8 @@ namespace Benchmarks
 {
 	public class CallDevirtualization
 	{
-		private IVirtualInterface _intfImpl;
-		private ClassImpl _classImpl;
+		private IVirtualInterface _intfImpl = null!;
+		private ClassImpl _classImpl = null!;
 		private StructImpl _structImpl;
 
 		private BypassImpl<ClassImpl> _bypassImpl;
