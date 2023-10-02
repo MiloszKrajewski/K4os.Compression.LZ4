@@ -5,7 +5,7 @@ using TestHelpers;
 using Xunit;
 using ReferenceLZ4 = LZ4.LZ4Codec;
 
-namespace K4os.Compression.LZ4.Legacy.Test
+namespace K4os.Compression.LZ4.Legacy.Tests
 {
 	public class WrapperTests
 	{

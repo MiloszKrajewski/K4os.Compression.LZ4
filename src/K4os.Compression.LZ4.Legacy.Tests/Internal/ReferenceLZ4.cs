@@ -1,10 +1,9 @@
 ﻿using System;
-using System.IO;
 using RefStream = LZ4.LZ4Stream;
 using RefStreamMode = LZ4.LZ4StreamMode;
 using RefStreamFlags = LZ4.LZ4StreamFlags;
 
-namespace K4os.Compression.LZ4.Legacy.Test.Internal
+namespace K4os.Compression.LZ4.Legacy.Tests.Internal
 {
 	public class ReferenceLZ4
 	{

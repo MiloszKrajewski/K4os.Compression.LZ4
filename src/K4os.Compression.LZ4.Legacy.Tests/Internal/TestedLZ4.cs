@@ -1,7 +1,6 @@
-﻿using System.IO;
-using K4os.Compression.LZ4.Internal;
+﻿using K4os.Compression.LZ4.Internal;
 
-namespace K4os.Compression.LZ4.Legacy.Test.Internal
+namespace K4os.Compression.LZ4.Legacy.Tests.Internal
 {
 	public class LZ4Settings
 	{
