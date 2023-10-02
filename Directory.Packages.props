@@ -1,0 +1,19 @@
+<Project>
+  <ItemGroup>
+    <!--
+    This repository is not using Central Package Version Management, because it is still not good.
+    For example, "error NU1008: Projects that use central package version management should not 
+    define the version on the PackageReference" is wrong, it should be possible to mix and match.
+    
+    So, for now I'll stick to Paket.
+    
+    But, when mature enough, You can add this to main Directory.Build.props:
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    -->
+    <!--
+    <PackageVersion Include="System.Reactive" Version="4.4.1" />
+    <PackageVersion Include="System.Interactive" Version="4.1.1" />
+    <PackageVersion Include="Newtonsoft.Json" Version="12.0.3" />
+    -->
+  </ItemGroup>
+</Project>

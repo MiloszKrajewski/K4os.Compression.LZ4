@@ -1,6 +1,14 @@
 {
   "sdk": {
-    "version": "6.0.402",
+    "version": "6.0.405",
     "rollForward": "latestMinor"
+  },
+  "scripts": {
+    "clean": ".\\nuke clean",
+    "restore": ".\\nuke restore",
+    "build": ".\\nuke build",
+    "rebuild": ".\\nuke rebuild",
+    "release": ".\\nuke release",
+    "test": ".\\nuke test"
   }
 }

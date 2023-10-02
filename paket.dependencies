@@ -5,10 +5,12 @@ source https://www.nuget.org/api/v2
 nuget lz4net
 nuget SharpZipLib
 nuget BenchmarkDotNet
+nuget System.Memory
 
 nuget xunit
 nuget xunit.runner.visualstudio
 nuget Microsoft.NET.Test.Sdk
+nuget coverlet.collector
 
 # paket is not great with conditional dependencies
 # nuget is not great either, but has a little bit more support for conditional sections

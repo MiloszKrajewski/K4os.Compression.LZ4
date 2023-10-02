@@ -1,7 +1,0 @@
-<Project>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../K4os.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-</Project>

@@ -14,14 +14,14 @@ packages/
 **/bin/
 **/obj/
 
-Debug/
-Release/
+playground/**/Debug/
+playground/**/Release/
+
+**/BenchmarkDotNet.Artifacts/
+
+.secrets.cfg
+.signing.snk
 
 *.bak
 *.user
 *.suo
-*.snk
-
-.secrets.cfg
-
-**/BenchmarkDotNet.Artifacts/
