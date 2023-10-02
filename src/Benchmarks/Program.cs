@@ -1,7 +1,7 @@
 ﻿using System;
 using BenchmarkDotNet.Running;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	class Program
 	{

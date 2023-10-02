@@ -1,6 +1,5 @@
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 
 namespace TestHelpers;
 
@@ -37,7 +36,7 @@ public class ByteSegment: ReadOnlySequenceSegment<byte>
 				: current.Append(segment);
 		}
 
-		return current is null
+		return current is null || first is null
 			? ReadOnlySequence<byte>.Empty
 			: new ReadOnlySequence<byte>(first, 0, current, current.Memory.Length);
 	}
@@ -51,8 +50,8 @@ public class ByteSegment: ReadOnlySequenceSegment<byte>
 		return segment;
 	}
 
-	public ReadOnlySequenceSegment<byte> Last => GetLast(this);
+	public ReadOnlySequenceSegment<byte>? Last => GetLast(this);
 
-	private static ReadOnlySequenceSegment<byte> GetLast(ReadOnlySequenceSegment<byte> current) =>
+	private static ReadOnlySequenceSegment<byte>? GetLast(ReadOnlySequenceSegment<byte> current) =>
 		current.Next switch { null => null, var next => GetLast(next) };
 }

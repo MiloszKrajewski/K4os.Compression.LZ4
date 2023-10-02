@@ -6,7 +6,7 @@ using BenchmarkDotNet.Attributes;
 using K4os.Compression.LZ4.Internal;
 using Mem = K4os.Compression.LZ4.vPrev.Internal.Mem;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	public class FixedMemoryAllocation
 	{

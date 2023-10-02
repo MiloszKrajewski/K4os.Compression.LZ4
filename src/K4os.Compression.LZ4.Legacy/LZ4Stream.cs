@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Diagnostics;
 
 namespace K4os.Compression.LZ4.Legacy;
 
@@ -53,7 +53,7 @@ public partial class LZ4Stream: Stream
 	private readonly int _blockSize;
 
 	/// <summary>The buffer.</summary>
-	private byte[] _buffer;
+	private byte[]? _buffer;
 
 	/// <summary>The buffer length (can be different then _buffer.Length).</summary>
 	private int _bufferLength;
@@ -221,8 +221,10 @@ public partial class LZ4Stream: Stream
 
 		if (compressedLength <= 0 || compressedLength >= _bufferOffset)
 		{
+			Debug.Assert(_buffer is not null);
+			
 			// incompressible block
-			compressed = _buffer;
+			compressed = _buffer!;
 			compressedLength = _bufferOffset;
 		}
 
@@ -335,8 +337,10 @@ public partial class LZ4Stream: Stream
 
 		if (_bufferOffset >= _bufferLength && !AcquireNextChunk())
 			return -1; // that's just end of stream
+		
+		Debug.Assert(_buffer is not null);
 
-		return _buffer[_bufferOffset++];
+		return _buffer![_bufferOffset++];
 	}
 
 	/// <summary>When overridden in a derived class, reads a sequence of bytes from the current stream and advances the position within the stream by the number of bytes read.</summary>
@@ -355,7 +359,9 @@ public partial class LZ4Stream: Stream
 			var chunk = Math.Min(count, _bufferLength - _bufferOffset);
 			if (chunk > 0)
 			{
-				Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, chunk);
+				Debug.Assert(_buffer is not null);
+
+				Buffer.BlockCopy(_buffer!, _bufferOffset, buffer, offset, chunk);
 				_bufferOffset += chunk;
 				total += chunk;
 				if (_interactiveRead) break;

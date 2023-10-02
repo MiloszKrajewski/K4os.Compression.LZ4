@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	[MemoryDiagnoser]
 	public class BufferAllocation

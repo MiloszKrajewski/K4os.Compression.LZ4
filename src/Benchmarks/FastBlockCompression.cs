@@ -1,12 +1,11 @@
 using System;
-using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using K4os.Compression.LZ4.Internal;
+using K4os.Compression.LZ4;
 using TestHelpers;
 using LZ4PrevCodec = K4os.Compression.LZ4.vPrev.LZ4Codec;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	[SimpleJob(RuntimeMoniker.NetCoreApp31)]
 	[SimpleJob(RuntimeMoniker.Net50)]

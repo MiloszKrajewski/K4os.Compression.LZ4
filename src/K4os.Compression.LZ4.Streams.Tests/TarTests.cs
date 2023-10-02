@@ -78,7 +78,7 @@ namespace K4os.Compression.LZ4.Streams.Tests
 			}
 		}
 
-		private static string TempFileName(string extension = null) =>
+		private static string TempFileName(string? extension = null) =>
 			Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{extension ?? string.Empty}");
 
 		private static int CopyPart(Stream sourceFile, Stream targetFile, int partSize)

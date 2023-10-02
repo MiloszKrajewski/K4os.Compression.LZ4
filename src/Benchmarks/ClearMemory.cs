@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	public class ClearMemory
 	{

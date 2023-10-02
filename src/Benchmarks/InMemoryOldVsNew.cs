@@ -1,12 +1,10 @@
 using System;
-using System.Buffers;
-using System.IO;
 using BenchmarkDotNet.Attributes;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams;
 using TestHelpers;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	[MemoryDiagnoser]
 	public class InMemoryOldVsNew

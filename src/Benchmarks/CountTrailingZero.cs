@@ -2,7 +2,7 @@ using System;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	// [SimpleJob(RuntimeMoniker.NetCoreApp31)]
 	[SimpleJob(RuntimeMoniker.Net50)]

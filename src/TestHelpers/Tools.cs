@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Xunit;
 
 namespace TestHelpers;
@@ -46,20 +45,18 @@ public static class Tools
 
 	public static byte[] LoadChunk(string filename, int index, int length)
 	{
-		using (var file = File.OpenRead(filename))
-		{
-			length = length < 0 ? (int)(file.Length - index) : length;
-			var src = new byte[length];
-			file.Seek(index, SeekOrigin.Begin);
-			file.Read(src, 0, length);
-			return src;
-		}
+		using var file = File.OpenRead(filename);
+		length = length < 0 ? (int)(file.Length - index) : length;
+		var src = new byte[length];
+		file.Seek(index, SeekOrigin.Begin);
+		file.Read(src, 0, length);
+		return src;
 	}
 
 	public static string FindFile(string filename) =>
 		Path.Combine(FindRoot(), filename);
-
-	private static string FindRoot(string path = ".")
+	
+	private static string? TryFindRoot(string path = ".")
 	{
 		bool IsRoot(string p) =>
 			Path.GetFullPath(p) == Path.GetFullPath(Path.Combine(p, ".."));
@@ -72,6 +69,9 @@ public static class Tools
 			path = Path.Combine(path, "..");
 		}
 	}
+
+	private static string FindRoot(string path = ".") => 
+		TryFindRoot(path) ?? throw new Exception("Could not find repository root");
 
 	public static Stream Slow(Stream stream, int threshold = 1) =>
 		new FakeNetworkStream(stream, threshold);
@@ -110,23 +110,22 @@ public static class Tools
 
 	public static void SameFiles(string original, string decoded)
 	{
-		using (var streamA = File.OpenRead(original))
-		using (var streamB = File.OpenRead(decoded))
+		using var streamA = File.OpenRead(original);
+		using var streamB = File.OpenRead(decoded);
+		
+		Assert.Equal(streamA.Length, streamB.Length);
+		var bufferA = new byte[4096];
+		var bufferB = new byte[4096];
+
+		while (true)
 		{
-			Assert.Equal(streamA.Length, streamB.Length);
-			var bufferA = new byte[4096];
-			var bufferB = new byte[4096];
+			var readA = streamA.Read(bufferA, 0, bufferA.Length);
+			var readB = streamB.Read(bufferB, 0, bufferB.Length);
+			Assert.Equal(readA, readB);
+			if (readA == 0)
+				break;
 
-			while (true)
-			{
-				var readA = streamA.Read(bufferA, 0, bufferA.Length);
-				var readB = streamB.Read(bufferB, 0, bufferB.Length);
-				Assert.Equal(readA, readB);
-				if (readA == 0)
-					break;
-
-				SameBytes(bufferA, bufferB, readA);
-			}
+			SameBytes(bufferA, bufferB, readA);
 		}
 	}
 
@@ -134,16 +133,15 @@ public static class Tools
 	{
 		var random = new Random(seed);
 		var buffer = new byte[0x10000];
-		using (var file = File.Create(filename))
+		using var file = File.Create(filename);
+		
+		while (length > 0)
 		{
-			while (length > 0)
-			{
-				random.NextBytes(buffer);
-				var chunkSize = Math.Min(length, buffer.Length);
+			random.NextBytes(buffer);
+			var chunkSize = Math.Min(length, buffer.Length);
 
-				file.Write(buffer, 0, chunkSize);
-				length -= chunkSize;
-			}
+			file.Write(buffer, 0, chunkSize);
+			length -= chunkSize;
 		}
 	}
 

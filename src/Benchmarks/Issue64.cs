@@ -1,12 +1,12 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using BenchmarkDotNet.Attributes;
+using K4os.Compression.LZ4;
 using TestHelpers;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	public class Issue64
 	{

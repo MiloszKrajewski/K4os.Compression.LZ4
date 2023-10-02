@@ -1,9 +1,8 @@
 using System;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace K4os.Compression.LZ4.Benchmarks
+namespace Benchmarks
 {
 	public class BitOps
 	{

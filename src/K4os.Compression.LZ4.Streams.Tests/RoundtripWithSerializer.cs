@@ -8,7 +8,7 @@ namespace K4os.Compression.LZ4.Streams.Tests
 	{
 		public class TestClass
 		{
-			public string Test1 { get; set; }
+			public string? Test1 { get; set; }
 		}
 
 		[Fact]
