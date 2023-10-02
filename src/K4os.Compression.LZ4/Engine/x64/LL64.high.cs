@@ -1,14 +1,15 @@
-using System;
-using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Internal;
-
-//------------------------------------------------------------------------------
-
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
+// ReSharper disable RedundantAssignment
+// ReSharper disable RedundantCast
+
+using System;
+using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Internal;
+
 #if BIT32
 using reg_t = System.UInt32;
 using Mem = K4os.Compression.LZ4.Internal.Mem32;
@@ -16,10 +17,9 @@ using Mem = K4os.Compression.LZ4.Internal.Mem32;
 using reg_t = System.UInt64;
 using Mem = K4os.Compression.LZ4.Internal.Mem64;
 #endif
+
 using size_t = System.UInt32;
 using uptr_t = System.UInt64;
-
-//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
@@ -261,16 +261,13 @@ namespace K4os.Compression.LZ4.Engine
 										matchCandidateIdx - backLength >= lowestMatchIndex);
 									currentSegmentLength = backLength + forwardPatternLength;
 									/* Adjust to end of pattern if the source pattern fits, otherwise the beginning of the pattern */
-									if ((currentSegmentLength
-											>= srcPatternLength
-										) /* current pattern segment large enough to contain full srcPatternLength */
+									if ((currentSegmentLength >= srcPatternLength) /* current pattern segment large enough to contain full srcPatternLength */
 										&& (forwardPatternLength <= srcPatternLength))
 									{
 										/* haven't reached this position yet */
 										uint newMatchIndex = matchCandidateIdx
 											+ (uint) forwardPatternLength
-											- (uint)
-											srcPatternLength; /* best position, full pattern, might be followed by more match */
+											- (uint) srcPatternLength; /* best position, full pattern, might be followed by more match */
 										if (LZ4HC_protectDictEnd(dictLimit, newMatchIndex))
 											matchIndex = newMatchIndex;
 										else

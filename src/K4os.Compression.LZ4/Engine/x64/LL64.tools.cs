@@ -1,13 +1,12 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-
-//------------------------------------------------------------------------------
-
-// ReSharper disable IdentifierTypo
+﻿// ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
+
+using System;
+using System.Runtime.CompilerServices;
+
 #if BIT32
 using reg_t = System.UInt32;
 using Mem = K4os.Compression.LZ4.Internal.Mem32;
@@ -22,8 +21,6 @@ using System.Numerics;
 
 using size_t = System.UInt32;
 using uptr_t = System.UInt64;
-
-//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
@@ -48,9 +45,8 @@ namespace K4os.Compression.LZ4.Engine
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected static uint LZ4_NbCommonBytes(uint val) =>
-			DeBruijnBytePos[
-				(uint)unchecked(((uint)((int)val & -(int)val) * 0x077CB531u) >> 27)
-			];
+			// ReSharper disable once RedundantCast
+			DeBruijnBytePos[(uint)unchecked(((uint)((int)val & -(int)val) * 0x077CB531u) >> 27)];
 
 		#else // BIT32
 
