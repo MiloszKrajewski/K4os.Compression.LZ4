@@ -31,8 +31,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "K4os.Compression.LZ4", "K4o
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K4os.Compression.LZ4.Tests", "K4os.Compression.LZ4.Tests\K4os.Compression.LZ4.Tests.csproj", "{F8F5D4B1-F2EE-452E-9EA0-CB6348E1EF90}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K4os.Compression.LZ4.App", "K4os.Compression.LZ4.App\K4os.Compression.LZ4.App.csproj", "{7FCF7B4D-51F6-4859-818A-AC6E794CCF69}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K4os.Compression.LZ4.Legacy", "K4os.Compression.LZ4.Legacy\K4os.Compression.LZ4.Legacy.csproj", "{0C85D933-31ED-415A-A9F3-77B6B6B3982F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "K4os.Compression.LZ4.Streams", "K4os.Compression.LZ4.Streams\K4os.Compression.LZ4.Streams.csproj", "{C77617A4-3A84-4AEF-BF97-0156B255AE98}"
@@ -69,10 +67,6 @@ Global
 		{F8F5D4B1-F2EE-452E-9EA0-CB6348E1EF90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8F5D4B1-F2EE-452E-9EA0-CB6348E1EF90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8F5D4B1-F2EE-452E-9EA0-CB6348E1EF90}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7FCF7B4D-51F6-4859-818A-AC6E794CCF69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7FCF7B4D-51F6-4859-818A-AC6E794CCF69}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7FCF7B4D-51F6-4859-818A-AC6E794CCF69}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7FCF7B4D-51F6-4859-818A-AC6E794CCF69}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A9010B8-39A7-4104-A8E9-E19281E693D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A9010B8-39A7-4104-A8E9-E19281E693D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C85D933-31ED-415A-A9F3-77B6B6B3982F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
