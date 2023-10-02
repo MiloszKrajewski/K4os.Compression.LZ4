@@ -1,7 +1,9 @@
+// ReSharper disable UnusedMember.Local
+// ReSharper disable AllUnderscoreLocalParameterName
+
 using System;
 using System.Linq;
 using System.Threading;
-using Fake.Core;
 using FsBuildTools;
 using NuGet.Versioning;
 using Nuke.Common;
@@ -19,7 +21,6 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using File = System.IO.File;
 using Log = Serilog.Log;
 
-// ReSharper disable UnusedMember.Local
 [GitHubActions(
 	"continuous",
 	GitHubActionsImage.WindowsLatest,
