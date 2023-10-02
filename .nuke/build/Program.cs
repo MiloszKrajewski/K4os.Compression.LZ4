@@ -36,17 +36,17 @@ class Program: NukeBuild
 		!IsLocalBuild ? Configuration.Release :
 		Debug ? Configuration.Debug :
 		Configuration.Release;
-	
-	bool IsReleasing => 
+
+	bool IsReleasing =>
 		ScheduledTargets.Contains(Release) ||
 		RunningTargets.Contains(Release) ||
 		FinishedTargets.Contains(Release);
 
 	[Solution] readonly Solution Solution;
-	
+
 	[GitRepository] readonly GitRepository GitRepository;
 	[GitVersion] readonly GitVersion GitVersion;
-	
+
 	static readonly AbsolutePath NukeDirectory = RootDirectory / ".nuke";
 	static readonly AbsolutePath OutputDirectory = RootDirectory / ".output";
 
@@ -60,7 +60,7 @@ class Program: NukeBuild
 		ReleaseNotes.FirstOrDefault()?.Version ??
 		throw new ArgumentException("No release notes found");
 
-    static void RestoreSecretFile(string secretFile, string exampleFile)
+	static void RestoreSecretFile(string secretFile, string exampleFile)
 	{
 		if (File.Exists(RootDirectory / secretFile))
 			return;
@@ -70,14 +70,14 @@ class Program: NukeBuild
 			secretFile, exampleFile);
 		CopyFile(RootDirectory / exampleFile, RootDirectory / secretFile);
 	}
-    
-    static string GetNugetApiKey() =>
-	    EnvironmentInfo.GetVariable<string>("NUGET_API_KEY").NullIfEmpty() ??
-	    throw new Exception("NUGET_API_KEY is not set");
 
-    static string GetGitHubApiKey() =>
-	    EnvironmentInfo.GetVariable<string>("GITHUB_API_KEY").NullIfEmpty() ??
-	    throw new Exception("GITHUB_API_KEY is not set");
+	static string GetNugetApiKey() =>
+		EnvironmentInfo.GetVariable<string>("NUGET_API_KEY").NullIfEmpty() ??
+		throw new Exception("NUGET_API_KEY is not set");
+
+	static string GetGitHubApiKey() =>
+		EnvironmentInfo.GetVariable<string>("GITHUB_API_KEY").NullIfEmpty() ??
+		throw new Exception("GITHUB_API_KEY is not set");
 
 	Target Clean => _ => _
 		.Before(Restore)
@@ -89,11 +89,11 @@ class Program: NukeBuild
 				.ForEach(DeleteDirectory);
 			EnsureCleanDirectory(OutputDirectory);
 		});
-	
+
 	Target Download => _ => _
 		.After(Clean)
 		.Executes(Downloads.restoreCorpus);
-	
+
 	Target Sanitize => _ => _
 		.Executes(Sanitizer.sanitizeOriginalSources);
 
@@ -103,13 +103,13 @@ class Program: NukeBuild
 			Sanitizer.convert64to32("./src/K4os.Compression.LZ4");
 			Sanitizer.convertAsyncToBlocking("./src/K4os.Compression.LZ4.Streams");
 		});
-	
+
 	Target Restore => _ => _
 		.After(Clean)
 		.Executes(() =>
 		{
-            RestoreSecretFile(".secrets.cfg", "res/.secrets.example.cfg");
-            RestoreSecretFile(".signing.snk", "res/.signing.example.snk");
+			RestoreSecretFile(".secrets.cfg", "res/.secrets.example.cfg");
+			RestoreSecretFile(".signing.snk", "res/.signing.example.snk");
 
 			DotNetToolRestore();
 			DotNet("paket restore");
@@ -184,12 +184,19 @@ class Program: NukeBuild
 		{
 			if (Configuration != Configuration.Release)
 			{
-				Log.Warning("Tests should be ran in release configuration, as the are quite slow in Debug");
+				Log.Warning(
+					"Tests should be ran in release configuration, as the are quite slow in Debug");
 				Thread.Sleep(5000);
 			}
-			
-			DotNetTest(s => s
-				.SetProjectFile(Solution)
-				.SetConfiguration(Configuration));
+
+			Solution
+				.AllProjects
+				.Where(p => p.Name.EndsWith(".Tests"))
+				.ForEach(p =>
+				{
+					DotNetTest(s => s
+						.SetProjectFile(p)
+						.SetConfiguration(Configuration));
+				});
 		});
 }

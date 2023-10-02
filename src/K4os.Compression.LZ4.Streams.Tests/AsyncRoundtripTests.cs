@@ -1,7 +1,6 @@
 #if NET6_0_OR_GREATER
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using TestHelpers;
 using Xunit;
 
@@ -38,8 +37,8 @@ public class AsyncOnlyStream: Stream
 
 	public AsyncOnlyStream(Stream stream) => _stream = stream;
 
-	[DoesNotReturn]
-	private static InvalidOperationException NotAllowed() => new("This operation is not allowed");
+	private static InvalidOperationException NotAllowed() => 
+		new("This operation is not allowed");
 
 	public override void Flush() => throw NotAllowed();
 
