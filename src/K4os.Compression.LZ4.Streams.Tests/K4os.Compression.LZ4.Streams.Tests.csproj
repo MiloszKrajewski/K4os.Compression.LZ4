@@ -1,16 +1,12 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <IsPackable>false</IsPackable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\K4os.Compression.LZ4.Streams\K4os.Compression.LZ4.Streams.csproj" />
-    <ProjectReference Include="..\K4os.Compression.LZ4.Test\K4os.Compression.LZ4.Test.csproj" />
+    <ProjectReference Include="..\K4os.Compression.LZ4.Tests\K4os.Compression.LZ4.Tests.csproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

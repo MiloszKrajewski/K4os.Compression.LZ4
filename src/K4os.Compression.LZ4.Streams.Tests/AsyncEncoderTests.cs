@@ -1,10 +1,8 @@
 using System;
-using System.IO;
-using System.Threading.Tasks;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test
+namespace K4os.Compression.LZ4.Streams.Tests
 {
 	public class AsyncEncoderTests
 	{

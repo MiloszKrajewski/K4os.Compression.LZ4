@@ -2,13 +2,10 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test;
+namespace K4os.Compression.LZ4.Streams.Tests;
 
 public class AsyncRoundtripTests
 {

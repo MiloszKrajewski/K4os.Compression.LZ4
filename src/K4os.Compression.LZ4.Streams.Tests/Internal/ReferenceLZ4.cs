@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using TestHelpers;
 
-namespace K4os.Compression.LZ4.Streams.Test.Internal
+namespace K4os.Compression.LZ4.Streams.Tests.Internal
 {
 	public class ReferenceLZ4
 	{

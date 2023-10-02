@@ -1,12 +1,11 @@
 using System;
-using System.IO;
 using System.Text;
 using ICSharpCode.SharpZipLib.Tar;
 using K4os.Compression.LZ4.vPrev.Internal;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test
+namespace K4os.Compression.LZ4.Streams.Tests
 {
 	public class TarTests
 	{

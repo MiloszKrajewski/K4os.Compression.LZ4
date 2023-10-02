@@ -1,8 +1,6 @@
 using System;
 using System.Buffers;
-using System.IO;
 using System.IO.Pipelines;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
@@ -10,7 +8,7 @@ using K4os.Compression.LZ4.Streams.Frames;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test;
+namespace K4os.Compression.LZ4.Streams.Tests;
 
 public class FrameRountripTests
 {

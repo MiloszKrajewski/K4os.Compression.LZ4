@@ -1,10 +1,9 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Text;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test
+namespace K4os.Compression.LZ4.Streams.Tests
 {
 	public class StreamInterfaceTests
 	{

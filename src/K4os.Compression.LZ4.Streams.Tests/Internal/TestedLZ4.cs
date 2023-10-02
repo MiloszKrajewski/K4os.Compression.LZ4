@@ -1,8 +1,7 @@
-﻿using System.IO;
-using K4os.Compression.LZ4.Encoders;
+﻿using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 
-namespace K4os.Compression.LZ4.Streams.Test.Internal
+namespace K4os.Compression.LZ4.Streams.Tests.Internal
 {
 	public class LZ4Settings
 	{

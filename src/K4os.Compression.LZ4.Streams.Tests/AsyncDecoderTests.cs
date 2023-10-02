@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using K4os.Compression.LZ4.Streams.Test.Internal;
+using K4os.Compression.LZ4.Streams.Tests.Internal;
 using TestHelpers;
 using Xunit;
 
-namespace K4os.Compression.LZ4.Streams.Test
+namespace K4os.Compression.LZ4.Streams.Tests
 {
 	public class AsyncDecoderTests
 	{
