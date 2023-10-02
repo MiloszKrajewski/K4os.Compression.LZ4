@@ -1,7 +1,5 @@
-using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
 

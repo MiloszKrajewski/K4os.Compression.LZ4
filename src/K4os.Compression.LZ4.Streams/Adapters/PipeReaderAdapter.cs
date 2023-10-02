@@ -1,9 +1,5 @@
-using System;
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
-using System.Threading;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
 using ReadResult = K4os.Compression.LZ4.Streams.Abstractions.ReadResult;
@@ -63,6 +59,7 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 		#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 		var result = await reader.ReadAtLeastAsync(length, token).Weave();
 		#else
+		_ = length; // ignore
 		var result = await reader.ReadAsync(token).Weave();
 		#endif
 		if (result.IsCanceled) ThrowPendingReadsCancelled();

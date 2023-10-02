@@ -1,8 +1,6 @@
 #nullable enable
 
-using System;
 using System.Buffers;
-using System.IO;
 using System.IO.Pipelines;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;

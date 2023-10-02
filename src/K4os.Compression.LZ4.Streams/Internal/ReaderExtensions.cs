@@ -1,6 +1,3 @@
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
@@ -46,7 +43,7 @@ internal static class ReaderExtensions
 
 			if (read == 0)
 				return progress == 0 && optional
-					? ReadResult.Create(state, 0)
+					? ReadResult.Create(state)
 					: throw EndOfStream();
 
 			progress += read;

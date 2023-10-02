@@ -1,10 +1,5 @@
 #nullable enable
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace K4os.Compression.LZ4.Streams.Internal;
 
 /// <summary>

@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace K4os.Compression.LZ4.Streams.Abstractions;
 

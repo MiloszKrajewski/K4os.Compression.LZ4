@@ -1,7 +1,4 @@
-using System;
 using System.Buffers;
-using System.Threading;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Streams.Abstractions;
 
 namespace K4os.Compression.LZ4.Streams.Adapters;

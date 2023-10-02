@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
