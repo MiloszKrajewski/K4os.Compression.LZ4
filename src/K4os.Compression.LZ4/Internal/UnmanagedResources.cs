@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 namespace K4os.Compression.LZ4.Internal;
 

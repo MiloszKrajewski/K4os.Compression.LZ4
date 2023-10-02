@@ -44,7 +44,7 @@ namespace K4os.Compression.LZ4.Streams.Tests
 		[InlineData(".corpus/dickens", null, 1337)]
 		[InlineData(".corpus/mozilla", null, 1337*1337)]
 		public async Task AsyncReaderReadExactlyTheSameDataAsSyncOne(
-			string original, string options, int chunkSize)
+			string original, string? options, int chunkSize)
 		{
 			original = Tools.FindFile(original);
 			options ??= "-1 -BD -B4 -BX";
@@ -57,9 +57,9 @@ namespace K4os.Compression.LZ4.Streams.Tests
 				var buffer = new byte[chunkSize];
 
 				await Task.CompletedTask;
-				
-				using (var src = LZ4Stream.Decode(File.OpenRead(compressed)))
-				using (var dst = File.Create(decompressed))
+
+				await using (var src = LZ4Stream.Decode(File.OpenRead(compressed)))
+				await using (var dst = File.Create(decompressed))
 				{
 					while (true)
 					{

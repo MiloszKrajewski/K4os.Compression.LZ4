@@ -17,7 +17,7 @@ module Sanitizer =
     let replaceText pattern (value: string) content =
         Regex.Replace(content, sprintf @"(?<=%s)(%s)(?=%s)" b pattern b, value)
     let replaceExpr pattern evaluator content =
-        let evaluator = MatchEvaluator(fun m -> evaluator (fun (n: string) -> m.Groups.[n].Value))
+        let evaluator = MatchEvaluator(fun m -> evaluator (fun (n: string) -> m.Groups[n].Value))
         Regex.Replace(content, sprintf @"(?<=%s)(%s)(?=%s)" b pattern b, evaluator)
     let rec repeat replacer content =
         match replacer content with

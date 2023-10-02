@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Xunit;
 
@@ -32,6 +33,7 @@ public class FrameworkTests
 	}
 
 	[Fact]
+	[SuppressMessage("ReSharper", "RedundantAssignment")]
 	public void PinnedArrayIsNotCollected()
 	{
 		var array1 = new byte[1024*1024*10];
