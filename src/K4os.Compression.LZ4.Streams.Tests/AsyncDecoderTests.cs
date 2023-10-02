@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
 using K4os.Compression.LZ4.Streams.Tests.Internal;
 using TestHelpers;
 using Xunit;
@@ -58,8 +56,8 @@ namespace K4os.Compression.LZ4.Streams.Tests
 
 				await Task.CompletedTask;
 
-				await using (var src = LZ4Stream.Decode(File.OpenRead(compressed)))
-				await using (var dst = File.Create(decompressed))
+				using (var src = LZ4Stream.Decode(File.OpenRead(compressed)))
+				using (var dst = File.Create(decompressed))
 				{
 					while (true)
 					{

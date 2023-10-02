@@ -5,15 +5,15 @@
 //------------------------------------------------------------------------------
 #define BLOCKING
 
+using K4os.Compression.LZ4.Streams.Internal;
+
 #if BLOCKING
 using ReadableBuffer = System.ReadOnlySpan<byte>;
 using Token = K4os.Compression.LZ4.Streams.Internal.EmptyToken;
 #else
-using System.Threading.Tasks;
 using ReadableBuffer = System.ReadOnlyMemory<byte>;
 using Token = System.Threading.CancellationToken;
 #endif
-using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams.Frames;
 
