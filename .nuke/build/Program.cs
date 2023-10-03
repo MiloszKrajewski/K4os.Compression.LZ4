@@ -179,14 +179,13 @@ class Program: NukeBuild
 		});
 
 	Target Test => _ => _
-		.DependsOn(Download)
-		.After(Build)
+		.DependsOn(Download).After(Build)
 		.Executes(() =>
 		{
 			if (Configuration != Configuration.Release)
 			{
 				Log.Warning(
-					"Tests should be ran in release configuration, as the are quite slow in Debug");
+					"Tests should be ran in release configuration, as they are quite slow in Debug");
 				Thread.Sleep(5000);
 			}
 

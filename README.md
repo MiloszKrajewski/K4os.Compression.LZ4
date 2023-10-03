@@ -8,18 +8,24 @@
 
 # LZ4
 
-LZ4 is lossless compression algorithm, sacrificing compression ratio for compression/decompression speed. Its compression speed is ~400 MB/s per core while decompression speed reaches ~2 GB/s, not far from RAM speed limits.
+LZ4 is lossless compression algorithm, sacrificing compression ratio for compression/decompression speed. 
+Its compression speed is ~400 MB/s per core while decompression speed reaches ~2 GB/s, not far from RAM speed limits.
 
-This library brings LZ4 to .NET Standard compatible platforms: .NET Core, .NET Framework, Mono, Xamarin, and UWP. Well... theoretically. It is .NET Standard 1.6 so all this platforms should be supported although I did not test it on all this platforms.
+This library brings LZ4 to .NET Standard compatible platforms: .NET Core, .NET Framework, Mono, Xamarin, and UWP. 
+Well... theoretically... kind of. Currently, it targets .NET Framework 4.6.2+, .NET Standard 2.0+ and .NET 5.0+. 
+
+As it is .NET Standard 2.0+ so all this platforms should be supported although I did not test it on all of them.
 
 LZ4 has been written by Yann Collet and original C sources can be found [here](https://github.com/Cyan4973/lz4)
 
 # Build
 
-```shell
-paket restore
-fake build
+```powershell
+./build.ps1
 ```
+
+**NOTE**: technically, it could be built on Linux as well, but setup process downloads and uses some Windows tools, 
+like `7z.exe` and `lz4.exe`. It could be adapted, but wasn't. Feel free to send PR.
 
 # Changes
 
@@ -27,7 +33,8 @@ Change log can be found [here](CHANGES.md).
 
 # Support
 
-Maintaining this library is outside of my daily job completely. Company I work for is not even using it, so I do this completely in my own free time.
+Maintaining this library is outside of my daily job completely. Company I work for is not even using it, so I do this 
+completely in my own free time.
 
 So, if you think my work is worth something, you could support me by funding my daily caffeine dose:
 
@@ -37,8 +44,12 @@ So, if you think my work is worth something, you could support me by funding my 
 
 # What is 'Fast compression algorithm'?
 
-While compression algorithms you use day-to-day to archive your data work around the speed of 10MB/s giving you quite decent compression ratios, 'fast algorithms' are designed to work 'faster than your hard drive' sacrificing compression ratio.
-One of the most famous fast compression algorithms in Google's own [Snappy](http://code.google.com/p/snappy/) which is advertised as 250MB/s compression, 500MB/s decompression on i7 in 64-bit mode.
+While compression algorithms you use day-to-day to archive your data work around the speed of 10MB/s giving you quite 
+decent compression ratios, 'fast algorithms' are designed to work 'faster than your hard drive' sacrificing compression 
+ratio.
+
+One of the most famous fast compression algorithms in Google's own [Snappy](http://code.google.com/p/snappy/) which is advertised as 250MB/s compression, 
+500MB/s decompression on i7 in 64-bit mode.
 Fast compression algorithms help reduce network traffic / hard drive load compressing data on the fly with no noticeable latency.
 
 I just tried to compress some sample data (Silesia Corpus) receiving:
@@ -46,7 +57,9 @@ I just tried to compress some sample data (Silesia Corpus) receiving:
 * **lzma** (7zip) - 1.5MB/s compression, 50MB/s decompression, 37% compression ratio
 * **lz4** - 280MB/s compression, 520MB/s decompression, 57% compression ratio
 
-**Note**: Values above are for illustration only. they are affected by HDD read/write speed (in fact LZ4 decompression in much faster). The 'real' tests are taking HDD speed out of equation. For detailed performance tests see [Performance Testing] and [Comparison to other algorithms].
+**Note**: Values above are for illustration only. they are affected by HDD read/write speed (in fact LZ4 decompression 
+in much faster). The 'real' tests are taking HDD speed out of equation. For detailed performance tests 
+see [Performance Testing] and [Comparison to other algorithms].
 
 ## Other 'Fast compression algorithms'
 
@@ -70,7 +83,10 @@ enum LZ4Level
 }
 ```
 
-There are multiple compression levels. LZ4 comes in 3 (4?) flavors of compression algorithms. You can notice suffixes of those levels: `FAST`, `HC`, `OPT` and `MAX` (while `MAX` is just `OPT` with "ultra" settings). Please note that compression speed drops rapidly when not using `FAST` mode, while decompression speed stays the same (actually, it is usually faster for high compression levels as there is less data to process).
+There are multiple compression levels. LZ4 comes in 3 (4?) flavors of compression algorithms. You can notice suffixes 
+of those levels: `FAST`, `HC`, `OPT` and `MAX` (while `MAX` is just `OPT` with "ultra" settings). Please note that 
+compression speed drops rapidly when not using `FAST` mode, while decompression speed stays the same (actually, 
+it is usually faster for high compression levels as there is less data to process).
 
 ### Utility
 
@@ -81,7 +97,8 @@ static class LZ4Codec
 }
 ```
 
-Returns maximum size of of a block after compression. Of course, most of the time compressed data will take less space than source data, although in case of incompressible (for example: already compressed) data it may take more.
+Returns maximum size of of a block after compression. Of course, most of the time compressed data will take less space 
+than source data, although in case of incompressible (for example: already compressed) data it may take more.
 
 Example:
 
@@ -93,7 +110,8 @@ var target = new byte[LZ4Codec.MaximumOutputSize(source.Length)];
 
 ### Compression
 
-Block can be compressed using `Encode(...)` method family. They are relatively low level functions as it is your job to allocate all memory.
+Block can be compressed using `Encode(...)` method family. They are relatively low level functions as it is your job 
+to allocate all memory.
 
 ```csharp
 static class LZ4Codec
@@ -114,9 +132,13 @@ static class LZ4Codec
 }
 ```
 
-All of them compress `source` buffer into `target` buffer and return number of bytes actually used after compression. If this value is negative it means that error has occurred and compression failed. In most cases mean that `target` buffer is too small.
+All of them compress `source` buffer into `target` buffer and return number of bytes actually used after compression. 
+If this value is negative it means that error has occurred and compression failed. In most cases mean that `target` 
+buffer is too small.
 
-Please note, it might be tempting to use `target` buffer the same size (or even one byte smaller) then `source` buffer, and use copy as a fallback. This will work just fine, yet compression into buffer that is smaller than `MaximumOutputSize(source.Length)` is a little bit slower.
+Please note, it might be tempting to use `target` buffer the same size (or even one byte smaller) then `source` buffer, 
+and use copy as a fallback. This will work just fine, yet compression into buffer that is smaller than `MaximumOutputSize(source.Length)` 
+is a little bit slower.
 
 Example:
 
@@ -148,7 +170,10 @@ static class LZ4Codec
 }
 ```
 
-You have to know upfront how much memory you need to decompress, as there is almost no way to guess it. I did not investigate theoretical maximum compression ratio, yet all-zero buffer gets compressed 245 times, therefore when decompressing output buffer would need to be 245 times bigger than input buffer. Yet, encoding itself does not store that information anywhere therefore it is your job.
+You have to know upfront how much memory you need to decompress, as there is almost no way to guess it. I did not 
+investigate theoretical maximum compression ratio, yet all-zero buffer gets compressed 245 times, therefore when 
+decompressing output buffer would need to be 245 times bigger than input buffer. Yet, encoding itself does not store 
+that information anywhere therefore it is your job.
 
 ```csharp
 var source = new byte[1000];
@@ -158,11 +183,16 @@ var decoded = LZ4Codec.Decode(
     target, 0, target.Length);
 ```
 
-**NOTE:** If I told you that decompression needs potentially 100 times more memory than original data you would think this is insane. And it is not 100 times, it is 255 times more, so it actually is insane. Please don't do it. This was for demonstration only. What you need is a way to store original size somehow (I'm not opinionated, do whatever you think is right) or... you can use `LZ4Pickler` (see below) or `LZ4Stream`.
+**NOTE:** If I told you that decompression needs potentially 100 times more memory than original data you would think 
+this is insane. And it is not 100 times, it is 255 times more, so it actually is insane. Please don't do it. 
+This was for demonstration only. What you need is a way to store original size somehow (I'm not opinionated, do 
+whatever you think is right) or... you can use `LZ4Pickler` (see below) or `LZ4Stream`.
 
 ## Pickler
 
-Sometimes all you need is to quickly compress a small chunk of data, let's say serialized message to send it over the network. You can use `LZ4Pickler` in such case. It does encode original length within a message and handles incompressible data (by copying).
+Sometimes all you need is to quickly compress a small chunk of data, let's say serialized message to send it over the 
+network. You can use `LZ4Pickler` in such case. It does encode original length within a message and handles 
+incompressible data (by copying).
 
 ```csharp
 static class LZ4Pickler
@@ -193,12 +223,14 @@ var encoded = LZ4Pickler.Pickle(source);
 var decoded = LZ4Pickler.Unpickle(encoded);
 ```
 
-Please note that this approach is slightly slower (copy after failed compression) and has one extra memory allocation (as it resizes buffer after compression).
+Please note that this approach is slightly slower (copy after failed compression) and has one extra memory allocation 
+(as it resizes buffer after compression).
 
 ## Streams
 
 Stream implementation is in different package (`K4os.Compression.LZ4.Streams`) as it has dependency on [`K4os.Hash.xxHash`](https://github.com/MiloszKrajewski/K4os.Hash.xxHash).
-It is fully compatible with [LZ4 Frame format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) although not all features are supported on compression (they are "properly" ignored on decompression).
+It is fully compatible with [LZ4 Frame format](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) although not all features are supported on compression 
+(they are "properly" ignored on decompression).
 
 ### Stream compression settings
 
@@ -210,8 +242,8 @@ class LZ4EncoderSettings
     long? ContentLength { get; set; } = null;
     bool ChainBlocks { get; set; } = true;
     int BlockSize { get; set; } = Mem.K64;
-    bool ContentChecksum => false;
-    bool BlockChecksum => false;
+    bool ContentChecksum { get; set; } = false;
+    bool BlockChecksum { get; set; } = false;
     uint? Dictionary => null;
     LZ4Level CompressionLevel { get; set; } = LZ4Level.L00_FAST;
     int ExtraMemory { get; set; } = 0;
@@ -222,7 +254,7 @@ Default options are good enough so you don't change anything.
 Refer to [original documentation](https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md) 
 for more detailed information.
 
-Please note that `ContentLength`, `ContentChecksum`, `BlockChecksum` and `Dictionary` are not currently 
+Please note that `ContentLength` and `Dictionary` are not currently 
 supported and trying to use values other than defaults will throw exceptions.
 
 ### Stream compression
@@ -301,7 +333,8 @@ not cause decompression to fail.
 
 ### Other stream-like data structures
 
-As per version 1.3-beta new stream abstractions has been added (note, it has both sync and async methods, but here I'm listing sync ones only):
+As per version 1.3-beta new stream abstractions has been added (note, it has both sync and async methods, but here 
+I'm listing sync ones only):
 
 ```csharp
 interface ILZ4FrameReader: IDisposable
