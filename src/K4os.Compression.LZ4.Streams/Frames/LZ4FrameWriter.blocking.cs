@@ -40,6 +40,8 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>
 		if (TryStashFrame())
 			/*await*/ FlushMeta(token);
 		
+		_descriptor.AssertIsNotNull();
+		
 		if (_descriptor.ContentChecksum)
 			UpdateContentChecksum(buffer.ToSpan());
 

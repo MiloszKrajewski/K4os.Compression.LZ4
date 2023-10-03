@@ -211,6 +211,8 @@ public partial class LZ4Stream: Stream
 	private void FlushCurrentChunk()
 	{
 		if (_bufferOffset <= 0) return;
+		
+		_buffer.AssertIsNotNull();
 
 		var compressed = new byte[_bufferOffset];
 		var compressionLevel = _highCompression ? LZ4Level.L09_HC : LZ4Level.L00_FAST;
@@ -221,10 +223,8 @@ public partial class LZ4Stream: Stream
 
 		if (compressedLength <= 0 || compressedLength >= _bufferOffset)
 		{
-			Debug.Assert(_buffer is not null);
-			
 			// incompressible block
-			compressed = _buffer!;
+			compressed = _buffer;
 			compressedLength = _bufferOffset;
 		}
 
@@ -334,13 +334,13 @@ public partial class LZ4Stream: Stream
 	public override int ReadByte()
 	{
 		if (!CanRead) throw NotSupported("Read");
-
+		
 		if (_bufferOffset >= _bufferLength && !AcquireNextChunk())
 			return -1; // that's just end of stream
 		
-		Debug.Assert(_buffer is not null);
-
-		return _buffer![_bufferOffset++];
+		_buffer.AssertIsNotNull();
+		
+		return _buffer[_bufferOffset++];
 	}
 
 	/// <summary>When overridden in a derived class, reads a sequence of bytes from the current stream and advances the position within the stream by the number of bytes read.</summary>
@@ -351,27 +351,27 @@ public partial class LZ4Stream: Stream
 	public override int Read(byte[] buffer, int offset, int count)
 	{
 		if (!CanRead) throw NotSupported("Read");
-
+		
 		var total = 0;
 
 		while (count > 0)
 		{
 			var chunk = Math.Min(count, _bufferLength - _bufferOffset);
-			if (chunk > 0)
+			if (chunk <= 0)
 			{
-				Debug.Assert(_buffer is not null);
+				if (!AcquireNextChunk()) break;
+			}
+			else
+			{
+				_buffer.AssertIsNotNull();
 
-				Buffer.BlockCopy(_buffer!, _bufferOffset, buffer, offset, chunk);
+				Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, chunk);
 				_bufferOffset += chunk;
 				total += chunk;
 				if (_interactiveRead) break;
 
 				offset += chunk;
 				count -= chunk;
-			}
-			else
-			{
-				if (!AcquireNextChunk()) break;
 			}
 		}
 

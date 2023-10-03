@@ -13,11 +13,11 @@ internal static class Extensions
 		[NotNull] this T? value,
 		[CallerArgumentExpression("value")] string name = null!) =>
 		value ?? ThrowArgumentNullException<T>(name);
-
+	
 	[DoesNotReturn]
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static T ThrowArgumentNullException<T>(string argumentName) => 
-		throw new ArgumentNullException(argumentName);
+	private static T ThrowArgumentNullException<T>(string name) => 
+		throw new ArgumentNullException(name);
 
 	internal static void Validate<T>(
 		this T[]? buffer, int offset, int length,

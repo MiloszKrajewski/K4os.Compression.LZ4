@@ -117,6 +117,8 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
 	private /*async*/ int ReadBlock(Token token)
 	{
 		_stash.Flush();
+		
+		_descriptor.AssertIsNotNull();
 
 		var blockLength = (int)/*await*/ Peek4(token);
 		if (blockLength == 0)
