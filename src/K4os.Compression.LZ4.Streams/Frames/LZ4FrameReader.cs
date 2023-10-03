@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
@@ -24,13 +20,13 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 
 	private readonly Func<ILZ4Descriptor, ILZ4Decoder> _decoderFactory;
 
-	private ILZ4Descriptor _descriptor;
-	private ILZ4Decoder _decoder;
+	private ILZ4Descriptor? _descriptor;
+	private ILZ4Decoder? _decoder;
 	
 	private XXH32.State _contentChecksum;
 
 
-	private byte[] _buffer;
+	private byte[]? _buffer;
 	private int _decoded;
 
 	private long _bytesRead;
@@ -60,7 +56,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 
 	private static int MaxBlockSize(int blockSizeCode) =>
 		blockSizeCode switch {
-			7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64
+			7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64,
 		};
 
 	private ILZ4Decoder CreateDecoder(ILZ4Descriptor descriptor) =>
@@ -127,6 +123,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 	
 	private unsafe void UpdateContentChecksum(int read)
 	{
+		_decoder.AssertIsNotNull();
 		var span = new Span<byte>(_decoder.Peek(-read), read);
 		XXH32.Update(ref _contentChecksum, span);
 	}
@@ -269,11 +266,17 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 	}
 
 	// ReSharper disable once UnusedParameter.Local
-	private void ReadData(EmptyToken _, int length) =>
+	private void ReadData(EmptyToken _, int length)
+	{
+		_buffer.AssertIsNotNull();
 		_reader.TryReadBlock(ref _stream, _buffer, 0, length, false);
+	}
 
-	private async Task ReadData(CancellationToken token, int length) =>
+	private async Task ReadData(CancellationToken token, int length)
+	{
+		_buffer.AssertIsNotNull();
 		_stream = (await _reader
 			.TryReadBlockAsync(_stream, _buffer, 0, length, false, token)
 			.Weave()).Stream;
+	}
 }

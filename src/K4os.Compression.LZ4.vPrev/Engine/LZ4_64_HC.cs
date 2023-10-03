@@ -1153,6 +1153,7 @@ namespace K4os.Compression.LZ4.vPrev.Engine
 			ctxPtr->compressionLevel = compressionLevel;
 		}
 
+		// ReSharper disable once UnusedMethodReturnValue.Local
 		private static int LZ4_loadDictHC(LZ4HC_CCtx_t* ctxPtr, byte* dictionary, int dictSize)
 		{
 			if (dictSize > 64 * KB)

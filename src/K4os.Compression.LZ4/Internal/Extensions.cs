@@ -1,10 +1,39 @@
 #nullable enable
+
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+
 // ReSharper disable once CheckNamespace
 
 namespace System;
 
 internal static class Extensions
 {
+	internal static T Required<T>(
+		[NotNull] this T? value,
+		[CallerArgumentExpression("value")] string name = null!) =>
+		value ?? ThrowArgumentNullException<T>(name);
+	
+	[Conditional("DEBUG")]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void AssertTrue(
+		this bool value, 
+		[CallerArgumentExpression("value")] string? name = null)
+	{
+		if (!value) ThrowAssertionFailed(name);
+	}
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowAssertionFailed(string? name) =>
+		throw new ArgumentException($"{name ?? "<unknown>"} assertion failed");
+	
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static T ThrowArgumentNullException<T>(string name) => 
+		throw new ArgumentNullException(name);
+
 	internal static void Validate<T>(
 		this T[]? buffer, int offset, int length,
 		bool allowNullIfEmpty = false)

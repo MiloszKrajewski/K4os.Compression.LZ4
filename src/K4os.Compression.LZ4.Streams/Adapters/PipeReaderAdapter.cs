@@ -1,9 +1,7 @@
-using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Internal;
 using ReadResult = K4os.Compression.LZ4.Streams.Abstractions.ReadResult;
@@ -63,6 +61,7 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 		#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 		var result = await reader.ReadAtLeastAsync(length, token).Weave();
 		#else
+		_ = length; // ignore
 		var result = await reader.ReadAsync(token).Weave();
 		#endif
 		if (result.IsCanceled) ThrowPendingReadsCancelled();
@@ -89,9 +88,8 @@ public readonly struct PipeReaderAdapter: IStreamReader<EmptyState>
 		return ReadResult.Create(default(EmptyState), totalRead);
 	}
 	
-	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	[DoesNotReturn]
-	#endif
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static void ThrowPendingReadsCancelled() =>
 		throw new OperationCanceledException(
 			$"Pending {nameof(PipeReader)} operations has been cancelled");

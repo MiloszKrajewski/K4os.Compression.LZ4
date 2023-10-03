@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 
 namespace K4os.Compression.LZ4.Legacy;
 

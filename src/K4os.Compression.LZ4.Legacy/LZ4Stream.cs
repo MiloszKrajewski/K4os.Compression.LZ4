@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 namespace K4os.Compression.LZ4.Legacy;
 
@@ -53,7 +52,7 @@ public partial class LZ4Stream: Stream
 	private readonly int _blockSize;
 
 	/// <summary>The buffer.</summary>
-	private byte[] _buffer;
+	private byte[]? _buffer;
 
 	/// <summary>The buffer length (can be different then _buffer.Length).</summary>
 	private int _bufferLength;
@@ -124,8 +123,7 @@ public partial class LZ4Stream: Stream
 
 	/// <summary>Returns EndOfStreamException.</summary>
 	/// <returns>EndOfStreamException</returns>
-	private static EndOfStreamException EndOfStream() => 
-		new EndOfStreamException("Unexpected end of stream");
+	private static EndOfStreamException EndOfStream() => new("Unexpected end of stream");
 
 	/// <summary>Tries to read variable length int.</summary>
 	/// <param name="result">The result.</param>
@@ -211,6 +209,8 @@ public partial class LZ4Stream: Stream
 	private void FlushCurrentChunk()
 	{
 		if (_bufferOffset <= 0) return;
+		
+		_buffer.AssertIsNotNull();
 
 		var compressed = new byte[_bufferOffset];
 		var compressionLevel = _highCompression ? LZ4Level.L09_HC : LZ4Level.L00_FAST;
@@ -332,10 +332,12 @@ public partial class LZ4Stream: Stream
 	public override int ReadByte()
 	{
 		if (!CanRead) throw NotSupported("Read");
-
+		
 		if (_bufferOffset >= _bufferLength && !AcquireNextChunk())
 			return -1; // that's just end of stream
-
+		
+		_buffer.AssertIsNotNull();
+		
 		return _buffer[_bufferOffset++];
 	}
 
@@ -347,14 +349,20 @@ public partial class LZ4Stream: Stream
 	public override int Read(byte[] buffer, int offset, int count)
 	{
 		if (!CanRead) throw NotSupported("Read");
-
+		
 		var total = 0;
 
 		while (count > 0)
 		{
 			var chunk = Math.Min(count, _bufferLength - _bufferOffset);
-			if (chunk > 0)
+			if (chunk <= 0)
 			{
+				if (!AcquireNextChunk()) break;
+			}
+			else
+			{
+				_buffer.AssertIsNotNull();
+
 				Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, chunk);
 				_bufferOffset += chunk;
 				total += chunk;
@@ -362,10 +370,6 @@ public partial class LZ4Stream: Stream
 
 				offset += chunk;
 				count -= chunk;
-			}
-			else
-			{
-				if (!AcquireNextChunk()) break;
 			}
 		}
 

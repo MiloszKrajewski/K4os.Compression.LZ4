@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using K4os.Compression.LZ4.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
@@ -15,7 +13,7 @@ public static class LZ4Stream
 	/// <param name="leaveOpen">Leave inner stream open after disposing.</param>
 	/// <returns>Compression stream.</returns>
 	public static LZ4EncoderStream Encode(
-		Stream stream, LZ4EncoderSettings settings = null, bool leaveOpen = false)
+		Stream stream, LZ4EncoderSettings? settings = null, bool leaveOpen = false)
 	{
 		settings ??= LZ4EncoderSettings.Default;
 		var frameInfo = settings.CreateDescriptor();
@@ -50,7 +48,7 @@ public static class LZ4Stream
 	/// <returns>Decompression stream.</returns>
 	public static LZ4DecoderStream Decode(
 		Stream stream,
-		LZ4DecoderSettings settings = null,
+		LZ4DecoderSettings? settings = null,
 		bool leaveOpen = false,
 		bool interactive = false)
 	{

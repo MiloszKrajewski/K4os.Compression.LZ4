@@ -1,4 +1,5 @@
-using System;
+#nullable enable
+
 using K4os.Compression.LZ4.Engine;
 
 namespace K4os.Compression.LZ4;
@@ -249,7 +250,7 @@ public static class LZ4Codec
 	public static unsafe int Decode(
 		byte[] source, int sourceOffset, int sourceLength,
 		byte[] target, int targetOffset, int targetLength,
-		byte[] dictionary, int dictionaryOffset, int dictionaryLength)
+		byte[]? dictionary, int dictionaryOffset, int dictionaryLength)
 	{
 		source.Validate(sourceOffset, sourceLength);
 		target.Validate(targetOffset, targetLength);

@@ -1,3 +1,7 @@
+## 1.3.7-beta (2023/10/03)
+* ADDED #61: Partial decompression support (see #61, #90) (thanks: Sewer56)
+* CHANGED: build process from FAKE (sorry!) to Nuke
+
 ## 1.3.6 (2023/08/15)
 * FIXED #85: removed call to Dispose from DisposeAsync in LZ4EncoderStream
 
@@ -87,7 +91,7 @@
 * added explicit "unchecked" around hash calculation
 
 ## 1.1.4 (2019/04/29)
-* aoved build process to FAKE 5 (no functionality added)
+* moved build process to FAKE 5 (no functionality added)
 
 ## 1.1.3 (2019/04/28)
 * added lz4net compatible pickler

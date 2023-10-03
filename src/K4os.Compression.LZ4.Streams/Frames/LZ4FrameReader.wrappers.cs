@@ -1,8 +1,5 @@
-using System;
 using System.Buffers;
-using System.IO;
 using System.IO.Pipelines;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;

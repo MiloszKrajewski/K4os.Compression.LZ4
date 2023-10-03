@@ -1,6 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace K4os.Compression.LZ4.Streams.Abstractions;
 
 /// <summary>

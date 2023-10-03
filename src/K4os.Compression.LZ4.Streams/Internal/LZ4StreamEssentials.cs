@@ -1,10 +1,3 @@
-#nullable enable
-
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace K4os.Compression.LZ4.Streams.Internal;
 
 /// <summary>
@@ -29,6 +22,7 @@ public abstract class LZ4StreamEssentials<T>: Stream
 	}
 
 	/// <summary>Wrapped resource.</summary>
+	// ReSharper disable once ConvertToAutoPropertyWhenPossible
 	protected T InnerResource => _innerResource;
     
 	private protected NotImplementedException NotImplemented(string operation) =>

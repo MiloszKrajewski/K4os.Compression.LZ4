@@ -2,16 +2,22 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "paket": {
-      "version": "7.1.5",
+    "run-script": {
+      "version": "0.5.0",
       "commands": [
-        "paket"
+        "r"
       ]
     },
-    "fake-cli": {
-      "version": "5.20.4",
+    "dotnet-outdated-tool": {
+      "version": "4.5.0",
       "commands": [
-        "fake"
+        "dotnet-outdated"
+      ]
+    },
+    "paket": {
+      "version": "7.2.1",
+      "commands": [
+        "paket"
       ]
     }
   }

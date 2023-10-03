@@ -1,6 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
 using System.Buffers;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using K4os.Compression.LZ4.Internal;
@@ -56,8 +56,7 @@ public static partial class LZ4Pickler
 		ReadOnlySpan<byte> source, TBufferWriter writer)
 		where TBufferWriter: IBufferWriter<byte>
 	{
-		if (writer is null) 
-			throw new ArgumentNullException(nameof(writer));
+		writer.Required(nameof(writer));
 
 		var sourceLength = source.Length;
 		if (sourceLength == 0) return;
@@ -132,7 +131,7 @@ public static partial class LZ4Pickler
 	private static PickleHeader DecodeHeader(ReadOnlySpan<byte> source) =>
 		(source[0] & VersionMask) switch {
 			0 => DecodeHeaderV0(source),
-			var v => throw CorruptedPickle($"Version {v} is not recognized")
+			var v => throw CorruptedPickle($"Version {v} is not recognized"),
 		};
 
 	private static PickleHeader DecodeHeaderV0(ReadOnlySpan<byte> source)

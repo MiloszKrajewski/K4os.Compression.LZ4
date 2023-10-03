@@ -1,17 +1,16 @@
-using System.Runtime.CompilerServices;
-using K4os.Compression.LZ4.Internal;
-
-//------------------------------------------------------------------------------
-
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
+// ReSharper disable RedundantCast
+// ReSharper disable CommentTypo
+
+using System.Runtime.CompilerServices;
+using K4os.Compression.LZ4.Internal;
+
 using size_t = System.UInt32;
 using uptr_t = System.UInt64;
-
-//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
@@ -243,7 +242,7 @@ namespace K4os.Compression.LZ4.Engine
 			}
 
 			{
-				byte* bytePtr = (byte*) (&pattern) + 3; /* works for any endianess */
+				byte* bytePtr = (byte*) (&pattern) + 3; /* works for any endianness */
 				while ((ip > iLow))
 				{
 					if (ip[-1] != *bytePtr) break;

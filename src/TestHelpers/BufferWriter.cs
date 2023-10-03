@@ -11,7 +11,7 @@ public class BufferWriter: IBufferWriter<byte>
 	public static BufferWriter New() => new();
 	public static BufferWriter New(int size) => new(size);
 
-	private byte[] _buffer;
+	private byte[]? _buffer;
 	private int _position;
 
 	public BufferWriter() => _buffer = Mem.Empty;

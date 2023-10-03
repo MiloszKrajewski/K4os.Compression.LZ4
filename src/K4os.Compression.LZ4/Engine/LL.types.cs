@@ -1,17 +1,15 @@
-using System;
-using System.Runtime.InteropServices;
-
-//------------------------------------------------------------------------------
-
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
 // ReSharper disable AccessToStaticMemberViaDerivedType
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
+// ReSharper disable CommentTypo
+
+using System;
+using System.Runtime.InteropServices;
+
 using size_t = System.UInt32;
 using uptr_t = System.UInt64;
-
-//------------------------------------------------------------------------------
 
 namespace K4os.Compression.LZ4.Engine
 {
@@ -38,7 +36,7 @@ namespace K4os.Compression.LZ4.Engine
 			public byte* dictionary;
 			public LZ4_stream_t* dictCtx;
 			public uint dictSize;
-		};
+		}
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct LZ4_streamDecode_t
@@ -47,7 +45,7 @@ namespace K4os.Compression.LZ4.Engine
 			public uint extDictSize;
 			public byte* prefixEnd;
 			public uint prefixSize;
-		};
+		}
 
 		protected const int MINMATCH = 4;
 

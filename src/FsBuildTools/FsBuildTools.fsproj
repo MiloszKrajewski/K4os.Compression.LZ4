@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Tools.fs" />
+    <Compile Include="Downloads.fs" />
+    <Compile Include="Sanitizer.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fake.IO.FileSystem" Version="6.0.0" />
+    <PackageReference Include="Fake.IO.Zip" Version="6.0.0" />
+    <PackageReference Include="Fake.Net.Http" Version="6.0.0" />
+  </ItemGroup>
+
+</Project>

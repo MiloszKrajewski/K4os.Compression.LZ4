@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\K4os.Compression.LZ4.Streams\K4os.Compression.LZ4.Streams.csproj" />
+    <ProjectReference Include="..\K4os.Compression.LZ4\K4os.Compression.LZ4.csproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

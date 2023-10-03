@@ -1,8 +1,5 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using K4os.Compression.LZ4.Encoders;
 using K4os.Compression.LZ4.Internal;
 using K4os.Compression.LZ4.Streams.Abstractions;
@@ -23,10 +20,10 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private Stash _stash = new();
 
 	private readonly Func<ILZ4Descriptor, ILZ4Encoder> _encoderFactory;
-	private ILZ4Descriptor _descriptor;
-	private ILZ4Encoder _encoder;
+	private ILZ4Descriptor? _descriptor;
+	private ILZ4Encoder? _encoder;
 
-	private byte[] _buffer;
+	private byte[]? _buffer;
 
 	private long _bytesWritten;
 	private XXH32.State _contentChecksum;
@@ -61,6 +58,8 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	{
 		if (_encoder != null)
 			return false;
+		
+		_descriptor.AssertIsNotNull();
 
 		_stash.Poke4(0x184D2204);
 
@@ -119,6 +118,8 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 
 	private ILZ4Encoder CreateEncoder()
 	{
+		_descriptor.AssertIsNotNull();
+		
 		var encoder = _encoderFactory(_descriptor);
 		if (encoder.BlockSize > _descriptor.BlockSize)
 			throw InvalidValue("BlockSize is greater than declared");
@@ -129,6 +130,8 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private BlockInfo TopupAndEncode(
 		ReadOnlySpan<byte> buffer, ref int offset, ref int count)
 	{
+		_buffer.AssertIsNotNull();
+
 		var action = _encoder.TopupAndEncode(
 			buffer.Slice(offset, count),
 			_buffer.AsSpan(),
@@ -139,15 +142,17 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 		_bytesWritten += loaded;
 		offset += loaded;
 		count -= loaded;
-
+		
 		return new BlockInfo(_buffer, action, encoded);
 	}
 
 	private BlockInfo FlushAndEncode()
 	{
+		_buffer.AssertIsNotNull();
+		
 		var action = _encoder.FlushAndEncode(
 			_buffer.AsSpan(), true, out var encoded);
-
+		
 		return new BlockInfo(_buffer, action, encoded);
 	}
 
@@ -160,15 +165,21 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	private void UpdateContentChecksum(ReadOnlySpan<byte> buffer) => 
 		XXH32.Update(ref _contentChecksum, buffer);
 
-	private uint? BlockChecksum(BlockInfo block) =>
-		_descriptor.BlockChecksum 
+	private uint? BlockChecksum(BlockInfo block)
+	{
+		_descriptor.AssertIsNotNull();
+		return _descriptor.BlockChecksum
 			? XXH32.DigestOf(block.Buffer, block.Offset, block.Length)
 			: null;
+	}
 
-	private uint? ContentChecksum() => 
-		_descriptor.ContentChecksum 
-			? XXH32.Digest(_contentChecksum) 
+	private uint? ContentChecksum()
+	{
+		_descriptor.AssertIsNotNull();
+		return _descriptor.ContentChecksum
+			? XXH32.Digest(_contentChecksum)
 			: null;
+	}
 
 	private int MaxBlockSizeCode(int blockSize) =>
 		blockSize <= Mem.K64 ? 4 :
@@ -221,7 +232,7 @@ public partial class LZ4FrameWriter<TStreamWriter, TStreamState>:
 	/// <summary>
 	/// Disposes the stream and releases all resources.
 	/// </summary>
-	/// <param name="disposing"><c>true</c> if called by user; <c>false</c> when called by garbag collector.</param>
+	/// <param name="disposing"><c>true</c> if called by user; <c>false</c> when called by garbage collector.</param>
 	protected virtual void Dispose(bool disposing)
 	{
 		if (!disposing) return;
