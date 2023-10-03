@@ -16,7 +16,7 @@
     <RepositoryUrl>https://github.com/$(RepositoryOwner)/$(RepositoryName)</RepositoryUrl>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <PackageLicenseUrl>$(RepositoryUrl)/blob/master/LICENSE?raw=true</PackageLicenseUrl>
-    <PackageIconUrl Condition=" Exists('$(RepositoryRoot)/icon.png') ">$(RepositoryUrl)/blob/master/icon.png?raw=true</PackageIconUrl>
+    <PackageIconUrl Condition=" Exists('$(RepositoryRoot)/doc/icon.png') ">$(RepositoryUrl)/blob/master/doc/icon.png?raw=true</PackageIconUrl>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <Optimize>true</Optimize>
