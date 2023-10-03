@@ -1,5 +1,3 @@
-#nullable enable
-
 using System.Buffers;
 using System.IO.Pipelines;
 using K4os.Compression.LZ4.Streams.Abstractions;

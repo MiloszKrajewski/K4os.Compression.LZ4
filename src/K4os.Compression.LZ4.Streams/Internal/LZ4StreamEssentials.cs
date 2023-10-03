@@ -1,5 +1,3 @@
-#nullable enable
-
 namespace K4os.Compression.LZ4.Streams.Internal;
 
 /// <summary>

@@ -5,7 +5,6 @@
     <IsPackable>true</IsPackable>
     <SignAssembly>true</SignAssembly>
     <PackageTags>$(PackageTags) stream</PackageTags>
-    <!--<Nullable>disable</Nullable>-->
   </PropertyGroup>
   <Import Project="$(PublicAssemblyProps)" />
   <ItemGroup>

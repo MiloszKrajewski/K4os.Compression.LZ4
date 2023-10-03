@@ -1,6 +1,3 @@
-#nullable enable
-
-using System;
 using K4os.Compression.LZ4.Encoders;
 
 namespace K4os.Compression.LZ4.Streams.Internal;

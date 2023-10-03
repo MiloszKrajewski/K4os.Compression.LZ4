@@ -1,3 +1,7 @@
+## 1.3.7-beta (2023/10/03)
+* ADDED #61: Partial decompression support (see #61, #90) (thanks: Sewer56)
+* CHANGED: deployment
+
 ## 1.3.6 (2023/08/15)
 * FIXED #85: removed call to Dispose from DisposeAsync in LZ4EncoderStream
 
