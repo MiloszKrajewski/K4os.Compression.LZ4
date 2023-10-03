@@ -1,10 +1,12 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using K4os.Compression.LZ4.Internal;
 using K4os.Hash.xxHash;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
+[SuppressMessage("ReSharper", "ConvertToAutoPropertyWithPrivateSetter")]
 internal struct Stash
 {
 	private byte[] _buffer;

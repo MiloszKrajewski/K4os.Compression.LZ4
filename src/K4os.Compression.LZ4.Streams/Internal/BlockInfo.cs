@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using K4os.Compression.LZ4.Encoders;
 
 namespace K4os.Compression.LZ4.Streams.Internal;
 
+[SuppressMessage("ReSharper", "ConvertToAutoProperty")]
 internal readonly struct BlockInfo
 {
 	private readonly byte[] _buffer;

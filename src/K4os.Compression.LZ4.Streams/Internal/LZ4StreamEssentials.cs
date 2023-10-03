@@ -22,6 +22,7 @@ public abstract class LZ4StreamEssentials<T>: Stream
 	}
 
 	/// <summary>Wrapped resource.</summary>
+	// ReSharper disable once ConvertToAutoPropertyWhenPossible
 	protected T InnerResource => _innerResource;
     
 	private protected NotImplementedException NotImplemented(string operation) =>
