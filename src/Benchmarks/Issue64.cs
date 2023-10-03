@@ -13,7 +13,7 @@ namespace Benchmarks
 		private byte[] _source = null!;
 
 		private static byte[] LoadBytes(string name) =>
-			File.ReadAllBytes(Tools.FindFile(@$"./assets/issue64/{name}"));
+			File.ReadAllBytes(Tools.FindFile($"./assets/issue64/{name}"));
 		
 		[GlobalSetup]
 		public void Setup() { _source = LoadBytes("input.dat"); }

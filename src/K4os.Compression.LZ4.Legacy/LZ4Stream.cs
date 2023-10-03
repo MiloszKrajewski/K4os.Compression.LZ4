@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace K4os.Compression.LZ4.Legacy;
 
@@ -124,8 +123,7 @@ public partial class LZ4Stream: Stream
 
 	/// <summary>Returns EndOfStreamException.</summary>
 	/// <returns>EndOfStreamException</returns>
-	private static EndOfStreamException EndOfStream() => 
-		new EndOfStreamException("Unexpected end of stream");
+	private static EndOfStreamException EndOfStream() => new("Unexpected end of stream");
 
 	/// <summary>Tries to read variable length int.</summary>
 	/// <param name="result">The result.</param>

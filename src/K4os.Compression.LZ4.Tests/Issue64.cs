@@ -11,7 +11,7 @@ namespace K4os.Compression.LZ4.Tests
 	public class Issue64
 	{
 		private static byte[] LoadBytes(string name) =>
-			File.ReadAllBytes(Tools.FindFile(@$"./assets/issue64/{name}"));
+			File.ReadAllBytes(Tools.FindFile($"./assets/issue64/{name}"));
 
 		[Fact]
 		public void ProvidedFileCanBeDecompressed()

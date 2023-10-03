@@ -90,23 +90,22 @@ namespace K4os.Compression.LZ4.Streams.Tests
 			var buffer = new byte[0x10000];
 			Lorem.Fill(buffer, 0, buffer.Length);
 
-			using (var output = new MemoryStream())
-			using (var encoder = LZ4Stream.Encode(output))
+			using var output = new MemoryStream();
+			using var encoder = LZ4Stream.Encode(output);
+			
+			while (written < 1024 * 1024 * 10)
 			{
-				while (written < 1024 * 1024 * 10)
+				void WriteAndAssert(int length)
 				{
-					void WriteAndAssert(int length)
-					{
-						encoder.Write(buffer, 0, length);
-						written += length;
-						Assert.Equal(encoder.Position, written);
-						Assert.Equal(encoder.Length, written);
-					}
-
-					WriteAndAssert(0);
-					WriteAndAssert(random.Next(0, buffer.Length));
-					WriteAndAssert(0);
+					encoder.Write(buffer, 0, length);
+					written += length;
+					Assert.Equal(encoder.Position, written);
+					Assert.Equal(encoder.Length, written);
 				}
+
+				WriteAndAssert(0);
+				WriteAndAssert(random.Next(0, buffer.Length));
+				WriteAndAssert(0);
 			}
 		}
 

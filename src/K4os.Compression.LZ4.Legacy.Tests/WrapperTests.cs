@@ -27,7 +27,7 @@ namespace K4os.Compression.LZ4.Legacy.Tests
 			ParseSettings(
 				settings, 
 				out var high, out var referenceEncoder, out var referenceDecoder);
-			Roundtrip(seed, new byte[0], high, referenceEncoder, referenceDecoder);
+			Roundtrip(seed, Array.Empty<byte>(), high, referenceEncoder, referenceDecoder);
 		}
 
 		[Theory]

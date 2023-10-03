@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -87,7 +89,7 @@ public static partial class LZ4Pickler
 			var target = result.AsSpan();
 			var offset = EncodeUncompressedHeader(target, version, sourceLength);
 			Debug.Assert(headerSize == offset, "Unexpected header size");
-			source.CopyTo(target.Slice(offset));
+			source.CopyTo(target[offset..]);
 			return result;
 		}
 		else
@@ -98,7 +100,7 @@ public static partial class LZ4Pickler
 			var offset = EncodeCompressedHeader(
 				target, version, headerSize, sourceLength, encodedLength);
 			Debug.Assert(headerSize == offset, "Unexpected header size");
-			buffer.Slice(0, encodedLength).CopyTo(target.Slice(offset));
+			buffer[..encodedLength].CopyTo(target[offset..]);
 			return result;
 		}
 	}
@@ -133,7 +135,7 @@ public static partial class LZ4Pickler
 		if (encodedLength <= 0 || encodedLength >= sourceLength)
 		{
 			var offset = EncodeUncompressedHeader(target, version, sourceLength);
-			source.CopyTo(target.Slice(offset));
+			source.CopyTo(target[offset..]);
 			writer.Advance(offset + sourceLength);
 		}
 		else
@@ -205,7 +207,7 @@ public static partial class LZ4Pickler
 		var sizeOfDiff = headerSize - 1;
 		Debug.Assert(EffectiveSizeOf(diffLength) <= sizeOfDiff, "Unexpected header size");
 		target[0] = EncodeHeaderByteV0(sizeOfDiff);
-		PokeN(target.Slice(1), diffLength, sizeOfDiff);
+		PokeN(target[1..], diffLength, sizeOfDiff);
 		return 1 + sizeOfDiff;
 	}
 

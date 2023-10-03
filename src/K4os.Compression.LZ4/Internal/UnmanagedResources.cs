@@ -1,4 +1,4 @@
-﻿using System;
+﻿#nullable enable
 
 namespace K4os.Compression.LZ4.Internal;
 

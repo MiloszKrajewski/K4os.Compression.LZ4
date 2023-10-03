@@ -15,18 +15,17 @@ namespace K4os.Compression.LZ4.Legacy.Tests.Internal
 		public static void Encode(
 			string original, string encoded, bool high, int block, int chunk)
 		{
-			using (var input = File.OpenRead(original))
-			using (var encode = LZ4Legacy.Encode(File.Create(encoded), high, block))
+			using var input = File.OpenRead(original);
+			using var encode = LZ4Legacy.Encode(File.Create(encoded), high, block);
+			
+			var buffer = new byte[chunk];
+			while (true)
 			{
-				var buffer = new byte[chunk];
-				while (true)
-				{
-					var read = input.Read(buffer, 0, buffer.Length);
-					if (read == 0)
-						break;
+				var read = input.Read(buffer, 0, buffer.Length);
+				if (read == 0)
+					break;
 
-					encode.Write(buffer, 0, read);
-				}
+				encode.Write(buffer, 0, read);
 			}
 		}
 		

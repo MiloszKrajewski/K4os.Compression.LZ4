@@ -12,6 +12,11 @@
 // ReSharper disable BuiltInTypeReferenceStyle
 // ReSharper disable RedundantAssignment
 // ReSharper disable RedundantCast
+// ReSharper disable ArrangeObjectCreationWhenTypeEvident
+// ReSharper disable CommentTypo
+// ReSharper disable JoinDeclarationAndInitializer
+// ReSharper disable TooWideLocalVariableScope
+// ReSharper disable MergeIntoPattern
 
 using System;
 using System.Runtime.CompilerServices;

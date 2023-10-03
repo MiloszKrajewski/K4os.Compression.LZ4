@@ -56,7 +56,7 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>:
 
 	private static int MaxBlockSize(int blockSizeCode) =>
 		blockSizeCode switch {
-			7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64
+			7 => Mem.M4, 6 => Mem.M1, 5 => Mem.K256, 4 => Mem.K64, _ => Mem.K64,
 		};
 
 	private ILZ4Decoder CreateDecoder(ILZ4Descriptor descriptor) =>

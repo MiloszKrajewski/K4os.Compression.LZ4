@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -130,7 +131,7 @@ public static partial class LZ4Pickler
 	private static PickleHeader DecodeHeader(ReadOnlySpan<byte> source) =>
 		(source[0] & VersionMask) switch {
 			0 => DecodeHeaderV0(source),
-			var v => throw CorruptedPickle($"Version {v} is not recognized")
+			var v => throw CorruptedPickle($"Version {v} is not recognized"),
 		};
 
 	private static PickleHeader DecodeHeaderV0(ReadOnlySpan<byte> source)

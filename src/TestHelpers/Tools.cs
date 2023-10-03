@@ -49,7 +49,7 @@ public static class Tools
 		length = length < 0 ? (int)(file.Length - index) : length;
 		var src = new byte[length];
 		file.Seek(index, SeekOrigin.Begin);
-		file.Read(src, 0, length);
+		Assert.Equal(length, file.Read(src, 0, length));
 		return src;
 	}
 

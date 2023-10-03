@@ -12,8 +12,7 @@ namespace K4os.Compression.LZ4.Engine;
 internal static unsafe class LLxx
 {
 	private static NotImplementedException AlgorithmNotImplemented(string action) =>
-		new NotImplementedException(
-			$"Algorithm {LL.Algorithm} not implemented for {action}");
+		new($"Algorithm {LL.Algorithm} not implemented for {action}");
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	public static int LZ4_decompress_safe(

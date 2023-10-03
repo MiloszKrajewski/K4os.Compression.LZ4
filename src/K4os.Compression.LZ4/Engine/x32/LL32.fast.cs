@@ -11,6 +11,8 @@
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
 // ReSharper disable RedundantCast
+// ReSharper disable JoinDeclarationAndInitializer
+// ReSharper disable MergeIntoPattern
 
 using System;
 using System.Runtime.CompilerServices;

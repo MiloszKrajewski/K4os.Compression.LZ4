@@ -4,7 +4,7 @@ using K4os.Compression.LZ4.vPrev.Internal;
 namespace K4os.Compression.LZ4.vPrev.Encoders
 {
 	/// <summary>
-	/// LZ4 decoder used with independent blocks mode. Plase note, that it will fail
+	/// LZ4 decoder used with independent blocks mode. Please note, that it will fail
 	/// if input data has been compressed with chained blocks
 	/// (<see cref="LZ4FastChainEncoder"/> and <see cref="LZ4HighChainEncoder"/>)
 	/// </summary>

@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -134,7 +136,7 @@ public unsafe struct PinnedMemory
 
 	private void ReleaseManaged()
 	{
-		var array = _handle.IsAllocated ? (byte[])_handle.Target : null;
+		var array = _handle.IsAllocated ? (byte[]?)_handle.Target : null;
 		_handle.Free();
 		BufferPool.Free(array);
 	}

@@ -117,103 +117,115 @@ namespace K4os.Compression.LZ4.Tests
 		
 		private static byte[] EncodeBlock(byte[] input, int topupSize, int blockSize)
 		{
-			using (var outputStream = new MemoryStream())
-			using (var inputStream = new MemoryStream(input))
+			using var outputStream = new MemoryStream();
+			using var inputStream = new MemoryStream(input);
+			
+			using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
+			using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
+			using (var encoder = new LZ4BlockEncoder(LZ4Level.L00_FAST, blockSize))
 			{
-				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
-				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var encoder = new LZ4BlockEncoder(LZ4Level.L00_FAST, blockSize))
+				var inputBuffer = new byte[topupSize];
+				var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
+
+				while (true)
 				{
-					var inputBuffer = new byte[topupSize];
-					var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
+					var bytes = inputReader.Read(inputBuffer, 0, inputBuffer.Length);
 
-					while (true)
+					if (bytes == 0)
 					{
-						var bytes = inputReader.Read(inputBuffer, 0, inputBuffer.Length);
-
-						if (bytes == 0)
-						{
-							Flush(outputWriter, encoder, outputBuffer);
-							outputWriter.Write(-1);
-							break;
-						}
-
-						Write(outputWriter, encoder, inputBuffer, bytes, outputBuffer);
+						Flush(outputWriter, encoder, outputBuffer);
+						outputWriter.Write(-1);
+						break;
 					}
-				}
 
-				return outputStream.ToArray();
+					Write(outputWriter, encoder, inputBuffer, bytes, outputBuffer);
+				}
 			}
+
+			return outputStream.ToArray();
 		}
 
 		private static byte[] Encode(byte[] input, int topupSize, int blockSize, int extraBlocks)
 		{
-			using (var outputStream = new MemoryStream())
-			using (var inputStream = new MemoryStream(input))
+			using var outputStream = new MemoryStream();
+			using var inputStream = new MemoryStream(input);
+			
+			using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
+			using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
+			using (var encoder = new LZ4FastChainEncoder(blockSize, extraBlocks))
 			{
-				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
-				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var encoder = new LZ4FastChainEncoder(blockSize, extraBlocks))
+				var inputBuffer = new byte[topupSize];
+				var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
+
+				while (true)
 				{
-					var inputBuffer = new byte[topupSize];
-					var outputBuffer = new byte[LZ4Codec.MaximumOutputSize(encoder.BlockSize)];
+					var bytes = inputReader.Read(inputBuffer, 0, inputBuffer.Length);
 
-					while (true)
+					if (bytes == 0)
 					{
-						var bytes = inputReader.Read(inputBuffer, 0, inputBuffer.Length);
-
-						if (bytes == 0)
-						{
-							Flush(outputWriter, encoder, outputBuffer);
-							outputWriter.Write(-1);
-							break;
-						}
-
-						Write(outputWriter, encoder, inputBuffer, bytes, outputBuffer);
+						Flush(outputWriter, encoder, outputBuffer);
+						outputWriter.Write(-1);
+						break;
 					}
-				}
 
-				return outputStream.ToArray();
+					Write(outputWriter, encoder, inputBuffer, bytes, outputBuffer);
+				}
 			}
+
+			return outputStream.ToArray();
 		}
 
 		private static byte[] Decode(byte[] input, int blockSize, int extraBlocks)
 		{
-			using (var outputStream = new MemoryStream())
-			using (var inputStream = new MemoryStream(input))
+			using var outputStream = new MemoryStream();
+			using var inputStream = new MemoryStream(input);
+			
+			using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
+			using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
+			using (var decoder = new LZ4ChainDecoder(blockSize, extraBlocks))
 			{
-				using (var inputReader = new BinaryReader(inputStream, Encoding.UTF8, false))
-				using (var outputWriter = new BinaryWriter(outputStream, Encoding.UTF8, true))
-				using (var decoder = new LZ4ChainDecoder(blockSize, extraBlocks))
+				var maximumInputBlock = LZ4Codec.MaximumOutputSize(blockSize);
+				var inputBuffer = new byte[maximumInputBlock];
+				var outputBuffer = new byte[blockSize];
+
+				while (true)
 				{
-					var maximumInputBlock = LZ4Codec.MaximumOutputSize(blockSize);
-					var inputBuffer = new byte[maximumInputBlock];
-					var outputBuffer = new byte[blockSize];
+					var length = inputReader.ReadInt32();
+					if (length < 0)
+						break;
 
-					while (true)
-					{
-						var length = inputReader.ReadInt32();
-						if (length < 0)
-							break;
+					Assert.True(length <= inputBuffer.Length);
+					Assert.Equal(length, ReadFullBlock(inputReader, inputBuffer, length));
 
-						Assert.True(length <= inputBuffer.Length);
-						inputReader.Read(inputBuffer, 0, length);
+					decoder.DecodeAndDrain(
+						inputBuffer,
+						0,
+						length,
+						outputBuffer,
+						0,
+						outputBuffer.Length,
+						out var decoded);
 
-						decoder.DecodeAndDrain(
-							inputBuffer,
-							0,
-							length,
-							outputBuffer,
-							0,
-							outputBuffer.Length,
-							out var decoded);
-
-						outputWriter.Write(outputBuffer, 0, decoded);
-					}
+					outputWriter.Write(outputBuffer, 0, decoded);
 				}
-
-				return outputStream.ToArray();
 			}
+
+			return outputStream.ToArray();
+		}
+
+		private static int ReadFullBlock(BinaryReader inputReader, byte[] inputBuffer, int length)
+		{
+			var offset = 0;
+			while (length > 0)
+			{
+				var chunk = inputReader.Read(inputBuffer, offset, length);
+				if (chunk <= 0) break;
+
+				length -= chunk;
+				offset += chunk;
+			}
+
+			return offset;
 		}
 
 		private static void Write(

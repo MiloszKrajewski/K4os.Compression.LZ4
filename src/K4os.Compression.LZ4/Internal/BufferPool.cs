@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
@@ -45,9 +47,9 @@ public static class BufferPool
 	/// <summary>Releases allocated buffer. <see cref="Alloc"/></summary>
 	/// <param name="buffer">Previously allocated buffer.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void Free(byte[] buffer)
+	public static void Free(byte[]? buffer)
 	{
-		if (IsPooled(buffer))
+		if (buffer is not null && IsPooled(buffer))
 			ArrayPool<byte>.Shared.Return(buffer);
 	}
 }

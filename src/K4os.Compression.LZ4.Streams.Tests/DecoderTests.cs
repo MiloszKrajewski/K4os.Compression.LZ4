@@ -64,7 +64,7 @@ namespace K4os.Compression.LZ4.Streams.Tests
 		[Fact]
 		public void DecodeFromSlowStream()
 		{
-			var original = Tools.FindFile($".corpus/reymont");
+			var original = Tools.FindFile(".corpus/reymont");
 
 			var encoded = Path.GetTempFileName();
 			try
@@ -88,7 +88,7 @@ namespace K4os.Compression.LZ4.Streams.Tests
 		[Fact]
 		public void InteractiveReadingReturnsBytesAsSoonAsTheyAreAvailable()
 		{
-			var original = Tools.FindFile($".corpus/reymont");
+			var original = Tools.FindFile(".corpus/reymont");
 
 			var encoded = Path.GetTempFileName();
 			try

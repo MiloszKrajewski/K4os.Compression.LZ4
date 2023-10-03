@@ -25,6 +25,8 @@ using Mem = K4os.Compression.LZ4.Internal.Mem64;
 
 using size_t = System.UInt32;
 using uptr_t = System.UInt64;
+// ReSharper disable CommentTypo
+// ReSharper disable TooWideLocalVariableScope
 
 namespace K4os.Compression.LZ4.Engine;
 

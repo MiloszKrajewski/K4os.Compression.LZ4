@@ -4,6 +4,8 @@
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 // ReSharper disable BuiltInTypeReferenceStyle
 // ReSharper disable RedundantCast
+// ReSharper disable CommentTypo
+// ReSharper disable TooWideLocalVariableScope
 
 using System;
 using System.Runtime.CompilerServices;
