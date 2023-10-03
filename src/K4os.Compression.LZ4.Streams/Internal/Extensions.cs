@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -42,7 +43,7 @@ internal static class Extensions
 	/// <param name="value">Argument value.</param>
 	/// <param name="name">Name of argument.</param>
 	/// <typeparam name="T">Type of argument.</typeparam>
-	// [Conditional("DEBUG")]
+	[Conditional("DEBUG")]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void AssertIsNotNull<T>(
 		[NotNull] this T? value, [CallerArgumentExpression("value")] string? name = null) 

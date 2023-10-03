@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -13,6 +14,20 @@ internal static class Extensions
 		[NotNull] this T? value,
 		[CallerArgumentExpression("value")] string name = null!) =>
 		value ?? ThrowArgumentNullException<T>(name);
+	
+	[Conditional("DEBUG")]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void AssertTrue(
+		this bool value, 
+		[CallerArgumentExpression("value")] string? name = null)
+	{
+		if (!value) ThrowAssertionFailed(name);
+	}
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowAssertionFailed(string? name) =>
+		throw new ArgumentException($"{name ?? "<unknown>"} assertion failed");
 	
 	[DoesNotReturn]
 	[MethodImpl(MethodImplOptions.NoInlining)]
