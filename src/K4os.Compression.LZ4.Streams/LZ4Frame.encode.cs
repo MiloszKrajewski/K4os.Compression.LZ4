@@ -95,11 +95,11 @@ public static partial class LZ4Frame
 		settings ??= LZ4EncoderSettings.Default;
 		fixed (byte* stream0 = target)
 		{
-			using var encoder = new ByteSpanLZ4FrameWriter(
+			var encoder = new ByteSpanLZ4FrameWriter(
 				UnsafeByteSpan.Create(stream0, target.Length),
 				i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
 				settings.CreateDescriptor());
-			encoder.CopyFrom(source);
+			using (encoder) encoder.CopyFrom(source);
 			return encoder.CompressedLength;
 		}
 	}
@@ -118,11 +118,11 @@ public static partial class LZ4Frame
 		settings ??= LZ4EncoderSettings.Default;
 		fixed (byte* stream0 = target)
 		{
-			using var encoder = new ByteSpanLZ4FrameWriter(
+			var encoder = new ByteSpanLZ4FrameWriter(
 				UnsafeByteSpan.Create(stream0, target.Length),
 				i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
 				settings.CreateDescriptor());
-			encoder.WriteManyBytes(source);
+			using (encoder) encoder.WriteManyBytes(source);
 			return encoder.CompressedLength;
 		}
 	}
@@ -141,11 +141,11 @@ public static partial class LZ4Frame
 		settings ??= LZ4EncoderSettings.Default;
 		fixed (byte* stream0 = target)
 		{
-			using var encoder = new ByteSpanLZ4FrameWriter(
+			var encoder = new ByteSpanLZ4FrameWriter(
 				UnsafeByteSpan.Create(stream0, target.Length),
 				i => i.CreateEncoder(settings.CompressionLevel, settings.ExtraMemory),
 				settings.CreateDescriptor());
-			source(encoder);
+			using (encoder) source(encoder);
 			return encoder.CompressedLength;
 		}
 	}

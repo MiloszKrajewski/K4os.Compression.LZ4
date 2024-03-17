@@ -17,6 +17,13 @@ namespace TestHelpers
 
 		public static readonly byte[] Bytes = Encoding.UTF8.GetBytes(Text);
 
+		public static byte[] Create(int length)
+		{
+			var result = new byte[length];
+			Fill(result, 0, length);
+			return result;
+		}
+
 		public static void Fill(byte[] output, int outputIndex, int outputLength)
 		{
 			while (outputLength > 0)

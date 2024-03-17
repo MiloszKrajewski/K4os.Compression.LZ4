@@ -1,5 +1,8 @@
+## 1.3.8 (2023/03/17)
+* FIXED #96: fixed issue returning wrong compressed length when compressing into Span<byte> 
+
 ## 1.3.7-beta (2023/10/03)
-* ADDED #61: Partial decompression support (see #61, #90) (thanks: Sewer56)
+* ADDED #61: partial decompression support (see #61, #90) (thanks: Sewer56)
 * CHANGED: build process from FAKE (sorry!) to Nuke
 
 ## 1.3.6 (2023/08/15)
