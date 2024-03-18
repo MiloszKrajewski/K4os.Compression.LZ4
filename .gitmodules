@@ -1,0 +1,4 @@
+[submodule "orig"]
+	path = orig
+	url = https://github.com/lz4/lz4.git
+	branch = dev
