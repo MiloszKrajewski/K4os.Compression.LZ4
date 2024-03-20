@@ -339,21 +339,21 @@ I'm listing sync ones only):
 ```csharp
 interface ILZ4FrameReader: IDisposable
 {
-	bool OpenFrame();
-	long? GetFrameLength();
-	int ReadOneByte();
-	int ReadManyBytes(Span<byte> buffer, bool interactive = false);
-	long GetBytesRead();
-	void CloseFrame();
+    bool OpenFrame();
+    long? GetFrameLength();
+    int ReadOneByte();
+    int ReadManyBytes(Span<byte> buffer, bool interactive = false);
+    long GetBytesRead();
+    void CloseFrame();
 }
 
 interface ILZ4FrameWriter: IDisposable
 {
-	bool OpenFrame();
-	void WriteOneByte(byte value);
-	void WriteManyBytes(ReadOnlySpan<byte> buffer);
-	long GetBytesWritten();
-	void CloseFrame();
+    bool OpenFrame();
+    void WriteOneByte(byte value);
+    void WriteManyBytes(ReadOnlySpan<byte> buffer);
+    long GetBytesWritten();
+    void CloseFrame();
 }
 ```
 
@@ -368,39 +368,39 @@ Factory methods for creating `ILZ4FrameReader` and `ILZ4FrameWriter` are availab
 ```csharp
 static class LZ4Frame
 {
-	// Decode
+    // Decode
     
-	static void Decode<TBufferWriter>(
-		ReadOnlySpan<byte> source, TBufferWriter target, int extraMemory = 0);
-	static ByteMemoryLZ4FrameReader Decode(
-		ReadOnlyMemory<byte> memory, int extraMemory = 0);
-	static ByteSequenceLZ4FrameReader Decode(
-		ReadOnlySequence<byte> sequence, int extraMemory = 0);
-	static StreamLZ4FrameReader Decode(
-		Stream stream, int extraMemory = 0, bool leaveOpen = false);
-	static PipeLZ4FrameReader Decode(
-		PipeReader reader, int extraMemory = 0, bool leaveOpen = false);
-	
-	// Encode
-		
-	static int Encode(
-		ReadOnlySequence<byte> source, Span<byte> target, LZ4EncoderSettings? settings = default);
-	static int Encode(
-		Span<byte> source, Span<byte> target, LZ4EncoderSettings? settings = default);
-	static int Encode(
-		Action<ILZ4FrameWriter> source, Span<byte> target, LZ4EncoderSettings? settings = default);
-	static ByteSpanLZ4FrameWriter Encode(
-		byte* target, int length, LZ4EncoderSettings? settings = default);
-	static ByteMemoryLZ4FrameWriter Encode(
-		Memory<byte> target, LZ4EncoderSettings? settings = default);
-	static ByteBufferLZ4FrameWriter<TBufferWriter> Encode<TBufferWriter>(
-		TBufferWriter target, LZ4EncoderSettings? settings = default);
-	static ByteBufferLZ4FrameWriter Encode(
-		IBufferWriter<byte> target, LZ4EncoderSettings? settings = default);
-	static StreamLZ4FrameWriter Encode(
-		Stream target, LZ4EncoderSettings? settings = default, bool leaveOpen = false);
-	static PipeLZ4FrameWriter Encode(
-		PipeWriter target, LZ4EncoderSettings? settings = default, bool leaveOpen = false);
+    static void Decode<TBufferWriter>(
+        ReadOnlySpan<byte> source, TBufferWriter target, int extraMemory = 0);
+    static ByteMemoryLZ4FrameReader Decode(
+        ReadOnlyMemory<byte> memory, int extraMemory = 0);
+    static ByteSequenceLZ4FrameReader Decode(
+        ReadOnlySequence<byte> sequence, int extraMemory = 0);
+    static StreamLZ4FrameReader Decode(
+        Stream stream, int extraMemory = 0, bool leaveOpen = false);
+    static PipeLZ4FrameReader Decode(
+        PipeReader reader, int extraMemory = 0, bool leaveOpen = false);
+    
+    // Encode
+        
+    static int Encode(
+        ReadOnlySequence<byte> source, Span<byte> target, LZ4EncoderSettings? settings = default);
+    static int Encode(
+        Span<byte> source, Span<byte> target, LZ4EncoderSettings? settings = default);
+    static int Encode(
+        Action<ILZ4FrameWriter> source, Span<byte> target, LZ4EncoderSettings? settings = default);
+    static ByteSpanLZ4FrameWriter Encode(
+        byte* target, int length, LZ4EncoderSettings? settings = default);
+    static ByteMemoryLZ4FrameWriter Encode(
+        Memory<byte> target, LZ4EncoderSettings? settings = default);
+    static ByteBufferLZ4FrameWriter<TBufferWriter> Encode<TBufferWriter>(
+        TBufferWriter target, LZ4EncoderSettings? settings = default);
+    static ByteBufferLZ4FrameWriter Encode(
+        IBufferWriter<byte> target, LZ4EncoderSettings? settings = default);
+    static StreamLZ4FrameWriter Encode(
+        Stream target, LZ4EncoderSettings? settings = default, bool leaveOpen = false);
+    static PipeLZ4FrameWriter Encode(
+        PipeWriter target, LZ4EncoderSettings? settings = default, bool leaveOpen = false);
 }
 ```
 
