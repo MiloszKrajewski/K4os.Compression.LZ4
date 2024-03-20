@@ -415,17 +415,17 @@ If you need to use `LZ4Frame` format (the official streaming format) you will by
 with new abstraction it can be much faster. So far, people needed to use `Stream` even if data was in memory already:
 
 ```csharp
-using var source = new MemoryStream(_encoded);
+using var source = new MemoryStream(encoded);
 using var decoder = LZ4Stream.Decode(source);
 using var target = new MemoryStream();
 decoder.CopyTo(target);
-_decoded = target.ToArray();
+var decoded = target.ToArray();
 ```
 
 Now it is simpler, and faster:
 
 ```csharp
-_decode = LZ4Frame.Decode(_encoded.AsSpan(), new ArrayBufferWriter<byte>()).WrittenMemory.ToArray();
+var decoded = LZ4Frame.Decode(encoded.AsSpan(), new ArrayBufferWriter<byte>()).WrittenMemory.ToArray();
 ```
 
 [`ArrayBufferWriter<T>`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraybufferwriter-1?view=net-6.0) 
