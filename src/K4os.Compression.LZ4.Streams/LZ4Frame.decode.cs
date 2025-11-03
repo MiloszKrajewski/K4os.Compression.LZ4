@@ -3,6 +3,7 @@ using System.IO.Pipelines;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Frames;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
 
@@ -13,56 +14,14 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public static partial class LZ4Frame
 {
-#if NETSTANDARD2_0 || NET462
-	// Simple buffer writer implementation for older frameworks
-	private class SimpleBufferWriter: IBufferWriter<byte>
-	{
-		private byte[] _buffer;
-		private int _position;
-
-		public SimpleBufferWriter()
-		{
-			_buffer = new byte[4096];
-			_position = 0;
-		}
-
-		public Memory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
-
-		public void Advance(int count)
-		{
-			if (count < 0)
-				throw new ArgumentOutOfRangeException(nameof(count));
-			if (_position > _buffer.Length - count)
-				throw new InvalidOperationException("Cannot advance past the end of the buffer.");
-			_position += count;
-		}
-
-		public Memory<byte> GetMemory(int sizeHint = 0)
-		{
-			if (sizeHint < 0)
-				throw new ArgumentOutOfRangeException(nameof(sizeHint));
-			EnsureCapacity(sizeHint);
-			return _buffer.AsMemory(_position);
-		}
-
-		public Span<byte> GetSpan(int sizeHint = 0) => GetMemory(sizeHint).Span;
-
-		private void EnsureCapacity(int sizeHint)
-		{
-			var requiredSize = _position + sizeHint;
-			if (_buffer.Length < requiredSize)
-			{
-				var newSize = Math.Max(_buffer.Length * 2, requiredSize);
-				Array.Resize(ref _buffer, newSize);
-			}
-		}
-	}
-#endif
-
 	/// <summary>Decompresses source bytes and returns the result as Memory.</summary>
 	/// <param name="source">Compressed bytes to decode.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
-	/// <returns>Decompressed data as Memory&lt;byte&gt;.</returns>
+	/// <returns>
+	/// Decompressed data as Memory&lt;byte&gt;.
+	/// Note: The underlying array in the returned Memory might be larger than the actual data.
+	/// Call .ToArray() on the result if you need a trimmed copy.
+	/// </returns>
 	public static Memory<byte> Decode(
 		ReadOnlySpan<byte> source, int extraMemory = 0)
 	{
