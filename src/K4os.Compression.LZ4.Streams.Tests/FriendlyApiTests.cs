@@ -1,3 +1,4 @@
+using System.Buffers;
 using TestHelpers;
 using Xunit;
 
@@ -12,6 +13,25 @@ namespace K4os.Compression.LZ4.Streams.Tests
 			{
 				TestRoundtrip($".corpus/{filename}");
 			}
+		}
+
+		[Fact]
+		public void DecodeByteArrayConvenience()
+		{
+			// Test the new convenience method: Memory<byte> Decode(ReadOnlySpan<byte> source)
+			var original = File.ReadAllBytes(Tools.FindFile(".corpus/reymont"));
+			
+			// Encode the data
+			var encodedWriter = new BufferWriter();
+			LZ4Frame.Encode(original.AsSpan(), encodedWriter);
+			var encoded = encodedWriter.WrittenMemory;
+			
+			// Decode using the new convenience method
+			var decoded = LZ4Frame.Decode(encoded.Span);
+			
+			// Verify the decoded data matches the original
+			Assert.Equal(original.Length, decoded.Length);
+			Assert.True(original.AsSpan().SequenceEqual(decoded.Span));
 		}
 
 		private static void TestRoundtrip(string filename)

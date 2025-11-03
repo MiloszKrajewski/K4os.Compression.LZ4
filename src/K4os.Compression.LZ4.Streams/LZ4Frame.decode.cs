@@ -3,6 +3,7 @@ using System.IO.Pipelines;
 using K4os.Compression.LZ4.Streams.Abstractions;
 using K4os.Compression.LZ4.Streams.Adapters;
 using K4os.Compression.LZ4.Streams.Frames;
+using K4os.Compression.LZ4.Streams.Internal;
 
 namespace K4os.Compression.LZ4.Streams;
 
@@ -13,6 +14,22 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public static partial class LZ4Frame
 {
+	/// <summary>Decompresses source bytes and returns the result as Memory.</summary>
+	/// <param name="source">Compressed bytes to decode.</param>
+	/// <param name="extraMemory">Extra memory used for decompression.</param>
+	/// <returns>
+	/// Decompressed data as ReadOnlyMemory&lt;byte&gt;.
+	/// Note: The underlying array in the returned Memory might be larger than the actual data.
+	/// Call .ToArray() on the result if you need a trimmed copy.
+	/// </returns>
+	public static ReadOnlyMemory<byte> Decode(
+		ReadOnlySpan<byte> source, int extraMemory = 0)
+	{
+		var writer = ByteBufferWriter.Create();
+		Decode(source, writer, extraMemory);
+		return writer.WrittenMemory;
+	}
+
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
 	/// <param name="source">Span to read from.</param>
 	/// <param name="target">Buffer to write to.</param>
