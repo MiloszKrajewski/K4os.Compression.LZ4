@@ -26,7 +26,7 @@ public static partial class LZ4Frame
 			_position = 0;
 		}
 
-		public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
+		public Memory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
 
 		public void Advance(int count)
 		{
@@ -68,11 +68,13 @@ public static partial class LZ4Frame
 	{
 #if NETSTANDARD2_0 || NET462
 		var writer = new SimpleBufferWriter();
+		Decode(source, writer, extraMemory);
+		return writer.WrittenMemory;
 #else
 		var writer = new ArrayBufferWriter<byte>();
-#endif
 		Decode(source, writer, extraMemory);
-		return writer.WrittenMemory.ToArray();
+		return writer.WrittenSpan.ToArray();
+#endif
 	}
 
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
