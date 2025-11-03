@@ -19,7 +19,7 @@ internal class SimpleBufferWriter: IBufferWriter<byte>
 		_position = 0;
 	}
 
-	public Memory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
+	public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
 
 	public void Advance(int count)
 	{
@@ -43,9 +43,10 @@ internal class SimpleBufferWriter: IBufferWriter<byte>
 	private void EnsureCapacity(int sizeHint)
 	{
 		var requiredSize = _position + sizeHint;
-		if (_buffer.Length < requiredSize)
+		var bufferLength = _buffer.Length;
+		if (bufferLength < requiredSize)
 		{
-			var newSize = Math.Max(_buffer.Length + (_buffer.Length >> 1), requiredSize);
+			var newSize = Math.Max(bufferLength + (bufferLength >> 1), requiredSize);
 			Array.Resize(ref _buffer, newSize);
 		}
 	}

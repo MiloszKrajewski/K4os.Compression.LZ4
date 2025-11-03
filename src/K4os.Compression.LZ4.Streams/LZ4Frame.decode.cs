@@ -18,22 +18,20 @@ public static partial class LZ4Frame
 	/// <param name="source">Compressed bytes to decode.</param>
 	/// <param name="extraMemory">Extra memory used for decompression.</param>
 	/// <returns>
-	/// Decompressed data as Memory&lt;byte&gt;.
+	/// Decompressed data as ReadOnlyMemory&lt;byte&gt;.
 	/// Note: The underlying array in the returned Memory might be larger than the actual data.
 	/// Call .ToArray() on the result if you need a trimmed copy.
 	/// </returns>
-	public static Memory<byte> Decode(
+	public static ReadOnlyMemory<byte> Decode(
 		ReadOnlySpan<byte> source, int extraMemory = 0)
 	{
 #if NETSTANDARD2_0 || NET462
 		var writer = new SimpleBufferWriter();
-		Decode(source, writer, extraMemory);
-		return writer.WrittenMemory;
 #else
 		var writer = new ArrayBufferWriter<byte>();
-		Decode(source, writer, extraMemory);
-		return writer.WrittenSpan.ToArray();
 #endif
+		Decode(source, writer, extraMemory);
+		return writer.WrittenMemory;
 	}
 
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
