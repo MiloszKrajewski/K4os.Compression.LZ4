@@ -13,6 +13,59 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public static partial class LZ4Frame
 {
+#if NETSTANDARD2_0 || NET462
+	// Simple buffer writer implementation for older frameworks
+	private class SimpleBufferWriter: IBufferWriter<byte>
+	{
+		private byte[] _buffer;
+		private int _position;
+
+		public SimpleBufferWriter()
+		{
+			_buffer = new byte[4096];
+			_position = 0;
+		}
+
+		public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
+
+		public void Advance(int count) => _position += count;
+
+		public Memory<byte> GetMemory(int sizeHint = 0)
+		{
+			EnsureCapacity(sizeHint);
+			return _buffer.AsMemory(_position);
+		}
+
+		public Span<byte> GetSpan(int sizeHint = 0) => GetMemory(sizeHint).Span;
+
+		private void EnsureCapacity(int sizeHint)
+		{
+			var requiredSize = _position + sizeHint;
+			if (_buffer.Length < requiredSize)
+			{
+				var newSize = Math.Max(_buffer.Length * 2, requiredSize);
+				Array.Resize(ref _buffer, newSize);
+			}
+		}
+	}
+#endif
+
+	/// <summary>Decompresses source bytes and returns the result as Memory.</summary>
+	/// <param name="source">Compressed bytes to decode.</param>
+	/// <param name="extraMemory">Extra memory used for decompression.</param>
+	/// <returns>Decompressed data as Memory&lt;byte&gt;.</returns>
+	public static Memory<byte> Decode(
+		ReadOnlySpan<byte> source, int extraMemory = 0)
+	{
+#if NETSTANDARD2_0 || NET462
+		var writer = new SimpleBufferWriter();
+#else
+		var writer = new ArrayBufferWriter<byte>();
+#endif
+		Decode(source, writer, extraMemory);
+		return writer.WrittenMemory.ToArray();
+	}
+
 	/// <summary>Creates decompression stream on top of inner stream.</summary>
 	/// <param name="source">Span to read from.</param>
 	/// <param name="target">Buffer to write to.</param>
