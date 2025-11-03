@@ -22,12 +22,10 @@ internal sealed class ByteBufferWriter: IBufferWriter<byte>
 	/// <summary>
 	/// Creates a buffer writer suitable for the current framework.
 	/// </summary>
-	/// <returns>A ByteBufferWriter instance.</returns>
-	public static ByteBufferWriter Create() => new ByteBufferWriter();
+	/// <returns>A buffer writer instance.</returns>
+	public static IBufferWriter<byte> Create() => new ByteBufferWriter();
 
 	public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
-
-	public IBufferWriter<byte> AsBufferWriter() => this;
 
 	public void Advance(int count)
 	{
@@ -67,29 +65,19 @@ using System.Buffers;
 namespace K4os.Compression.LZ4.Streams.Internal;
 
 /// <summary>
-/// Buffer writer wrapper for newer frameworks.
+/// Buffer writer factory for newer frameworks.
 /// </summary>
-internal sealed class ByteBufferWriter
+internal static class ByteBufferWriter
 {
-	private readonly ArrayBufferWriter<byte> _writer;
-
-	private ByteBufferWriter()
-	{
-		_writer = new ArrayBufferWriter<byte>();
-	}
-
 	/// <summary>
 	/// Creates a buffer writer suitable for the current framework.
 	/// </summary>
-	/// <returns>A ByteBufferWriter instance.</returns>
-	public static ByteBufferWriter Create() => new ByteBufferWriter();
-
-	public ReadOnlyMemory<byte> WrittenMemory => _writer.WrittenMemory;
-
-	public IBufferWriter<byte> AsBufferWriter() => _writer;
+	/// <returns>A buffer writer instance.</returns>
+	public static IBufferWriter<byte> Create() => new ArrayBufferWriter<byte>();
 }
 
 #endif
+
 
 
 

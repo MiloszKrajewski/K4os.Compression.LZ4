@@ -25,8 +25,12 @@ public static partial class LZ4Frame
 	public static ReadOnlyMemory<byte> Decode(
 		ReadOnlySpan<byte> source, int extraMemory = 0)
 	{
-		var writer = ByteBufferWriter.Create();
-		Decode(source, writer.AsBufferWriter(), extraMemory);
+#if NETSTANDARD2_0 || NET462
+		var writer = (ByteBufferWriter)ByteBufferWriter.Create();
+#else
+		var writer = (ArrayBufferWriter<byte>)ByteBufferWriter.Create();
+#endif
+		Decode(source, writer, extraMemory);
 		return writer.WrittenMemory;
 	}
 
