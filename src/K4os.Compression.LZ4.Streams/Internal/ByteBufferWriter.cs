@@ -22,7 +22,7 @@ internal sealed class ByteBufferWriter: IBufferWriter<byte>
 	/// <summary>
 	/// Creates a buffer writer suitable for the current framework.
 	/// </summary>
-	/// <returns>A buffer writer instance.</returns>
+	/// <returns>An IBufferWriter&lt;byte&gt; instance.</returns>
 	public static IBufferWriter<byte> Create() => new ByteBufferWriter();
 
 	public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
@@ -72,7 +72,7 @@ internal static class ByteBufferWriter
 	/// <summary>
 	/// Creates a buffer writer suitable for the current framework.
 	/// </summary>
-	/// <returns>A buffer writer instance.</returns>
+	/// <returns>An IBufferWriter&lt;byte&gt; instance.</returns>
 	public static IBufferWriter<byte> Create() => new ArrayBufferWriter<byte>();
 }
 
