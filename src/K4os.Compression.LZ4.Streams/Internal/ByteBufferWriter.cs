@@ -78,7 +78,3 @@ internal static class ByteBufferWriter
 
 #endif
 
-
-
-
-
