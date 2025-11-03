@@ -44,11 +44,11 @@ internal class SimpleBufferWriter: IBufferWriter<byte>
 	{
 		var requiredSize = _position + sizeHint;
 		var bufferLength = _buffer.Length;
-		if (bufferLength < requiredSize)
-		{
-			var newSize = Math.Max(bufferLength + (bufferLength >> 1), requiredSize);
-			Array.Resize(ref _buffer, newSize);
-		}
+		if (bufferLength >= requiredSize)
+			return;
+
+		var newSize = Math.Max(bufferLength + (bufferLength >> 1), requiredSize);
+		Array.Resize(ref _buffer, newSize);
 	}
 }
 
