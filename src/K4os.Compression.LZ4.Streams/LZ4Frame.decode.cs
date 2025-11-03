@@ -28,10 +28,19 @@ public static partial class LZ4Frame
 
 		public ReadOnlyMemory<byte> WrittenMemory => _buffer.AsMemory(0, _position);
 
-		public void Advance(int count) => _position += count;
+		public void Advance(int count)
+		{
+			if (count < 0)
+				throw new ArgumentOutOfRangeException(nameof(count));
+			if (_position > _buffer.Length - count)
+				throw new InvalidOperationException("Cannot advance past the end of the buffer.");
+			_position += count;
+		}
 
 		public Memory<byte> GetMemory(int sizeHint = 0)
 		{
+			if (sizeHint < 0)
+				throw new ArgumentOutOfRangeException(nameof(sizeHint));
 			EnsureCapacity(sizeHint);
 			return _buffer.AsMemory(_position);
 		}
