@@ -16,7 +16,6 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
-using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using File = System.IO.File;
 using Log = Serilog.Log;
@@ -69,7 +68,7 @@ class Program: NukeBuild
 		Log.Warning(
 			"Secret file '{SecretFile}' not found, copying example file '{ExampleFile}' instead",
 			secretFile, exampleFile);
-		CopyFile(RootDirectory / exampleFile, RootDirectory / secretFile);
+		(RootDirectory / exampleFile).Copy(RootDirectory / secretFile);
 	}
 
 	static string GetNugetApiKey() =>
@@ -87,8 +86,8 @@ class Program: NukeBuild
 			RootDirectory
 				.GlobDirectories("**/bin", "**/obj", "packages")
 				.Where(p => !NukeDirectory.Contains(p))
-				.ForEach(DeleteDirectory);
-			EnsureCleanDirectory(OutputDirectory);
+				.ForEach(p => p.DeleteDirectory());
+			OutputDirectory.CreateOrCleanDirectory();
 		});
 
 	Target Download => _ => _

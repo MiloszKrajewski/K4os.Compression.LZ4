@@ -8,7 +8,7 @@ nuget BenchmarkDotNet
 nuget System.Memory
 
 nuget xunit
-nuget xunit.runner.visualstudio
+nuget xunit.runner.visualstudio >= 2.0 < 3.0
 nuget Microsoft.NET.Test.Sdk
 nuget coverlet.collector
 

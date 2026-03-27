@@ -10,66 +10,65 @@ namespace K4os.Compression.LZ4.Streams;
 /// </summary>
 public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 {
-	private readonly StreamLZ4FrameReader _reader;
-	private readonly bool _interactive;
-	
-	/// <summary>
-	/// Creates LZ4 decoder stream.
-	/// </summary>
-	/// <param name="inner">Inner stream, the stream compressed data is coming from..</param>
-	/// <param name="decoderFactory">Decoder factory.</param>
-	/// <param name="leaveOpen">Leave inner stream open after this stream is disposed.</param>
-	/// <param name="interactive">Interactive mode, provide bytes as soon as they are available; don't wait for full block.</param>
-	public LZ4DecoderStream(
-		Stream inner,
-		Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
-		bool leaveOpen = false,
-		bool interactive = false):
-		base(inner, leaveOpen)
-	{
-		_reader = new StreamLZ4FrameReader(inner, true, decoderFactory);
-		_interactive = interactive;
-	}
+    private readonly StreamLZ4FrameReader _reader;
+    private readonly bool _interactive;
 
-	/// <inheritdoc />
-	public override int ReadByte() => 
-		_reader.ReadOneByte();
+    /// <summary>
+    /// Creates LZ4 decoder stream.
+    /// </summary>
+    /// <param name="inner">Inner stream, the stream compressed data is coming from..</param>
+    /// <param name="decoderFactory">Decoder factory.</param>
+    /// <param name="leaveOpen">Leave inner stream open after this stream is disposed.</param>
+    /// <param name="interactive">Interactive mode, provide bytes as soon as they are available; don't wait for full block.</param>
+    public LZ4DecoderStream(
+        Stream inner,
+        Func<ILZ4Descriptor, ILZ4Decoder> decoderFactory,
+        bool leaveOpen = false,
+        bool interactive = false):
+        base(inner, leaveOpen)
+    {
+        _reader = new StreamLZ4FrameReader(inner, true, decoderFactory);
+        _interactive = interactive;
+    }
 
-	/// <inheritdoc />
-	public override int Read(byte[] buffer, int offset, int count) =>
-		_reader.ReadManyBytes(buffer.AsSpan(offset, count), _interactive);
+    /// <inheritdoc />
+    public override int ReadByte() =>
+        _reader.ReadOneByte();
 
-	/// <inheritdoc />
-	public override Task<int> ReadAsync(
-		byte[] buffer, int offset, int count, CancellationToken token) =>
-		_reader.ReadManyBytesAsync(token, buffer.AsMemory(offset, count), _interactive);
+    /// <inheritdoc />
+    public override int Read(byte[] buffer, int offset, int count) =>
+        _reader.ReadManyBytes(buffer.AsSpan(offset, count), _interactive);
 
-	/// <inheritdoc />
-	public override bool CanWrite => false;
+    /// <inheritdoc />
+    public override Task<int> ReadAsync(
+        byte[] buffer, int offset, int count, CancellationToken token) =>
+        _reader.ReadManyBytesAsync(token, buffer.AsMemory(offset, count), _interactive);
 
-	/// <summary>
-	/// Length of stream. Please note, this will only work if original LZ4 stream has
-	/// <c>ContentLength</c> field set in descriptor. Otherwise returned value will be <c>-1</c>.
-	/// It will also require synchronous stream access, so it wont work if AllowSynchronousIO
-	/// is <c>false</c>.
-	/// </summary>
-	public override long Length => _reader.GetFrameLength() ?? -1;
+    /// <inheritdoc />
+    public override bool CanWrite => false;
 
-	/// <summary>
-	/// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
-	/// not have <c>Seek</c> capability.
-	/// </summary>
-	public override long Position => _reader.GetBytesRead();
-	
-	/// <inheritdoc />
-	protected override void Dispose(bool disposing)
-	{
-		if (disposing) _reader.Dispose();
-		base.Dispose(disposing);
-	}
-	
-	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-	
+    /// <summary>
+    /// Length of stream. Please note, this will only work if original LZ4 stream has
+    /// <c>ContentLength</c> field set in descriptor. Otherwise returned value will be <c>-1</c>.
+    /// It will also require synchronous stream access, so it wont work if AllowSynchronousIO
+    /// is <c>false</c>.
+    /// </summary>
+    public override long Length => _reader.GetFrameLength() ?? -1;
+
+    /// <summary>
+    /// Position within the stream. Position can be read, but cannot be set as LZ4 stream does
+    /// not have <c>Seek</c> capability.
+    /// </summary>
+    public override long Position => _reader.GetBytesRead();
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _reader.Dispose();
+        base.Dispose(disposing);
+    }
+
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	/// <inheritdoc />
 	public override int Read(Span<byte> buffer) =>
 		_reader.ReadManyBytes(buffer, _interactive);
@@ -85,6 +84,6 @@ public class LZ4DecoderStream: LZ4StreamOnStreamEssentials
 		await _reader.DisposeAsync().Weave();
 		await base.DisposeAsync().Weave();
 	}
-	
-	#endif
+
+#endif
 }

@@ -14,56 +14,59 @@ namespace K4os.Compression.LZ4.Streams.Adapters;
 /// </summary>
 public readonly struct ByteMemoryReadAdapter: IStreamReader<int>
 {
-	private readonly ReadOnlyMemory<byte> _memory;
+    private readonly ReadOnlyMemory<byte> _memory;
 
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="memory"></param>
-	public ByteMemoryReadAdapter(ReadOnlyMemory<byte> memory) { _memory = memory; }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="memory"></param>
+    public ByteMemoryReadAdapter(ReadOnlyMemory<byte> memory)
+    {
+        _memory = memory;
+    }
 
-	/// <summary>
-	/// Copies bytes from span to buffer. Performs all length checks. 
-	/// </summary>
-	/// <param name="head">Head offset of <see cref="ReadOnlyMemory{T}"/>.</param>
-	/// <param name="buffer">Target buffer.</param>
-	/// <param name="offset">Offset in target buffer.</param>
-	/// <param name="length">Number of bytes to copy.</param>
-	/// <returns>Number of bytes actually copied.</returns>
-	internal int CopyToBuffer(
-		int head, byte[] buffer, int offset, int length)
-	{
-		length = Math.Min(_memory.Length - head, length);
-		if (length <= 0) return 0;
+    /// <summary>
+    /// Copies bytes from span to buffer. Performs all length checks. 
+    /// </summary>
+    /// <param name="head">Head offset of <see cref="ReadOnlyMemory{T}"/>.</param>
+    /// <param name="buffer">Target buffer.</param>
+    /// <param name="offset">Offset in target buffer.</param>
+    /// <param name="length">Number of bytes to copy.</param>
+    /// <returns>Number of bytes actually copied.</returns>
+    internal int CopyToBuffer(
+        int head, byte[] buffer, int offset, int length)
+    {
+        length = Math.Min(_memory.Length - head, length);
+        if (length <= 0) return 0;
 
-		var source = _memory.Span.Slice(head, length);
-		var target = buffer.AsSpan(offset, length);
-		source.CopyTo(target);
+        var source = _memory.Span.Slice(head, length);
+        var target = buffer.AsSpan(offset, length);
+        source.CopyTo(target);
 
-		return length;
-	}
+        return length;
+    }
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static int Advance(ref int state, int length)
-	{
-		if (length > 0) state += length;
-		return length;
-	}
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int Advance(ref int state, int length)
+    {
+        if (length > 0) state += length;
+        return length;
+    }
 
-	/// <inheritdoc />
-	public int Read(
-		ref int state,
-		byte[] buffer, int offset, int length) =>
-		Advance(ref state, CopyToBuffer(state, buffer, offset, length));
+    /// <inheritdoc />
+    public int Read(
+        ref int state,
+        byte[] buffer, int offset, int length) =>
+        Advance(ref state, CopyToBuffer(state, buffer, offset, length));
 
-	/// <inheritdoc />
-	public Task<ReadResult<int>> ReadAsync(
-		int state,
-		byte[] buffer, int offset, int length,
-		CancellationToken token)
-	{
-		token.ThrowIfCancellationRequested();
-		var bytes = Read(ref state, buffer, offset, length);
-		return Task.FromResult(ReadResult.Create(state, bytes));
-	}
+    /// <inheritdoc />
+    public Task<ReadResult<int>> ReadAsync(
+        int state,
+        byte[] buffer, int offset, int length,
+        CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        var bytes = Read(ref state, buffer, offset, length);
+        return Task.FromResult(ReadResult.Create(state, bytes));
+    }
 }

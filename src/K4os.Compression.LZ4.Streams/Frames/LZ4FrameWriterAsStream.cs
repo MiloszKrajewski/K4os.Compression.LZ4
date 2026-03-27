@@ -8,31 +8,30 @@ namespace K4os.Compression.LZ4.Streams.Frames;
 /// </summary>
 public class LZ4FrameWriterAsStream: LZ4StreamEssentials<ILZ4FrameWriter>
 {
-	/// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
-	/// <param name="writer">Underlying frame encoder.</param>
-	/// <param name="doNotDispose">Indicates <paramref name="writer"/> should be left
-	/// open after disposing this stream.</param>
-	public LZ4FrameWriterAsStream(ILZ4FrameWriter writer, bool doNotDispose = false):
-		base(writer, doNotDispose) { }
+    /// <summary>Creates new instance of <see cref="LZ4EncoderStream"/>.</summary>
+    /// <param name="writer">Underlying frame encoder.</param>
+    /// <param name="doNotDispose">Indicates <paramref name="writer"/> should be left
+    /// open after disposing this stream.</param>
+    public LZ4FrameWriterAsStream(ILZ4FrameWriter writer, bool doNotDispose = false):
+        base(writer, doNotDispose) { }
 
-	/// <inheritdoc />
-	public override bool CanWrite => true;
+    /// <inheritdoc />
+    public override bool CanWrite => true;
 
-	/// <inheritdoc />
-	public override void WriteByte(byte value) =>
-		InnerResource.WriteOneByte(value);
+    /// <inheritdoc />
+    public override void WriteByte(byte value) =>
+        InnerResource.WriteOneByte(value);
 
-	/// <inheritdoc />
-	public override void Write(byte[] buffer, int offset, int count) =>
-		InnerResource.WriteManyBytes(buffer.AsSpan(offset, count));
+    /// <inheritdoc />
+    public override void Write(byte[] buffer, int offset, int count) =>
+        InnerResource.WriteManyBytes(buffer.AsSpan(offset, count));
 
-	/// <inheritdoc />
-	public override Task WriteAsync(
-		byte[] buffer, int offset, int count, CancellationToken token) =>
-		InnerResource.WriteManyBytesAsync(token, buffer.AsMemory(offset, count));
+    /// <inheritdoc />
+    public override Task WriteAsync(
+        byte[] buffer, int offset, int count, CancellationToken token) =>
+        InnerResource.WriteManyBytesAsync(token, buffer.AsMemory(offset, count));
 
-	#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
-
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 	/// <inheritdoc />
 	public override void Write(ReadOnlySpan<byte> buffer) =>
 		InnerResource.WriteManyBytes(buffer);
@@ -42,12 +41,12 @@ public class LZ4FrameWriterAsStream: LZ4StreamEssentials<ILZ4FrameWriter>
 		ReadOnlyMemory<byte> buffer, CancellationToken token = default) =>
 		new(InnerResource.WriteManyBytesAsync(token, buffer));
 
-	#endif
+#endif
 
-	/// <summary>Length of the stream and number of bytes written so far.</summary>
-	public override long Length => InnerResource.GetBytesWritten();
+    /// <summary>Length of the stream and number of bytes written so far.</summary>
+    public override long Length => InnerResource.GetBytesWritten();
 
-	/// <summary>Read-only position in the stream. Trying to set it will throw
-	/// <see cref="InvalidOperationException"/>.</summary>
-	public override long Position => InnerResource.GetBytesWritten();
+    /// <summary>Read-only position in the stream. Trying to set it will throw
+    /// <see cref="InvalidOperationException"/>.</summary>
+    public override long Position => InnerResource.GetBytesWritten();
 }

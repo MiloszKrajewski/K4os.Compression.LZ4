@@ -11,7 +11,7 @@ open Fake.IO.Globbing.Operators
 module Sanitizer =
     let private b = @"(\b|\s|^|$|[\(\)\[\]])"
     let private sanitize source target rules =
-        File.WriteAllText (target, rules (File.ReadAllText source))
+        File.WriteAllText (target, (rules (File.ReadAllText source): string))
     let replaceRaw pattern (value: string) content =
         Regex.Replace(content, pattern, value)
     let replaceText pattern (value: string) content =

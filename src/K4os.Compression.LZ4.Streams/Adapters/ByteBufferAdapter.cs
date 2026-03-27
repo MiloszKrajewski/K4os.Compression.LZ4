@@ -13,42 +13,42 @@ namespace K4os.Compression.LZ4.Streams.Adapters;
 /// </summary>
 /// <typeparam name="TBufferWriter">Type implementing <see cref="IBufferWriter{T}"/></typeparam>
 public readonly struct ByteBufferAdapter<TBufferWriter>: IStreamWriter<TBufferWriter>
-	where TBufferWriter: IBufferWriter<byte>
+    where TBufferWriter: IBufferWriter<byte>
 {
-	/// <inheritdoc />
-	public void Write(
-		ref TBufferWriter state,
-		byte[] buffer, int offset, int length)
-	{
-		if (length <= 0) return;
+    /// <inheritdoc />
+    public void Write(
+        ref TBufferWriter state,
+        byte[] buffer, int offset, int length)
+    {
+        if (length <= 0) return;
 
-		var source = buffer.AsSpan(offset, length);
-		var target = state.GetSpan(length);
-		source.CopyTo(target);
-		state.Advance(length);
-	}
+        var source = buffer.AsSpan(offset, length);
+        var target = state.GetSpan(length);
+        source.CopyTo(target);
+        state.Advance(length);
+    }
 
-	/// <inheritdoc />
-	public Task<TBufferWriter> WriteAsync(
-		TBufferWriter state,
-		byte[] buffer, int offset, int length,
-		CancellationToken token)
-	{
-		Write(ref state, buffer, offset, length);
-		return Task.FromResult(state);
-	}
-	
-	/// <inheritdoc />
-	public bool CanFlush
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => false;
-	}
+    /// <inheritdoc />
+    public Task<TBufferWriter> WriteAsync(
+        TBufferWriter state,
+        byte[] buffer, int offset, int length,
+        CancellationToken token)
+    {
+        Write(ref state, buffer, offset, length);
+        return Task.FromResult(state);
+    }
 
-	/// <inheritdoc />
-	public void Flush(ref TBufferWriter state) { }
-	
-	/// <inheritdoc />
-	public Task<TBufferWriter> FlushAsync(TBufferWriter state, CancellationToken token) => 
-		Task.FromResult(state);
+    /// <inheritdoc />
+    public bool CanFlush
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => false;
+    }
+
+    /// <inheritdoc />
+    public void Flush(ref TBufferWriter state) { }
+
+    /// <inheritdoc />
+    public Task<TBufferWriter> FlushAsync(TBufferWriter state, CancellationToken token) =>
+        Task.FromResult(state);
 }

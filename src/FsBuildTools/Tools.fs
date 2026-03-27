@@ -2,7 +2,6 @@ namespace FsBuildTools
 
 open System
 open System.IO
-open System.Net
 open System.Text.RegularExpressions
 open System.Diagnostics
 open System.Runtime.InteropServices
@@ -42,12 +41,6 @@ module Path =
     let dirnameOf (path: string) = Path.GetDirectoryName(path)
 
 module File =
-    ServicePointManager.SecurityProtocol <-
-        ServicePointManager.SecurityProtocol
-        ||| SecurityProtocolType.Tls
-        ||| SecurityProtocolType.Tls11
-        ||| SecurityProtocolType.Tls12
-
     let copy target source = Shell.copyFile target source
     let rename target source = Shell.rename target source
 
@@ -61,10 +54,10 @@ module File =
 
     let exists filename = File.Exists(filename)
     let loadText filename = File.ReadAllText(filename)
-    let saveText filename text = File.WriteAllText(filename, text)
+    let saveText filename (text: string) = File.WriteAllText(filename, text)
     let loadLines filename = File.ReadAllLines(filename)
     let saveLines filename lines = File.WriteAllLines(filename, lines)
-    let appendText filename text = File.AppendAllText(filename, text)
+    let appendText filename (text: string) = File.AppendAllText(filename, text)
     let appendLines filename lines = File.AppendAllLines(filename, lines)
 
     let touch filename =
@@ -82,7 +75,7 @@ module Regex =
         let ignoreCase = if ignoreCase then RegexOptions.IgnoreCase else RegexOptions.None
         Regex(pattern, RegexOptions.ExplicitCapture ||| RegexOptions.IgnorePatternWhitespace ||| ignoreCase)
     let replace pattern (replacement: string) input = Regex.Replace(input, pattern, replacement)
-    let matches pattern input = Regex.IsMatch(input, pattern)
+    let matches pattern (input: string) = Regex.IsMatch(input, pattern)
     let (|Match|_|) (pattern: Regex) text =
         match pattern.Match(text) with | m when m.Success -> Some m | _ -> None
 
@@ -96,7 +89,10 @@ module Shell =
         Log.info $"> %s{command} @ %s{Path.toRelativeFromCurrent directory}"
         let comspec, comspecArgs = if linux then ("sh", "-c") else (Environment.environVarOrFail "COMSPEC", "/c")
         let info = ProcessStartInfo(comspec, $"%s{comspecArgs} \"%s{command}\"", UseShellExecute = false, WorkingDirectory = directory)
-        let proc = Process.Start(info)
+        let proc =
+            match Process.Start(info) with
+            | null -> failwith $"Failed to start process: {executable}"
+            | p -> p
         proc.WaitForExit()
         match proc.ExitCode with | 0 -> () | c -> failwithf $"Execution failed with error code %d{c}"
 

@@ -25,3 +25,5 @@ playground/**/Release/
 *.bak
 *.user
 *.suo
+.claude/settings.local.json
+.claude/settings.local.json

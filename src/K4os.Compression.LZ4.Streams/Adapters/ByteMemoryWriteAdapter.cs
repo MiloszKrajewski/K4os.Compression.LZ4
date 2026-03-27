@@ -14,59 +14,62 @@ namespace K4os.Compression.LZ4.Streams.Adapters;
 /// </summary>
 public readonly struct ByteMemoryWriteAdapter: IStreamWriter<int>
 {
-	private readonly Memory<byte> _memory;
+    private readonly Memory<byte> _memory;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="ByteMemoryWriteAdapter"/> class. 
-	/// </summary>
-	/// <param name="memory">Memory buffer.</param>
-	public ByteMemoryWriteAdapter(Memory<byte> memory) { _memory = memory; }
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ByteMemoryWriteAdapter"/> class. 
+    /// </summary>
+    /// <param name="memory">Memory buffer.</param>
+    public ByteMemoryWriteAdapter(Memory<byte> memory)
+    {
+        _memory = memory;
+    }
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void Advance(ref int memory, int length)
-	{
-		if (length > 0) memory += length;
-	}
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Advance(ref int memory, int length)
+    {
+        if (length > 0) memory += length;
+    }
 
-	/// <inheritdoc />
-	public void Write(
-		ref int state,
-		byte[] buffer, int offset, int length)
-	{
-		if (length <= 0) return;
+    /// <inheritdoc />
+    public void Write(
+        ref int state,
+        byte[] buffer, int offset, int length)
+    {
+        if (length <= 0) return;
 
-		if (length > _memory.Length - state)
-			throw new ArgumentOutOfRangeException(nameof(length));
+        if (length > _memory.Length - state)
+            throw new ArgumentOutOfRangeException(nameof(length));
 
-		var source = buffer.AsSpan(offset, length);
-		var target = _memory.Span.Slice(state, length);
-		source.CopyTo(target);
+        var source = buffer.AsSpan(offset, length);
+        var target = _memory.Span.Slice(state, length);
+        source.CopyTo(target);
 
-		Advance(ref state, length);
-	}
+        Advance(ref state, length);
+    }
 
-	/// <inheritdoc />
-	public Task<int> WriteAsync(
-		int state,
-		byte[] buffer, int offset, int length,
-		CancellationToken token)
-	{
-		token.ThrowIfCancellationRequested();
-		Write(ref state, buffer, offset, length);
-		return Task.FromResult(state);
-	}
+    /// <inheritdoc />
+    public Task<int> WriteAsync(
+        int state,
+        byte[] buffer, int offset, int length,
+        CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        Write(ref state, buffer, offset, length);
+        return Task.FromResult(state);
+    }
 
-	/// <inheritdoc />
-	public bool CanFlush
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => false;
-	}
+    /// <inheritdoc />
+    public bool CanFlush
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => false;
+    }
 
-	/// <inheritdoc />
-	public void Flush(ref int state) { }
+    /// <inheritdoc />
+    public void Flush(ref int state) { }
 
-	/// <inheritdoc />
-	public Task<int> FlushAsync(int state, CancellationToken token) =>
-		Task.FromResult(state);
+    /// <inheritdoc />
+    public Task<int> FlushAsync(int state, CancellationToken token) =>
+        Task.FromResult(state);
 }
