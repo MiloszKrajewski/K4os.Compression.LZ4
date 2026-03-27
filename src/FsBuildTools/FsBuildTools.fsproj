@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fake.IO.FileSystem" Version="6.0.0" />
-    <PackageReference Include="Fake.IO.Zip" Version="6.0.0" />
-    <PackageReference Include="Fake.Net.Http" Version="6.0.0" />
+    <PackageReference Include="Fake.IO.FileSystem" Version="6.1.4" />
+    <PackageReference Include="Fake.IO.Zip" Version="6.1.4" />
+    <PackageReference Include="Fake.Net.Http" Version="6.1.4" />
   </ItemGroup>
 
 </Project>
