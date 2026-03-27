@@ -9,10 +9,10 @@
       ],
       "rollForward": false
     },
-    "paket": {
-      "version": "10.3.1",
+    "dotnet-outdated-tool": {
+      "version": "4.7.1",
       "commands": [
-        "paket"
+        "dotnet-outdated"
       ],
       "rollForward": false
     }
