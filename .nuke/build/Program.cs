@@ -112,7 +112,6 @@ class Program: NukeBuild
 			RestoreSecretFile(".signing.snk", "res/.signing.example.snk");
 
 			DotNetToolRestore();
-			DotNet("paket restore");
 			DotNetRestore(s => s.SetProjectFile(Solution));
 		});
 
