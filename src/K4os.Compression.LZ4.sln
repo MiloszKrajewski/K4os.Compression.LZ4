@@ -14,7 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".environment", ".environmen
 		..\.env = ..\.env
 		..\global.json = ..\global.json
 		..\nuget.config = ..\nuget.config
-		..\paket.dependencies = ..\paket.dependencies
 		..\PublicAssembly.props = ..\PublicAssembly.props
 	EndProjectSection
 EndProject
