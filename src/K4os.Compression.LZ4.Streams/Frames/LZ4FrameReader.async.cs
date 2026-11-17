@@ -160,7 +160,15 @@ public partial class LZ4FrameReader<TStreamReader, TStreamState>
         while (count > 0)
         {
             if (_decoded <= 0 && (_decoded = await ReadBlock(token).Weave()) == 0)
-                break;
+            {
+                // Frame ended. In interactive mode, 0 consistently marks end of frame
+                // (end mark is always consumed at the start of a call). Otherwise, if
+                // nothing has been read yet, continue with the next frame (if any), so
+                // 0 is returned only at the actual end of stream (see #119).
+                if (read > 0 || interactive || !await EnsureHeader(token).Weave()) break;
+
+                continue;
+            }
 
             var empty = Drain(buffer.ToSpan(), ref offset, ref count, ref read);
 
