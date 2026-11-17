@@ -323,6 +323,9 @@ internal unsafe partial class LL64
 				length = token & ML_MASK;
 
 				_copy_match:
+				if (offset == 0)
+					goto _output_error; /* Error : offset 0 is invalid (reserved) */
+
 				if (length == ML_MASK)
 				{
 					variable_length_error error = variable_length_error.ok;
