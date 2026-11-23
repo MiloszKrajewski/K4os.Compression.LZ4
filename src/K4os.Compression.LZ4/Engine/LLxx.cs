@@ -92,6 +92,15 @@ internal static unsafe class LLxx
 		};
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
+	public static int LZ4_loadDict(
+		LL.LZ4_stream_t* context, byte* dictionary, int dictionaryLength) =>
+		LL.Algorithm switch {
+			Algorithm.X64 => LL64.LZ4_loadDict(context, dictionary, dictionaryLength),
+			Algorithm.X32 => LL32.LZ4_loadDict(context, dictionary, dictionaryLength),
+			_ => throw AlgorithmNotImplemented(nameof(LZ4_loadDict))
+		};
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	public static int LZ4_compress_HC(
 		byte* source, byte* target, int sourceLength, int targetLength, int level) =>
 		LL.Algorithm switch {

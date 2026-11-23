@@ -14,6 +14,7 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 	private PinnedMemory _contextPin;
 	
 	private readonly int _blockSize;
+	private LZ4FastDictionary _dictionary;
 	private readonly int _outputLength;
 	private int _outputIndex;
 
@@ -33,6 +34,43 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 		_outputIndex = 0;
 		PinnedMemory.Alloc<LZ4Context>(out _contextPin);
 		PinnedMemory.Alloc(out _outputBufferPin, _outputLength + 8, false);
+	}
+
+	/// <summary>Creates new instance of decoder starting with preset dictionary.</summary>
+	/// <param name="blockSize">Block size.</param>
+	/// <param name="extraBlocks">Number of extra blocks. With a preset dictionary the 64KB history
+	/// window is full from the first block, so with 0 extra blocks every block moves 64KB of history
+	/// to the start of the buffer; a few extra blocks (e.g. 4) amortize that copy.</param>
+	/// <param name="dictionary">Preset dictionary (never modified by the decoder).</param>
+	public LZ4ChainDecoder(int blockSize, int extraBlocks, LZ4FastDictionary dictionary):
+		this(blockSize, extraBlocks)
+	{
+		_dictionary = dictionary;
+		Reset();
+	}
+
+	/// <summary>Preset dictionary (<c>null</c> if there is none).</summary>
+	public LZ4FastDictionary Dictionary => _dictionary;
+
+	/// <summary>
+	/// Resets decoder to its initial state: discards decoded output and history,
+	/// so next block is decoded as the first one (against preset dictionary, if any).
+	/// </summary>
+	public void Reset() => Reset(_dictionary);
+
+	/// <summary>
+	/// Resets decoder to its initial state, starting from given preset dictionary from now on
+	/// (also for subsequent <see cref="Reset()"/> calls).
+	/// </summary>
+	/// <param name="dictionary">Preset dictionary (<c>null</c> for none).</param>
+	public void Reset(LZ4FastDictionary dictionary)
+	{
+		ThrowIfDisposed();
+		_dictionary = dictionary;
+		_outputIndex = 0;
+		Mem.Zero((byte*)Context, sizeof(LZ4Context));
+		if (_dictionary is { Length: > 0 })
+			Inject(_dictionary.Data, _dictionary.Length);
 	}
 
 	/// <inheritdoc />
