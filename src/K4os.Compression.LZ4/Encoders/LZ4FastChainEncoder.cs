@@ -12,7 +12,7 @@ using LZ4Context = LL.LZ4_stream_t;
 public unsafe class LZ4FastChainEncoder: LZ4EncoderBase
 {
 	private PinnedMemory _contextPin;
-	private readonly LZ4FastDictionary _dictionary;
+	private LZ4FastDictionary _dictionary;
 
 	private LZ4Context* Context => _contextPin.Reference<LZ4Context>();
 
@@ -36,13 +36,24 @@ public unsafe class LZ4FastChainEncoder: LZ4EncoderBase
 		Reset();
 	}
 
+	/// <summary>Preset dictionary (<c>null</c> if there is none).</summary>
+	public LZ4FastDictionary Dictionary => _dictionary;
+
 	/// <summary>
 	/// Resets encoder to its initial state: discards buffered input and history,
 	/// so next block is encoded as the first one (against preset dictionary, if any).
 	/// </summary>
-	public void Reset()
+	public void Reset() => Reset(_dictionary);
+
+	/// <summary>
+	/// Resets encoder to its initial state, starting from given preset dictionary from now on
+	/// (also for subsequent <see cref="Reset()"/> calls).
+	/// </summary>
+	/// <param name="dictionary">Preset dictionary (<c>null</c> for none).</param>
+	public void Reset(LZ4FastDictionary dictionary)
 	{
 		ThrowIfDisposed();
+		_dictionary = dictionary;
 		if (_dictionary is null)
 		{
 			LL.LZ4_initStream(Context);

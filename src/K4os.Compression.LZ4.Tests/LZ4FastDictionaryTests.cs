@@ -140,6 +140,31 @@ namespace K4os.Compression.LZ4.Tests
 			Assert.Equal(second, Decode(decoder, blocks));
 		}
 
+		[Fact]
+		public void ResetShouldSwitchDictionary()
+		{
+			using var first = new LZ4FastDictionary(Messages(1, 1000, 16 * 1024));
+			using var second = new LZ4FastDictionary(Messages(5, 1000, 16 * 1024));
+			var messages = MessageList(2, 50);
+			var expected = EncodeFresh(second, messages);
+
+			using var encoder = new LZ4FastChainEncoder(BlockSize, 0, first);
+			using var decoder = new LZ4ChainDecoder(BlockSize, 0, first);
+			Decode(decoder, Encode(encoder, MessageList(3, 100)));
+			encoder.Reset(second);
+			decoder.Reset(second);
+			var blocks = Encode(encoder, messages);
+
+			Assert.Same(second, encoder.Dictionary);
+			Assert.Equal(expected, blocks);
+			Assert.Equal(messages, Decode(decoder, blocks));
+
+			encoder.Reset(null);
+			decoder.Reset(null);
+			Assert.Null(encoder.Dictionary);
+			Assert.Equal(messages, Decode(decoder, Encode(encoder, messages)));
+		}
+
 		[Theory]
 		[InlineData(0)]
 		[InlineData(1)]

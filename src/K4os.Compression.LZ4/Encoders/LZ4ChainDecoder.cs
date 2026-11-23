@@ -14,7 +14,7 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 	private PinnedMemory _contextPin;
 	
 	private readonly int _blockSize;
-	private readonly LZ4FastDictionary _dictionary;
+	private LZ4FastDictionary _dictionary;
 	private readonly int _outputLength;
 	private int _outputIndex;
 
@@ -47,13 +47,24 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 		Reset();
 	}
 
+	/// <summary>Preset dictionary (<c>null</c> if there is none).</summary>
+	public LZ4FastDictionary Dictionary => _dictionary;
+
 	/// <summary>
 	/// Resets decoder to its initial state: discards decoded output and history,
 	/// so next block is decoded as the first one (against preset dictionary, if any).
 	/// </summary>
-	public void Reset()
+	public void Reset() => Reset(_dictionary);
+
+	/// <summary>
+	/// Resets decoder to its initial state, starting from given preset dictionary from now on
+	/// (also for subsequent <see cref="Reset()"/> calls).
+	/// </summary>
+	/// <param name="dictionary">Preset dictionary (<c>null</c> for none).</param>
+	public void Reset(LZ4FastDictionary dictionary)
 	{
 		ThrowIfDisposed();
+		_dictionary = dictionary;
 		_outputIndex = 0;
 		Mem.Zero((byte*)Context, sizeof(LZ4Context));
 		if (_dictionary is { Length: > 0 })
