@@ -14,6 +14,7 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 	private PinnedMemory _contextPin;
 	
 	private readonly int _blockSize;
+	private readonly LZ4FastDictionary _dictionary;
 	private readonly int _outputLength;
 	private int _outputIndex;
 
@@ -33,6 +34,30 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 		_outputIndex = 0;
 		PinnedMemory.Alloc<LZ4Context>(out _contextPin);
 		PinnedMemory.Alloc(out _outputBufferPin, _outputLength + 8, false);
+	}
+
+	/// <summary>Creates new instance of decoder starting with preset dictionary.</summary>
+	/// <param name="blockSize">Block size.</param>
+	/// <param name="extraBlocks">Number of extra blocks.</param>
+	/// <param name="dictionary">Preset dictionary (never modified by the decoder).</param>
+	public LZ4ChainDecoder(int blockSize, int extraBlocks, LZ4FastDictionary dictionary):
+		this(blockSize, extraBlocks)
+	{
+		_dictionary = dictionary;
+		Reset();
+	}
+
+	/// <summary>
+	/// Resets decoder to its initial state: discards decoded output and history,
+	/// so next block is decoded as the first one (against preset dictionary, if any).
+	/// </summary>
+	public void Reset()
+	{
+		ThrowIfDisposed();
+		_outputIndex = 0;
+		Mem.Zero((byte*)Context, sizeof(LZ4Context));
+		if (_dictionary is { Length: > 0 })
+			Inject(_dictionary.Data, _dictionary.Length);
 	}
 
 	/// <inheritdoc />

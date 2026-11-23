@@ -18,7 +18,8 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 	private int _inputIndex;
 	private int _inputPointer;
 	
-	private byte* InputBuffer => _inputBufferPin.Pointer;
+	/// <summary>Input buffer (dictionary followed by blocks).</summary>
+	protected byte* InputBuffer => _inputBufferPin.Pointer;
 
 	/// <summary>Creates new instance of encoder.</summary>
 	/// <param name="chaining">Needs to be <c>true</c> if using dependent blocks.</param>
@@ -94,6 +95,18 @@ public abstract unsafe class LZ4EncoderBase: UnmanagedResources, ILZ4Encoder
 			return;
 
 		_inputIndex = _inputPointer = CopyDict(InputBuffer, _inputPointer);
+	}
+
+	/// <summary>
+	/// Discards buffered input and sets the position of the next block.
+	/// Bytes before <paramref name="index"/> are treated as already encoded,
+	/// i.e. it is the length of the dictionary placed at the start of <see cref="InputBuffer"/>.
+	/// </summary>
+	/// <param name="index">Position of next block.</param>
+	protected void ResetInput(int index)
+	{
+		ThrowIfDisposed();
+		_inputIndex = _inputPointer = index;
 	}
 
 	/// <summary>Encodes single block using appropriate algorithm.</summary>
