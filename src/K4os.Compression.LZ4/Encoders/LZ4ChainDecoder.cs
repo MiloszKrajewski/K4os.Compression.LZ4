@@ -38,7 +38,9 @@ public unsafe class LZ4ChainDecoder: UnmanagedResources, ILZ4Decoder
 
 	/// <summary>Creates new instance of decoder starting with preset dictionary.</summary>
 	/// <param name="blockSize">Block size.</param>
-	/// <param name="extraBlocks">Number of extra blocks.</param>
+	/// <param name="extraBlocks">Number of extra blocks. With a preset dictionary the 64KB history
+	/// window is full from the first block, so with 0 extra blocks every block moves 64KB of history
+	/// to the start of the buffer; a few extra blocks (e.g. 4) amortize that copy.</param>
 	/// <param name="dictionary">Preset dictionary (never modified by the decoder).</param>
 	public LZ4ChainDecoder(int blockSize, int extraBlocks, LZ4FastDictionary dictionary):
 		this(blockSize, extraBlocks)

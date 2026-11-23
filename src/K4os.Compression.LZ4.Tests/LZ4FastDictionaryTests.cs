@@ -22,16 +22,20 @@ namespace K4os.Compression.LZ4.Tests
 		}
 
 		[Theory]
-		[InlineData(1, 100)]
-		[InlineData(50, 1000)]
-		[InlineData(3000, 1000)] // ~300KB: the input buffer wraps several times
-		public void RoundtripWithDictionary(int messageCount, int dictionarySize)
+		[InlineData(1, 100, 0)]
+		[InlineData(50, 1000, 0)]
+		[InlineData(3000, 1000, 0)] // ~300KB: the input buffer wraps several times
+		[InlineData(1, 100, 4)]
+		[InlineData(50, 1000, 4)]
+		[InlineData(3000, 1000, 4)] // extra blocks: history is copied only when the buffer wraps
+		[InlineData(3000, 64 * 1024, 4)]
+		public void RoundtripWithDictionary(int messageCount, int dictionarySize, int extraBlocks)
 		{
 			using var dictionary = new LZ4FastDictionary(Messages(1, 1000, dictionarySize));
 			var messages = MessageList(2, messageCount);
 
-			using var encoder = new LZ4FastChainEncoder(BlockSize, 0, dictionary);
-			using var decoder = new LZ4ChainDecoder(BlockSize, 0, dictionary);
+			using var encoder = new LZ4FastChainEncoder(BlockSize, extraBlocks, dictionary);
+			using var decoder = new LZ4ChainDecoder(BlockSize, extraBlocks, dictionary);
 			var blocks = Encode(encoder, messages);
 
 			Assert.Equal(messages, Decode(decoder, blocks));
@@ -225,8 +229,8 @@ namespace K4os.Compression.LZ4.Tests
 		{
 			using var dictionary = new LZ4FastDictionary(Messages(1, 2000, 64 * 1024));
 			var messages = MessageList(2, 2000);
-			using var plain = new LZ4FastChainEncoder(BlockSize, 0);
-			using var primed = new LZ4FastChainEncoder(BlockSize, 0, dictionary);
+			using var plain = new LZ4FastChainEncoder(BlockSize, 4);
+			using var primed = new LZ4FastChainEncoder(BlockSize, 4, dictionary);
 
 			var plainTime = Best(() => {
 				plain.Reset();

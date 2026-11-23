@@ -27,7 +27,9 @@ public unsafe class LZ4FastChainEncoder: LZ4EncoderBase
 
 	/// <summary>Creates new instance of encoder starting with preset dictionary.</summary>
 	/// <param name="blockSize">Block size.</param>
-	/// <param name="extraBlocks">Number of extra blocks.</param>
+	/// <param name="extraBlocks">Number of extra blocks. With a preset dictionary the 64KB history
+	/// window is full from the first block, so with 0 extra blocks every block moves 64KB of history
+	/// to the start of the buffer; a few extra blocks (e.g. 4) amortize that copy.</param>
 	/// <param name="dictionary">Preset dictionary (loaded once, never modified by the encoder).</param>
 	public LZ4FastChainEncoder(int blockSize, int extraBlocks, LZ4FastDictionary dictionary):
 		this(blockSize, extraBlocks)
